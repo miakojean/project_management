@@ -4,7 +4,8 @@
         :style="{ maxWidth: maxWidth }"
     >   
         
-        <span>{{ label }}</span>
+        <span v-if="isloading === false">{{ label }}</span>
+        <span v-else class="loading loading-spinner loading-md"></span>
 
     </button>
 </template>
@@ -38,7 +39,7 @@ export default defineComponent({
 <style scoped>
 .main-button {
     background: #2f80ed;
-    padding: 0.9rem;
+    padding: 0.8rem;
     border: none;
     border-radius: 4px;
     color: white;
