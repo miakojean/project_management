@@ -114,34 +114,34 @@ label{
 }
 
 input{
-    padding: 0.8rem;
-    width: 100%;
-    max-width: 500px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border-radius: 0.2rem;
-    border: 1px solid #cacaca;
-    outline: none;
-    transition: border-color 0.3s ease;
+  padding: 0.8rem;
+  width: 100%;
+  max-width: 500px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0.2rem;
+  border: 1px solid #cacaca;
+  outline: none;
+  transition: border-color 0.3s ease;
 }
 
 input:placeholder-shown{
-    font-weight: 400;
+  font-weight: 400;
 }
 
 input:focus {
-    border-color: #2563eb;
+  border-color: #2563eb;
 }
 
 input.error {
-    border-color: #dc2626;
-    background-color: #fef2f2;
+  border-color: #dc2626;
+  background-color: #fef2f2;
 }
 
 .error-message {
-    color: #dc2626;
-    font-size: 0.8rem;
-    font-weight: 500;
-    margin-top: 0.25rem;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
 }
 </style>

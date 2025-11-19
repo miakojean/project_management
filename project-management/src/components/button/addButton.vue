@@ -27,11 +27,16 @@ button{
     border-radius: 0.3rem;
     color:#fff;
     font-size: 1rem;
-    font-weight: 400;
+    font-weight: 500;
     width: 100%;
     min-width: 200px;
     transition: all 0.3s ease-in-out;
     cursor: pointer;
     background: #00a2ff;
+}
+
+button:hover{
+    background: #007bc2;
+    transition: ease-in-out 0.2s;
 }
 </style>

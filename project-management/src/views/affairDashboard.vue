@@ -8,8 +8,7 @@
     </header>
 
     <main class="main-area">
-        <div class="content-wrapper">
-        </div>
+      <customerSectionFolder/>
     </main>
 
     <footer class="footer-area">
@@ -22,12 +21,15 @@
 <script>
 import navbar from '@/components/navigation/navbar.vue';
 import sidebar from '@/components/navigation/sidebar.vue';
+import customerSectionFolder from '@/components/section/customerSectionFolder.vue';
 
 export default {
     name: 'DashboardLayout',
     components: {
-        navbar,
-        sidebar
+      navbar,
+      sidebar,
+      customerSectionFolder
+        
     }
 }
 </script>
@@ -70,7 +72,7 @@ export default {
 
 .main-area {
   grid-area: main;
-  background-color: #f4f6f8;
+  background-color: #ffffff;
   overflow-y: auto;
   padding: 2rem;
 }
