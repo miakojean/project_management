@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import addButton from '../button/addButton.vue';
+import addButton from '../button/toolButton.vue';
 import researchfamily from '../input/researchfamily.vue';
 export default {
     components:{

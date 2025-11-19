@@ -16,10 +16,4 @@ export default {
 </script>
 
 <style scoped>
-input{
-    outline:none;
-}
-input:focus{
-    outline: none;
-}
 </style>

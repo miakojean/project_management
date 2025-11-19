@@ -117,6 +117,7 @@ export default {
 <style scoped>
 .album-card {
     max-width: 400px;
+    max-height: 400px;
     background: #ffffff;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
