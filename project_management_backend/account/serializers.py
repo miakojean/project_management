@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from .models import Utilisateur
 
+
 class UtilisateurCreateSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
@@ -65,6 +66,15 @@ class UtilisateurCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         password = validated_data.pop('password')
-        user = Utilisateur(**validated_data)
-        user.save()
+        
+        # Méthode recommandée par Django
+        user = Utilisateur.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=password,
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            phone_number=validated_data.get('phone_number', ''),
+            category_title=validated_data.get('category_title', ''),
+        )
         return user
