@@ -1,15 +1,35 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator, MinValueValidator, FileExtensionValidator
-from django.utils import timezone
-from account.models import Utilisateur
-from decimal import Decimal
-import os
-from django.conf import settings
-import re
-from unidecode import unidecode
+# Etablissement des modèles du système de gestion de documents pour le cabinet
 
+Le but de l'app web est d'offrir un système de gestion et de suivi des dossiers juridiques. Nous allons opter pour l'architecture MVC (Modèles, Vue, Controlleur).
 
+Dans un premier temps le projet a deux applications. Une pour la gestion des utilisateurs (account) et l'autre pour la gestion des documents (Manager).
+
+## Modèle pour l'application account
+
+``` python
+class Utilisateur(AbstracUser):
+
+    # Vu qu'il hérite de AbstractUser il a: firstname, lastname, username, email, password par défaut.
+
+    # Puis on ajoute des attributs supplémentaires, telles que responsabiltées et numéro de téléphone
+
+    class Responsabilities(models.TextChoices):
+        DIRECTEUR = 'DR', _('Directeur')
+        ASSISTANT = 'AS', _('Assistant')
+        AUTRE = 'AU', _('Autre')
+
+    category_title = models.Charfield(choices=Responsabilities.choices)
+    phone_number = models.Charfield(),
+
+    def __str__(self):
+        return f'Profile de {self.username}'
+ ```
+
+## Modèle pour l'application manager
+
+Le premier modèle est celui du client ou celui qui fait la demande de prestation de service.
+
+``` python
 class Client(models.Model):
     """
     Modèle représentant un client du cabinet juridique
@@ -118,23 +138,12 @@ class Client(models.Model):
         if self.type_client == 'PERSONNE_MORALE':
             return self.raison_sociale
         return f"{self.nom} {self.prenoms}"
-    
-    def creer_nom_dossier_securise(self):
-        """Crée un nom de dossier sécurisé pour le client"""
-        if self.type_client == 'PERSONNE_MORALE':
-            nom_base = self.raison_sociale
-        else:
-            nom_base = f"{self.nom} {self.prenoms}"
-        
-        # Nettoyage du nom
-        nom_base = unidecode(nom_base)
-        nom_base = re.sub(r'[^\w\s-]', '', nom_base)
-        nom_base = re.sub(r'[-\s]+', '_', nom_base)
-        nom_base = nom_base.strip('_').upper()
-        
-        # Ajoute la référence client pour éviter les doublons
-        return f"{nom_base}_{self.reference_client}"
 
+```
+
+Ensuite on passe à l'établissement du modèle de dossier qui comprends tous les documents relatifs au service démandé par le client.
+
+``` python
 
 class Dossier(models.Model):
     """
@@ -419,86 +428,11 @@ class Dossier(models.Model):
         if self.date_cloture:
             return (self.date_cloture - self.date_ouverture).days
         return (timezone.now().date() - self.date_ouverture).days
+```
 
+Enfin on les documents qui vont constituer le dossier
 
-class CategorieDocument(models.Model):
-    """
-    Modèle pour catégoriser les documents
-    """
-    nom = models.CharField(_("Nom"), max_length=100, unique=True)
-    description = models.TextField(_("Description"), blank=True)
-    code = models.CharField(_("Code"), max_length=20, unique=True, help_text=_("Code court pour référencement"))
-    
-    # Paramètres
-    couleur = models.CharField(
-        _("Couleur"),
-        max_length=7,
-        default='#3498db',
-        help_text=_("Couleur hex pour l'interface (#RRGGBB)")
-    )
-    icone = models.CharField(
-        _("Icône"),
-        max_length=50,
-        blank=True,
-        help_text=_("Nom de l'icône (ex: file-text, certificate, etc.)")
-    )
-    
-    # Organisation
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='sous_categories',
-        verbose_name=_("Catégorie parente")
-    )
-    
-    ordre = models.PositiveIntegerField(_("Ordre"), default=1)
-    est_actif = models.BooleanField(_("Est actif"), default=True)
-    
-    date_creation = models.DateTimeField(_("Date de création"), auto_now_add=True)
-    date_modification = models.DateTimeField(_("Date de modification"), auto_now=True)
-    
-    class Meta:
-        ordering = ['ordre', 'nom']
-        verbose_name = _("Catégorie de document")
-        verbose_name_plural = _("Catégories de documents")
-    
-    def __str__(self):
-        if self.parent:
-            return f"{self.parent.nom} > {self.nom}"
-        return self.nom
-
-
-def creer_nom_fichier_securise(filename):
-    """Crée un nom de fichier sécurisé"""
-    name, ext = os.path.splitext(filename)
-    safe_name = unidecode(name)
-    safe_name = re.sub(r'[^\w\s-]', '', safe_name)
-    safe_name = re.sub(r'[-\s]+', '_', safe_name)
-    safe_name = safe_name.strip('_')
-    
-    # Ajoute un timestamp pour éviter les doublons
-    timestamp = str(int(timezone.now().timestamp()))[-6:]
-    return f"{safe_name}_{timestamp}{ext}"
-
-
-def document_upload_path(instance, filename):
-    """
-    CORRECTION: Génère le chemin cohérent avec la structure des dossiers clients
-    """
-    # Si le document est lié à un dossier, utilise son chemin
-    if instance.dossier and instance.dossier.chemin_dossier:
-        # Chemin relatif depuis MEDIA_ROOT
-        chemin_relatif = os.path.relpath(instance.dossier.chemin_dossier, settings.MEDIA_ROOT)
-        nom_fichier_securise = creer_nom_fichier_securise(filename)
-        return os.path.join(chemin_relatif, nom_fichier_securise)
-    
-    # Fallback: structure par défaut pour les documents sans dossier
-    date = timezone.now()
-    nom_fichier_securise = creer_nom_fichier_securise(filename)
-    return f"documents/sans_dossier/{date.year}/{date.month:02d}/{nom_fichier_securise}"
-
+```python 
 
 class Document(models.Model):
     """
@@ -849,142 +783,4 @@ class Document(models.Model):
         )
         return nouvelle_version
 
-
-class SignatureDocument(models.Model):
-    """
-    Modèle intermédiaire pour gérer les signatures de documents
-    """
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.CASCADE,
-        related_name='signatures'
-    )
-    
-    signataire = models.ForeignKey(
-        Utilisateur,
-        on_delete=models.CASCADE,
-        related_name='signatures'
-    )
-    
-    ordre_signature = models.PositiveIntegerField(
-        _("Ordre signature"),
-        default=1,
-        help_text=_("Ordre dans lequel le signataire doit signer")
-    )
-    
-    a_signe = models.BooleanField(_("A signé"), default=False)
-    date_signature = models.DateTimeField(_("Date signature"), null=True, blank=True)
-    commentaire = models.TextField(_("Commentaire"), blank=True)
-    
-    # Traçabilité technique
-    adresse_ip = models.GenericIPAddressField(_("Adresse IP"), null=True, blank=True)
-    empreinte_numerique = models.CharField(
-        _("Empreinte numérique"),
-        max_length=64,
-        blank=True,
-        help_text=_("Hash SHA-256 du document au moment de la signature")
-    )
-    
-    date_creation = models.DateTimeField(_("Date de création"), auto_now_add=True)
-    
-    class Meta:
-        ordering = ['document', 'ordre_signature']
-        verbose_name = _("Signature de document")
-        verbose_name_plural = _("Signatures de documents")
-        unique_together = ['document', 'signataire']
-    
-    def __str__(self):
-        statut = "✓ Signé" if self.a_signe else "En attente"
-        return f"{self.document.reference} - {self.signataire.get_full_name()} ({statut})"
-    
-    def signer(self, ip_address=None):
-        """Enregistre la signature"""
-        self.a_signe = True
-        self.date_signature = timezone.now()
-        self.adresse_ip = ip_address
-        
-        import hashlib
-        if self.document.fichier:
-            hash_sha256 = hashlib.sha256()
-            for chunk in self.document.fichier.chunks():
-                hash_sha256.update(chunk)
-            self.empreinte_numerique = hash_sha256.hexdigest()
-        
-        self.save()
-        
-        if self.document.est_signe_completement:
-            self.document.statut = 'SIGNE'
-            self.document.save()
-
-
-class HistoriqueDocument(models.Model):
-    """
-    Modèle pour tracer l'historique des actions sur un document
-    """
-    ACTION_CHOICES = [
-        ('CREATION', 'Création'),
-        ('MODIFICATION', 'Modification'),
-        ('CONSULTATION', 'Consultation'),
-        ('TELECHARGEMENT', 'Téléchargement'),
-        ('VALIDATION', 'Validation'),
-        ('SIGNATURE', 'Signature'),
-        ('ENVOI', 'Envoi'),
-        ('ARCHIVAGE', 'Archivage'),
-        ('SUPPRESSION', 'Suppression'),
-        ('PARTAGE', 'Partage'),
-    ]
-    
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.CASCADE,
-        related_name='historique'
-    )
-    
-    action = models.CharField(_("Action"), max_length=20, choices=ACTION_CHOICES)
-    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, verbose_name=_("Utilisateur"))
-    date_action = models.DateTimeField(_("Date action"), auto_now_add=True)
-    
-    details = models.TextField(
-        _("Détails"),
-        blank=True,
-        help_text=_("Détails supplémentaires sur l'action")
-    )
-    
-    adresse_ip = models.GenericIPAddressField(_("Adresse IP"), null=True, blank=True)
-    
-    class Meta:
-        ordering = ['-date_action']
-        verbose_name = _("Historique de document")
-        verbose_name_plural = _("Historiques de documents")
-    
-    def __str__(self):
-        return f"{self.document.reference} - {self.get_action_display()} par {self.utilisateur} le {self.date_action}"
-
-
-class EtapeDossier(models.Model):
-    """
-    Modèle pour gérer les étapes d'un dossier
-    """
-    dossier = models.ForeignKey(
-        Dossier,
-        on_delete=models.CASCADE,
-        related_name='etapes',
-        verbose_name=_("Dossier")
-    )
-    nom = models.CharField(_("Nom de l'étape"), max_length=200)
-    description = models.TextField(_("Description"), blank=True)
-    ordre = models.PositiveIntegerField(_("Ordre"), default=1)
-    date_debut = models.DateField(_("Date début"), null=True, blank=True)
-    date_fin = models.DateField(_("Date fin"), null=True, blank=True)
-    est_terminee = models.BooleanField(_("Est terminée"), default=False)
-    
-    date_creation = models.DateTimeField(_("Date de création"), auto_now_add=True)
-    date_modification = models.DateTimeField(_("Date de modification"), auto_now=True)
-    
-    class Meta:
-        ordering = ['dossier', 'ordre']
-        verbose_name = _("Étape de dossier")
-        verbose_name_plural = _("Étapes de dossier")
-    
-    def __str__(self):
-        return f"{self.dossier.reference_dossier} - {self.nom}"
+```
