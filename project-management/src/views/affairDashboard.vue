@@ -1,3 +1,4 @@
+<!-- affairDashboard.vue -->
 <template>
   <div class="dashboard-container">
     
@@ -12,7 +13,7 @@
     </main>
 
     <footer class="footer-area">
-      <p>&copy; 2024 Mon Entreprise</p>
+      <p>&copy; 2025 Adn consulting</p>
     </footer>
 
   </div>
@@ -29,7 +30,6 @@ export default {
       navbar,
       sidebar,
       customerSectionFolder
-        
     }
 }
 </script>
@@ -49,22 +49,19 @@ export default {
 
 /* --- Styles des Zones --- */
 
-/* NOTE: Vue applique automatiquement le style scoped du parent 
-   à la racine du composant enfant. Donc ce style s'appliquera 
-   bien à la balise <aside> qui est dans sidebar.vue 
-*/
 .sidebar-area {
   grid-area: sidebar;
-  background-color: #2c3e50;
-  color: white;
+  background-color: #ffffff;
+  color: var(--primary-color);
   padding: 1rem;
   overflow-y: auto;
+  border-right: 1px solid #e5e7eb; /* ✅ Bordure de séparation */
 }
 
 .header-area {
   grid-area: header;
   background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -72,7 +69,7 @@ export default {
 
 .main-area {
   grid-area: main;
-  background-color: #ffffff;
+  background-color: #f9fafb; /* Légère différence de fond pour mieux voir la séparation */
   overflow-y: auto;
   padding: 2rem;
 }
@@ -80,10 +77,25 @@ export default {
 .footer-area {
   grid-area: footer;
   background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #e5e7eb;
   padding: 1rem;
   text-align: center;
   font-size: 0.9rem;
   color: #666;
+}
+
+/* Responsive - Masquer le sidebar sur mobile */
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "header"
+      "main"
+      "footer";
+  }
+
+  .sidebar-area {
+    display: none; /* À remplacer par un menu hamburger mobile */
+  }
 }
 </style>
