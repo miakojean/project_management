@@ -1,35 +1,29 @@
 <template>
-    <nav>
-        <brand/>
-    </nav>
+    <div class="logo">
+        <img src="../../../public/LOGO.png" alt="logo de Adn consulting">
+        <h4> <span>ADN</span> CONSULTING</h4>
+    </div>
 </template>
 
 <script>
-import brand from './brand.vue';
 export default {
-    components:{
-        brand
-    }
+
 }
 </script>
 
 <style scoped>
-nav{
-    background: #fff;
+.logo{
     width: 100%;
-    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 1rem;
 }
 
 img{
     width:50px;
     height:50px;
     background-size: cover;
-}
-
-.logo{
-    display: flex;
-    align-items: center;
-    gap: 1rem;
 }
 
 .logo h4{

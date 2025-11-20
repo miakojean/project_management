@@ -9,7 +9,7 @@
 
     <div class="svg-pattern">
       <div 
-        v-for="(icon, index) in icons" 
+        v-for="(icon, index) in icons"
         :key="index" 
         class="svg-icon"
         :style="icon.style"
@@ -76,7 +76,7 @@ main {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
 }
 
 /* CONTENEUR DU FORMULAIRE */

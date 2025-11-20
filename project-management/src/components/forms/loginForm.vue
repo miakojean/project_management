@@ -39,6 +39,7 @@
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import divider from '../tools/divider.vue';
+import { useRouter } from 'vue-router';
 import { reactive, ref } from 'vue';
 
 export default {
@@ -49,7 +50,9 @@ export default {
     },
     setup() {
 
-        const isloading = ref(false)
+        const router = useRouter();
+
+        const isloading = ref(false);
 
         const formData = reactive({
             email: "",
@@ -77,6 +80,7 @@ export default {
             if (validateData()) {
                 isloading.value = true
                 setTimeout(()=>{
+                    router.push('/dashboard')
                     console.log("Vous avez réussi ");
                     isloading.value = false
                 }, 3000);
@@ -86,6 +90,7 @@ export default {
         };
         
         return {
+            router,
             isloading,
             formData,
             emailInput,
