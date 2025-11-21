@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _ 
 import uuid
 from django.utils import timezone
-# Create your models here.
+# Create your models here. 
 
 class Utilisateur(AbstractUser):
     

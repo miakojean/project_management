@@ -1,14 +1,16 @@
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.password_validation import validate_password
 from .models import Utilisateur
 
 
 class UtilisateurCreateSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
-        write_only = True,
-        style = { 'input_type': 'password'},
-        error_messages = {
+        write_only=True,
+        style={'input_type': 'password'},
+        validators=[validate_password],  # AJOUT: Validation Django du mot de passe
+        error_messages={
             'blank': _('Le mot de passe est obligatoire.'),
             'required': _('Le mot de passe est obligatoire.')
         }
@@ -39,16 +41,13 @@ class UtilisateurCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
+        # Validation de la correspondance des mots de passe
         if data['password'] != data['password2']:
             raise serializers.ValidationError({
                 "password2": _("Les mots de passe ne correspondent pas.")
             })
         
-        # Validation de la force du mot de passe (optionnel)
-        if len(data['password']) < 8:
-            raise serializers.ValidationError({
-                "password": _("Le mot de passe doit contenir au moins 8 caractères.")
-            })
+        # La validation de la longueur est maintenant gérée par validate_password
 
         # Vérifications d'unicité
         if Utilisateur.objects.filter(username=data['username']).exists():
@@ -64,17 +63,93 @@ class UtilisateurCreateSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        validated_data.pop('password2')
+        # Extraire les mots de passe
         password = validated_data.pop('password')
+        validated_data.pop('password2')  # On retire le champ de confirmation
         
-        # Méthode recommandée par Django
+        # Création de l'utilisateur avec create_user() qui hash automatiquement
         user = Utilisateur.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=password,
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            phone_number=validated_data.get('phone_number', ''),
-            category_title=validated_data.get('category_title', ''),
+            **validated_data,
+            password=password  # Le password est passé séparément pour être hashé
         )
         return user
+
+
+# Serializer pour la mise à jour (sans les champs de mot de passe)
+class UtilisateurUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            'first_name', 'last_name',
+            'phone_number', 'category_title',
+            'email'
+        ]
+
+
+# Serializer pour changer le mot de passe
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    new_password2 = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
+
+    def validate(self, data):
+        if data['new_password'] != data['new_password2']:
+            raise serializers.ValidationError({
+                "new_password2": _("Les nouveaux mots de passe ne correspondent pas.")
+            })
+        return data
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(_("L'ancien mot de passe est incorrect."))
+        return value
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+# Serializer pour la liste (sans mot de passe)
+class UtilisateurListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            'id', 'username', 'email',
+            'first_name', 'last_name',
+            'phone_number', 'category_title',
+            'date_joined', 'last_login'
+        ]
+        read_only_fields = ['id', 'date_joined', 'last_login']
+
+
+# Serializer pour le profil détaillé
+class UtilisateurDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            'id', 'username', 'email',
+            'first_name', 'last_name',
+            'phone_number', 'category_title',
+            'date_joined', 'last_login', 'is_active',
+            'is_staff', 'is_superuser'
+        ]
+        read_only_fields = [
+            'id', 'date_joined', 'last_login', 
+            'is_active', 'is_staff', 'is_superuser'
+        ]
