@@ -73,7 +73,6 @@ export default {
 <style scoped>
 main {
   position: relative;
-  height: 100vh;
   width: 100vw;
   overflow: hidden;
   background-color: #ffffff;
