@@ -7,7 +7,7 @@ from decimal import Decimal
 import os
 from django.conf import settings
 import re
-from unidecode import unidecode
+from unidecode import unidecode 
 
 
 class Client(models.Model):
