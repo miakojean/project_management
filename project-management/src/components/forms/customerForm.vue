@@ -1,0 +1,255 @@
+<template>
+    <form class="form-container" @submit.prevent="handleSubmit">
+        <div class="form-grid">
+            
+            <div class="form-row">
+                <inputfamily 
+                    identifiant="nom" 
+                    label="Nom" 
+                    placeholder="Entrer le nom du client"
+                    v-model="formData.nom"
+                    :required="true"
+                />
+                <inputfamily 
+                    identifiant="prenoms" 
+                    label="Prénom(s)" 
+                    placeholder="Entrer prénom(s)"
+                    v-model="formData.prenoms"
+                    :required="true"
+                />
+                 <inputfamily 
+                    identifiant="date-naissance" 
+                    label="Date de naissance" 
+                    placeholder="JJ/MM/AAAA"
+                    type="date"
+                    v-model="formData.dateNaissance"
+                />
+            </div>
+            
+            <div class="form-row">
+                <inputfamily 
+                    identifiant="lieu-naissance" 
+                    label="Lieu de naissance" 
+                    placeholder="Entrer le lieu de naissance"
+                    v-model="formData.lieuNaissance"
+                />
+                <inputfamily 
+                    identifiant="email" 
+                    label="Email" 
+                    placeholder="Entrer l'email"
+                    type="email"
+                    v-model="formData.email"
+                    :required="true"
+                />
+                <inputfamily 
+                    identifiant="telephone" 
+                    label="Téléphone" 
+                    placeholder="Entrer le téléphone"
+                    type="tel"
+                    v-model="formData.telephone"
+                />
+            </div>
+
+            <div class="form-row">
+                <inputfamily 
+                    identifiant="adresse" 
+                    label="Adresse" 
+                    placeholder="Entrer l'adresse"
+                    v-model="formData.adresse"
+                />
+                <inputfamily 
+                    identifiant="ville" 
+                    label="Ville" 
+                    placeholder="Entrer la ville"
+                    v-model="formData.ville"
+                />
+                <inputfamily 
+                    identifiant="code-postal" 
+                    label="Code postal" 
+                    placeholder="Entrer le code postal"
+                    v-model="formData.codePostal"
+                />
+            </div>
+
+            <div class="form-row">
+                <inputfamily 
+                    identifiant="pays" 
+                    label="Pays" 
+                    placeholder="Entrer le pays"
+                    v-model="formData.pays"
+                />
+                <inputfamily 
+                    identifiant="profession" 
+                    label="Profession" 
+                    placeholder="Entrer la profession"
+                    v-model="formData.profession"
+                />
+                <inputfamily 
+                    identifiant="cin" 
+                    label="CIN/Passport" 
+                    placeholder="Numéro CIN ou passeport"
+                    v-model="formData.cin"
+                />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <mainButton 
+                :loading="isLoading"
+                label="Ajouter client"
+                type="submit"
+            >
+                
+            </mainButton>
+        </div>
+    </form>
+</template>
+
+<script>
+import { ref, reactive } from 'vue';
+import inputfamily from '../input/inputfamily.vue';
+import mainButton from '../button/mainButton.vue';
+
+export default {
+    name: 'ClientPhysiqueForm',
+    components: {
+        inputfamily,
+        mainButton
+    },
+    emits: ['submit'],
+    setup(props, { emit }) {
+        const isLoading = ref(false);
+        
+        const formData = reactive({
+            nom: '',
+            prenoms: '',
+            email: '',
+            telephone: '',
+            adresse: '',
+            ville: '',
+            codePostal: '',
+            pays: '',
+            date_naissance: '',
+            lieu_naissance: '',
+            profession: '',
+            cin: ''
+        });
+
+        const handleSubmit = async () => {
+            isLoading.value = true;
+            
+            try {
+                // Validation des champs requis
+                if (!formData.nomComplet || !formData.prenoms || !formData.email) {
+                    alert('Veuillez remplir les champs obligatoires');
+                    return;
+                }
+
+                // Simulation d'appel API
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Émission des données
+                emit('submit', {
+                    ...formData,
+                    type: 'physique'
+                });
+
+                // Réinitialisation du formulaire
+                Object.keys(formData).forEach(key => {
+                    formData[key] = '';
+                });
+
+            } catch (error) {
+                console.error('Erreur lors de la soumission:', error);
+            } finally {
+                isLoading.value = false;
+            }
+        };
+
+        return {
+            isLoading,
+            formData,
+            handleSubmit
+        };
+    }
+};
+</script>
+
+<style scoped>
+.form-container {
+    width: 100%;
+    max-width: 1000px; /* Augmenté un peu pour accommoder 3 colonnes */
+    margin: 0 auto;
+    padding-top: 4rem;
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.form-row {
+    display: grid;
+    /* C'est ici que se joue le 3 par 3 */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 1rem;
+    align-items: start;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    /* Sur tablette moyenne, on passe à 2 colonnes */
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Sur mobile, on passe à 1 colonne */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        justify-content: center;
+    }
+    
+    .form-container {
+        padding: 0 1rem;
+    }
+}
+
+/* Animation */
+.form-row {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger animation pour les lignes */
+.form-row:nth-child(1) { animation-delay: 0.1s; }
+.form-row:nth-child(2) { animation-delay: 0.2s; }
+.form-row:nth-child(3) { animation-delay: 0.3s; }
+.form-row:nth-child(4) { animation-delay: 0.4s; }
+</style>

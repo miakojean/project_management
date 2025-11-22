@@ -3,21 +3,35 @@
         <h2>Dossier récents</h2>
 
         <div class="recents__affairs">
-            <cardAffairsFolder :avancement="50"/>
-            <cardAffairsFolder/>
-            <cardAffairsFolder/>
-            <cardAffairsFolder/>
-            <cardAffairsFolder/>
+            <cardAffairsFolder :avancement="50" @click="goToFolderDetail"/>
+            <cardAffairsFolder @click="goToFolderDetail"/>
+            <cardAffairsFolder @click="goToFolderDetail"/>
+            <cardAffairsFolder @click="goToFolderDetail"/>
+            <cardAffairsFolder @click="goToFolderDetail"/>
         </div>
     </section>
 </template>
 
 <script>
 import cardAffairsFolder from '../cards/cardAffairsFolder.vue';
+import { useRouter } from 'vue-router';
 export default {
 
     components:{
         cardAffairsFolder,
+    },
+
+    setup(){
+        const router = useRouter();
+
+        const goToFolderDetail = () => {
+            router.push('/dashboard/customer/affairs')
+        }
+
+        return{
+            router,
+            goToFolderDetail
+        }
     }
 }
 </script>

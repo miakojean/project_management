@@ -129,10 +129,6 @@ export default {
                     if (refreshToken) {
                         sessionStorage.setItem('refresh', refreshToken);
                     }
-
-                    // Réinitialiser le formulaire
-                    formData.email = "";
-                    formData.password = "";
                     
                     // Redirection
                     router.push('/dashboard');

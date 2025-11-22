@@ -1,31 +1,28 @@
 from django.urls import path
 from .views import (
-    CreateUserView, 
-    UserLoginView, 
+    CreateUserView,
+    UserLoginView,
     UserLogoutView,
-    PasswordResetConfirmView,
     PasswordResetRequestView,
-    PasswordResetTokenVerifyView
+    PasswordResetTokenVerifyView,
+    PasswordResetConfirmView,
+    UserProfileView  # Import de la vue existante
 )
-
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    path('', CreateUserView.as_view(), name = "index"),
-    path('login', UserLoginView.as_view(), name="login"),
+    path('register', CreateUserView.as_view(), name='register'),
+    path('login', UserLoginView.as_view(), name='login'),
     path('logout', UserLogoutView.as_view(), name='logout'),
-
-    # Password reseting
-    path('password-reseting', PasswordResetRequestView.as_view(),name='reset-passwor' ),
-    path('password-reset/confirm', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-    path('password-reset/verify-token', PasswordResetTokenVerifyView.as_view(), name='verify-token'),
-
-    #JWT endpoint
-    path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
+    # JWT Token refresh
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token/verify', TokenVerifyView.as_view(), name='token_verify'),
+    
+    # Password reset
+    path('password-reset', PasswordResetRequestView.as_view(), name='password_reset'),
+    path('password-reset/verify', PasswordResetTokenVerifyView.as_view(), name='password_reset_verify'),
+    path('password-reset/confirm', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    
+    # User profile - AJOUT DE CETTE LIGNE
+    path('me', UserProfileView.as_view(), name='user_profile'),
 ]

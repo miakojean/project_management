@@ -67,19 +67,16 @@ export default {
         // Données principales
         titre: {
             type: String,
-            required: true,
             default: 'Titre du dossier'
         },
         reference: {
             type: String,
-            required: true,
             default: 'REF-00000'
         },
         
         // Client
         clientNom: {
             type: String,
-            required: true,
             default: 'Nom du client'
         },
         
@@ -190,6 +187,7 @@ export default {
     border: 1px solid #e2e8f0;
     overflow: hidden;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .dossier-card:hover {

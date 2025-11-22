@@ -5,21 +5,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 
 const api = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000, // Réduit à 10s (plus raisonnable)
+    timeout: 10000, // 10s
     withCredentials: true
 })
 
-// Service de stockage cohérent
+// Service de stockage
 const storage = {
     getToken: () => {
-        // Priorité à sessionStorage, fallback à localStorage
         return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
     },
     getRefreshToken: () => {
         return sessionStorage.getItem('refresh') || localStorage.getItem('refresh');
     },
     setTokens: (authToken, refreshToken) => {
-        // Utilise sessionStorage pour plus de sécurité
         sessionStorage.setItem('authToken', authToken);
         if (refreshToken) {
             sessionStorage.setItem('refresh', refreshToken);
@@ -33,14 +31,28 @@ const storage = {
     }
 };
 
+// --- INTERCEPTEUR DE REQUÊTE (C'est ici que la correction est appliquée) ---
 api.interceptors.request.use(
     (config) => {
         const token = storage.getToken();
-        if (token) {
+        
+        // Liste des URLs où il ne faut PAS envoyer le token Bearer
+        // pour éviter l'erreur "token_not_valid" sur des endpoints publics
+        const publicEndpoints = [
+            '/account/login',
+            '/account/register',
+            '/account/token/refresh'
+        ];
+
+        // Vérifie si l'URL actuelle fait partie des endpoints publics
+        const isPublicEndpoint = publicEndpoints.some(endpoint => config.url.includes(endpoint));
+
+        // On ajoute le token SEULEMENT si on n'est pas sur une page de login/refresh
+        if (token && !isPublicEndpoint) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         
-        // Ajouter un timestamp pour éviter le cache
+        // Ajouter un timestamp pour éviter le cache sur les GET
         if (config.method === 'get') {
             config.params = {
                 ...config.params,
@@ -55,6 +67,7 @@ api.interceptors.request.use(
     }
 );
 
+// --- INTERCEPTEUR DE RÉPONSE ---
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -71,6 +84,7 @@ api.interceptors.response.use(
 
             if (refreshToken) {
                 try {
+                    // On utilise axios directement ici pour éviter de déclencher l'intercepteur principal
                     const refreshResponse = await axios.post(
                         `${API_BASE_URL}/account/token/refresh`,
                         { refresh: refreshToken },
@@ -110,18 +124,13 @@ api.interceptors.response.use(
             }
         }
 
-        // Gestion d'autres erreurs courantes
+        // Logs d'erreurs optionnels
         if (error.response?.status === 403) {
-            console.error('Accès refusé');
-            // Optionnel: rediriger vers une page d'erreur
+            console.error('Accès refusé (403)');
         }
         
-        if (error.response?.status === 500) {
-            console.error('Erreur serveur');
-        }
-        
-        if (error.code === 'ECONNABORTED') {
-            console.error('Timeout de la requête');
+        if (error.response?.status >= 500) {
+            console.error('Erreur serveur (500)');
         }
 
         return Promise.reject(error);
@@ -134,13 +143,14 @@ export const authService = {
         try {
             const response = await api.post('/account/login', credentials);
             
-            if (response.data.access_token || response.data.access) {
-                const token = response.data.access_token || response.data.access;
-                const refreshToken = response.data.refresh_token || response.data.refresh;
+            if (response.data.access || response.data.access_token) {
+                const token = response.data.access || response.data.access_token;
+                const refreshToken = response.data.refresh || response.data.refresh_token;
                 
                 storage.setTokens(token, refreshToken);
                 return response;
             }
+            
             throw new Error('Token non reçu dans la réponse');
             
         } catch (error) {
@@ -150,8 +160,10 @@ export const authService = {
     
     logout: async () => {
         try {
-            // Appeler l'endpoint de logout si disponible
-            await api.post('/account/logout');
+            const refresh = storage.getRefreshToken();
+            if (refresh) {
+                await api.post('/account/logout', { refresh });
+            }
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
@@ -163,8 +175,24 @@ export const authService = {
     getCurrentUser: async () => {
         try {
             const response = await api.get('/account/me');
+            
+            // Le backend retourne { user: {...} }
+            if (response.data.user) {
+                return response.data.user;
+            }
+            
+            // Au cas où le backend retournerait directement l'objet user
             return response.data;
+            
         } catch (error) {
+            console.error('Get current user error:', error);
+            
+            // Si erreur 401, on déconnecte
+            if (error.response?.status === 401) {
+                storage.clearTokens();
+                router.push('/login');
+            }
+            
             throw error;
         }
     },
@@ -173,14 +201,5 @@ export const authService = {
         return !!storage.getToken();
     }
 };
-
-export function simulateApiConnexion() {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            console.log("Connexion réussie");
-            resolve();
-        }, 3000);
-    });
-}
 
 export default api;

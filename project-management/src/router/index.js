@@ -36,6 +36,13 @@ const router = createRouter({
       path:'/dashboard/customer/affairs',
       name:'affair',
       component: () => import('@/views/affairDashboard.vue')
+    },
+
+    /* Register new customer, add folder affairs and add documents */
+    {
+      path:'/customer',
+      name:'customer',
+      component: () => import('@/components/section/newCustomer.vue')
     }
   ],
 })

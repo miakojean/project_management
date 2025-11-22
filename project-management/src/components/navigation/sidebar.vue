@@ -69,6 +69,8 @@
 
 <script>
 import brand from './brand.vue';
+import { authService } from '@/_services/api';
+
 export default {
     name: 'Sidebar',
     components:{
@@ -77,6 +79,7 @@ export default {
     data() {
         return {
             activeItem: 'dashboard',
+            isLoggingOut: false,
             mainMenuItems: [
                 {
                     id: 'dashboard',
@@ -144,6 +147,27 @@ export default {
             ],
         }
     },
+    computed: {
+        userName() {
+            return this.currentUser ? 
+                `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim() || 
+                this.currentUser.username : 
+                'Utilisateur';
+        },
+        userRole() {
+            return this.currentUser?.category_title || 'Avocat principal';
+        },
+        userAvatar() {
+            const name = this.currentUser ? 
+                `${this.currentUser.first_name || ''}+${this.currentUser.last_name || ''}`.trim() || 
+                this.currentUser.username : 
+                'Utilisateur';
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff`;
+        }
+    },
+    async mounted() {
+        await this.loadCurrentUser();
+    },
     methods: {
         setActive(itemId) {
             this.activeItem = itemId;
@@ -158,6 +182,63 @@ export default {
         logout() {
             console.log('Déconnexion');
             // Logique de déconnexion
+        }
+    },
+    methods: {
+        setActive(itemId) {
+            this.activeItem = itemId;
+            console.log('Navigation vers:', itemId);
+            // Ici, vous ajouterez la navigation Vue Router
+            // this.$router.push({ name: itemId });
+        },
+        toggleProfileMenu() {
+            console.log('Toggle profile menu');
+            // Logique pour afficher/masquer le menu profil
+        },
+        async loadCurrentUser() {
+            try {
+                if (authService.isAuthenticated()) {
+                    this.currentUser = await authService.getCurrentUser();
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement du profil:', error);
+                // En cas d'erreur, déconnecter l'utilisateur
+                await this.performLogout();
+            }
+        },
+        async logout() {
+            if (this.isLoggingOut) return;
+            
+            // Confirmation de déconnexion
+            if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                return;
+            }
+            
+            await this.performLogout();
+        },
+        async performLogout() {
+            this.isLoggingOut = true;
+            
+            try {
+                await authService.logout();
+                
+                // Redirection vers la page de login
+                this.$router.push('/login');
+                
+                // Optionnel: Afficher un message de succès
+                console.log('Déconnexion réussie');
+                
+            } catch (error) {
+                console.error('Erreur lors de la déconnexion:', error);
+                
+                // Même en cas d'erreur, on nettoie le stockage local et on redirige
+                this.$router.push('/login');
+                
+                // Afficher un message d'erreur à l'utilisateur
+                alert('Une erreur est survenue lors de la déconnexion. Vous avez été redirigé vers la page de connexion.');
+            } finally {
+                this.isLoggingOut = false;
+            }
         }
     }
 }
