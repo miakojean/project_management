@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { authGuard } from '@/guards/authGards'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,19 +31,22 @@ const router = createRouter({
     {
       path:'/dashboard',
       name:'dashboard',
-      component: () => import('@/views/dashboarIndexView.vue')
+      component: () => import('@/views/dashboarIndexView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path:'/dashboard/customer/affairs',
       name:'affair',
-      component: () => import('@/views/affairDashboard.vue')
+      component: () => import('@/views/affairDashboard.vue'),
+      meta: { requiresAuth: true }
     },
 
     /* Register new customer, add folder affairs and add documents */
     {
       path:'/customer',
       name:'customer',
-      component: () => import('@/components/section/newCustomer.vue')
+      component: () => import('@/components/section/newCustomer.vue'),
+      meta: { requiresAuth: true }
     }
   ],
 })

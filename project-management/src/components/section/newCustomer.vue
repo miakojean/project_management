@@ -9,6 +9,7 @@
         <main class="layout__main">
             <!-- Étape 1: Sélection du type de personne -->
             <div v-if="currentStep === 1" class="step-container">
+                
                 <choicesFamily
                     v-model="entityType"
                     label="Type de client"
@@ -22,10 +23,13 @@
 
             <!-- Étape 2: Formulaire selon le type sélectionné -->
             <div v-else-if="currentStep === 2" class="step-container">
-                <h4>Nouveau dossier personne</h4>
+                <div class="form__title">
+                    <h4>Nouveau client</h4>
+                    <p>Personne physique</p>
+                </div>
                 <customerForm 
                     :entity-type="entityType"
-                    @back="goToPreviousStep"
+                    @prevstep="goToPreviousStep"
                     @submit="handleFormSubmit"
                 />
             </div>
@@ -150,6 +154,26 @@ export default {
     width: 100%;
     max-width: 900px;
     animation: fadeIn 0.3s ease;
+}
+
+.form__title {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 1rem;
+}
+
+.form__title h4{
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.form__title p{
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--adn-gray-color);
 }
 
 /* Responsive */

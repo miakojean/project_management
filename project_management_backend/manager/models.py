@@ -29,7 +29,7 @@ class Client(models.Model):
     
     # Informations générales
     type_client = models.CharField(_("Type de client"), max_length=20, choices=TYPE_CLIENT_CHOICES)
-    statut = models.CharField(_("Statut"), max_length=10, choices=STATUT_CHOICES, default='PROSPECT')
+    statut = models.CharField(_("Statut"), max_length=10, choices=STATUT_CHOICES, default='ACTIF')
     reference_client = models.CharField(_("Référence client"), max_length=50, unique=True, editable=False)
     
     # Personne Physique

@@ -77,25 +77,32 @@
                 <inputfamily 
                     identifiant="representantLegal" 
                     label="Nom du representant legal" 
-                    placeholder="Entrer le nom du representant legal"
+                    placeholder="Entrer le pays"
                     v-model="formData.representant_legal_nom"
                 />
                 <inputfamily 
-                    identifiant="representantLegalRole" 
-                    label="Représentant légal fonction" 
-                    placeholder="Entrer la fonction"
+                    identifiant="profession" 
+                    label="Profession" 
+                    placeholder="Entrer la profession"
                     v-model="formData.representant_legal_fonction"
+                />
+                <inputfamily 
+                    identifiant="cin" 
+                    label="CIN/Passport" 
+                    placeholder="Numéro CIN ou passeport"
+                    v-model="formData.cin"
                 />
             </div>
         </div>
 
         <div class="form-actions">
-            <prevButton @click="handlePrevStep"/>
             <mainButton 
                 :loading="isLoading"
                 label="Ajouter client"
                 type="submit"
-            />
+            >
+                
+            </mainButton>
         </div>
     </form>
 </template>
@@ -104,16 +111,14 @@
 import { ref, reactive } from 'vue';
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
-import prevButton from '../button/prevButton.vue';
 
 export default {
     name: 'ClientPhysiqueForm',
     components: {
         inputfamily,
-        mainButton,
-        prevButton
+        mainButton
     },
-    emits: ['prevstep','submit'],
+    emits: ['submit'],
     setup(props, { emit }) {
         const isLoading = ref(false);
         
@@ -133,10 +138,6 @@ export default {
             representant_legal_fonction:'',
             charge_de_clientele:'',
         });
-
-        const handlePrevStep = () =>{
-            emit('prevstep')
-        };
 
         const handleSubmit = async () => {
             isLoading.value = true;
@@ -172,7 +173,6 @@ export default {
         return {
             isLoading,
             formData,
-            handlePrevStep,
             handleSubmit
         };
     }
@@ -204,7 +204,7 @@ export default {
 
 .form-actions {
     display: flex;
-    gap: 2rem;
+    justify-content: center;
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
