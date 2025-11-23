@@ -25,12 +25,25 @@
             <div v-else-if="currentStep === 2" class="step-container">
                 <div class="form__title">
                     <h4>Nouveau client</h4>
-                    <p>Personne physique</p>
+                    <p>{{ entityType === 'PERSONNE_PHYSIQUE' ? 'Personne physique' : 'Personne morale' }}</p>
                 </div>
+                
+                <!-- Formulaire Personne Physique -->
                 <customerForm 
+                    v-if="entityType === 'PERSONNE_PHYSIQUE'"
                     :entity-type="entityType"
                     @prevstep="goToPreviousStep"
                     @submit="handleFormSubmit"
+                    @notification="handleNotification"
+                />
+                
+                <!-- Formulaire Personne Morale -->
+                <customerCompanyForm 
+                    v-else-if="entityType === 'PERSONNE_MORALE'"
+                    :entity-type="entityType"
+                    @prevstep="goToPreviousStep"
+                    @submit="handleFormSubmit"
+                    @notification="handleNotification"
                 />
             </div>
 
@@ -48,27 +61,46 @@
                     ></div>
                 </div>
             </div>
+
+            <!-- Notification Popup -->
+            <notificationPopup 
+                :message="notificationMessage"
+                :type="notificationType"
+                :visible="showNotification"
+                :duration="notificationDuration"
+                @close="showNotification = false"
+            />
         </main>
     </div>
 </template>
 
 <script>
 import customerForm from '../forms/customerForm.vue';
+import customerCompanyForm from '../forms/customerCompanyForm.vue';
 import brand from '../navigation/brand.vue';
 import choicesFamily from '../input/choicesFamily.vue';
+import notificationPopup from '../tools/notificationPopup.vue';
 import { ref } from 'vue';
 
 export default {
     name: 'CustomerLayout',
     components: {
         customerForm,
+        customerCompanyForm,
         brand,
-        choicesFamily
+        choicesFamily,
+        notificationPopup
     },
     setup() {
         const entityType = ref(null);
         const currentStep = ref(1);
         const totalSteps = ref(2);
+        
+        // Gestion des notifications
+        const showNotification = ref(false);
+        const notificationMessage = ref('');
+        const notificationType = ref('success');
+        const notificationDuration = ref(5000);
 
         const goToNextStep = (selectedType) => {
             console.log('Type sélectionné:', selectedType);
@@ -81,15 +113,24 @@ export default {
         };
 
         const handleFormSubmit = (formData) => {
-            console.log('Données du formulaire:', formData);
+            console.log('Données du formulaire soumises avec succès:', formData);
             console.log('Type d\'entité:', entityType.value);
             
-            // Ici vous pouvez envoyer les données à votre API
-            // et rediriger vers une page de confirmation
-            alert('Client créé avec succès !');
-            
-            // Réinitialiser pour un nouveau client
-            // resetForm();
+            // Optionnel: Vous pouvez ajouter une logique supplémentaire ici
+            // comme rediriger vers une autre page ou réinitialiser le formulaire
+        };
+
+        const handleNotification = (notification) => {
+            console.log('📢 Notification reçue:', notification);
+            showNotification.value = true;
+            notificationMessage.value = notification.message;
+            notificationType.value = notification.type;
+            notificationDuration.value = notification.duration || 5000;
+
+            // Auto-hide après la durée spécifiée
+            setTimeout(() => {
+                showNotification.value = false;
+            }, notificationDuration.value);
         };
 
         const resetForm = () => {
@@ -101,9 +142,14 @@ export default {
             entityType,
             currentStep,
             totalSteps,
+            showNotification,
+            notificationMessage,
+            notificationType,
+            notificationDuration,
             goToNextStep,
             goToPreviousStep,
             handleFormSubmit,
+            handleNotification,
             resetForm
         };
     }
@@ -143,7 +189,7 @@ export default {
     padding: 2rem;
     overflow-y: auto;
     background: #f8fafc;
-    height: 100vh;
+    /* height: 100vh; */
 }
 
 .step-container {
@@ -151,6 +197,7 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding-top:4rem;
     width: 100%;
     max-width: 900px;
     animation: fadeIn 0.3s ease;
@@ -162,6 +209,7 @@ export default {
     align-items: center;
     justify-content: start;
     gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 .form__title h4{
@@ -174,6 +222,9 @@ export default {
     font-size: 1rem;
     font-weight: 500;
     color: var(--adn-gray-color);
+    background: #f3f4f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
 }
 
 /* Responsive */
@@ -184,6 +235,12 @@ export default {
     
     .layout__main {
         padding: 1rem;
+    }
+     
+    .form__title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 }
 

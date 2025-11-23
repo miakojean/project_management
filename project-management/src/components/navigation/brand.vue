@@ -1,13 +1,23 @@
 <template>
-    <div class="logo">
+    <div class="logo" @click="goToDashboard">
         <img src="../../../public/LOGO.png" alt="logo de Adn consulting">
         <h4> <span>ADN</span> CONSULTING</h4>
     </div>
 </template>
 
 <script>
+import { useRouter } from 'vue-router';
 export default {
-
+    setup(){
+        const router = useRouter()
+        const goToDashboard = () =>{
+            router.push('/dashboard')
+        }
+        return{
+            router,
+            goToDashboard
+        }
+    }
 }
 </script>
 
@@ -18,6 +28,7 @@ export default {
     align-items: center;
     justify-content: start;
     gap: 1rem;
+    cursor: pointer;
 }
 
 img{

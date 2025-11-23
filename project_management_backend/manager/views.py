@@ -6,8 +6,12 @@ from django.db import transaction
 from .models import Client
 from .serializers import ClientSerializer, ClientCreateSerializer
 from account.models import Utilisateur
+import logging
 
 # views.py - Version simplifiée
+
+# Configuration basique du logger
+logger = logging.getLogger(__name__)
 
 class ClientCreateAPIView(APIView):
     """
@@ -52,6 +56,26 @@ class ClientCreateAPIView(APIView):
                 'message': 'Erreur lors de la création du client',
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # --- AJOUTEZ CETTE MÉTHODE ---
+    def _log_creation(self, client, user):
+        """
+        Enregistre l'action de création dans les logs ou la BDD
+        """
+        try:
+            # Exemple 1 : Juste un print dans la console du serveur
+            print(f"📝 LOG : Le client {client.id} ({client.nom}) a été créé par {user.username}")
+            
+            # Exemple 2 : Si vous avez un modèle d'historique (décommentez si besoin)
+            # ActionLog.objects.create(
+            #     user=user,
+            #     action="CREATION_CLIENT",
+            #     details=f"Création du client {client.nom}"
+            # )
+            
+        except Exception as e:
+            # On ne veut pas que le log fasse planter la création du client
+            print(f"Erreur lors du logging: {e}")
     
 
 class ClientBulkCreateAPIView(APIView):

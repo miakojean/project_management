@@ -12,10 +12,10 @@
             <div 
                 class="entity-option"
                 :class="{
-                    'entity-option--selected': selectedValue === 'physical',
+                    'entity-option--selected': selectedValue === 'PERSONNE_PHYSIQUE',
                     'entity-option--disabled': disabled
                 }"
-                @click="selectOption('physical')"
+                @click="selectOption('PERSONNE_PHYSIQUE')"
             >
                 <div class="entity-option__icon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -27,7 +27,7 @@
                     <p class="entity-option__description">Client individuel</p>
                 </div>
                 <div class="entity-option__indicator">
-                    <div class="indicator" :class="{ 'indicator--active': selectedValue === 'physical' }"></div>
+                    <div class="indicator" :class="{ 'indicator--active': selectedValue === 'PERSONNE_PHYSIQUE' }"></div>
                 </div>
             </div>
 
@@ -35,10 +35,10 @@
             <div 
                 class="entity-option"
                 :class="{
-                    'entity-option--selected': selectedValue === 'legal',
+                    'entity-option--selected': selectedValue === 'PERSONNE_MORALE',
                     'entity-option--disabled': disabled
                 }"
-                @click="selectOption('legal')"
+                @click="selectOption('PERSONNE_MORALE')"
             >
                 <div class="entity-option__icon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -50,7 +50,7 @@
                     <p class="entity-option__description">Entreprise, Société, Association</p>
                 </div>
                 <div class="entity-option__indicator">
-                    <div class="indicator" :class="{ 'indicator--active': selectedValue === 'legal' }"></div>
+                    <div class="indicator" :class="{ 'indicator--active': selectedValue === 'PERSONNE_MORALE' }"></div>
                 </div>
             </div>
         </div>
@@ -87,12 +87,12 @@ export default {
         modelValue: {
             type: String,
             default: null,
-            validator: (value) => [null, 'physical', 'legal'].includes(value)
+            validator: (value) => [null, 'PERSONNE_PHYSIQUE', 'PERSONNE_MORALE'].includes(value)
         },
         // Label du champ
         label: {
             type: String,
-            default: 'Type de personne'
+            default: 'Type de client'
         },
         // Champ obligatoire
         required: {
@@ -118,12 +118,12 @@ export default {
         options: {
             type: Object,
             default: () => ({
-                physical: {
+                PERSONNE_PHYSIQUE: {
                     title: 'Personne Physique',
                     description: 'Client individuel',
                     icon: null
                 },
-                legal: {
+                PERSONNE_MORALE: {
                     title: 'Personne Morale',
                     description: 'Entreprise, Société, Association',
                     icon: null
