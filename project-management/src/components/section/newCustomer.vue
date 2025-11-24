@@ -38,12 +38,9 @@
                 />
                 
                 <!-- Formulaire Personne Morale -->
-                <customerCompanyForm 
+                <firmForm 
                     v-else-if="entityType === 'PERSONNE_MORALE'"
-                    :entity-type="entityType"
                     @prevstep="goToPreviousStep"
-                    @submit="handleFormSubmit"
-                    @notification="handleNotification"
                 />
             </div>
 
@@ -77,6 +74,7 @@
 <script>
 import customerForm from '../forms/customerForm.vue';
 import customerCompanyForm from '../forms/customerCompanyForm.vue';
+import firmForm from '../forms/firmForm.vue';
 import brand from '../navigation/brand.vue';
 import choicesFamily from '../input/choicesFamily.vue';
 import notificationPopup from '../tools/notificationPopup.vue';
@@ -89,7 +87,8 @@ export default {
         customerCompanyForm,
         brand,
         choicesFamily,
-        notificationPopup
+        notificationPopup,
+        firmForm
     },
     setup() {
         const entityType = ref(null);

@@ -4,33 +4,39 @@
             
             <div class="form-row">
                 <inputfamily 
-                    identifiant="nom" 
-                    label="Nom" 
-                    placeholder="Entrer le nom du client"
+                    identifiant="Raison morale" 
+                    label="Raison morale" 
+                    placeholder="Entrer le nom l'entreprise"
                     v-model="formData.nom"
                     :required="true"
                 />
                 <inputfamily 
-                    identifiant="prenoms" 
-                    label="Prénom(s)" 
-                    placeholder="Entrer prénom(s)"
+                    identifiant="Forme juridique" 
+                    label="Forme juridique" 
+                    placeholder="Entrer la forme juridique"
                     v-model="formData.prenoms"
                     :required="true"
                 />
-                 <inputfamily 
-                    identifiant="date-naissance" 
-                    label="Date de naissance" 
-                    placeholder="JJ/MM/AAAA"
-                    type="date"
+                <inputfamily 
+                    identifiant="Numéro RCCM" 
+                    label="Numéro RCCM" 
+                    placeholder="Entrer votre uméro rccm"
+                    type="texte"
                     v-model="formData.date_naissance"
                 />
             </div>
             
             <div class="form-row">
                 <inputfamily 
-                    identifiant="lieu-naissance" 
-                    label="Lieu de naissance" 
-                    placeholder="Entrer le lieu de naissance"
+                    identifiant="CompteContribuable" 
+                    label="Numéro Compte Contribuable" 
+                    placeholder="Numéro Compte Contribuable"
+                    v-model="formData.lieu_naissance"
+                />
+                <inputfamily 
+                    identifiant="Capitalsocial" 
+                    label="Capital social" 
+                    placeholder="Votre Capital social"
                     v-model="formData.lieu_naissance"
                 />
                 <inputfamily 
@@ -41,15 +47,15 @@
                     v-model="formData.adresse"
                     :required="true"
                 />
+            </div>
+
+            <div class="form-row">
                 <inputfamily 
                     identifiant="ville" 
                     label="Ville" 
                     placeholder="Entrer la ville"
                     v-model="formData.ville"
                 />
-            </div>
-
-            <div class="form-row">
                 <inputfamily 
                     identifiant="telephone" 
                     label="Téléphone" 
@@ -65,15 +71,15 @@
                     v-model="formData.telephone_2"
                 />
                 
+            </div>
+
+            <div class="form-row">
                 <inputfamily 
                     identifiant="email" 
                     label="Email" 
                     placeholder="Entrer votre email"
                     v-model="formData.email"
                 />
-            </div>
-
-            <div class="form-row">
                 <inputfamily 
                     identifiant="representantLegal" 
                     label="Nom du representant legal" 
@@ -86,16 +92,11 @@
                     placeholder="Entrer la profession"
                     v-model="formData.representant_legal_fonction"
                 />
-                <inputfamily 
-                    identifiant="cin" 
-                    label="CIN/Passport" 
-                    placeholder="Numéro CIN ou passeport"
-                    v-model="formData.cin"
-                />
             </div>
         </div>
 
         <div class="form-actions">
+            <prevButton @click="handlePrevStep"/>
             <mainButton 
                 :loading="isLoading"
                 label="Ajouter client"
@@ -111,14 +112,15 @@
 import { ref, reactive } from 'vue';
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
-
+import prevButton from '../button/prevButton.vue';
 export default {
     name: 'ClientPhysiqueForm',
     components: {
         inputfamily,
-        mainButton
+        mainButton,
+        prevButton,
     },
-    emits: ['submit'],
+    emits: ['submit', 'prevstep'],
     setup(props, { emit }) {
         const isLoading = ref(false);
         
@@ -138,6 +140,10 @@ export default {
             representant_legal_fonction:'',
             charge_de_clientele:'',
         });
+
+        const handlePrevStep = () => {
+            emit('prevstep');
+        };
 
         const handleSubmit = async () => {
             isLoading.value = true;
@@ -173,7 +179,8 @@ export default {
         return {
             isLoading,
             formData,
-            handleSubmit
+            handleSubmit,
+            handlePrevStep
         };
     }
 };
@@ -209,6 +216,7 @@ export default {
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
     width: 100%;
+    gap: 2rem;
 }
 
 /* Responsive */
