@@ -4,9 +4,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from .models import Client
-from .serializers import ClientSerializer, ClientCreateSerializer
+from .serializers import ClientSerializer, ClientCreateSerializer, ClientListSerializer
 from account.models import Utilisateur
 import logging
+from django.db.models import Q, Count
 
 # views.py - Version simplifiée
 
@@ -220,5 +221,134 @@ class ClientWithDossierCreateAPIView(APIView):
             return Response({
                 'success': False,
                 'message': 'Erreur lors de la création du client avec dossier',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ClientListAPIView(APIView):
+    """
+    API View pour lister et filtrer les clients
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Récupère la liste des clients avec filtres et pagination
+        """
+        try:
+            # Récupération des paramètres de requête
+            type_client = request.GET.get('type_client')
+            statut = request.GET.get('statut')
+            search = request.GET.get('search')
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 20))
+            
+            # Construction de la queryset de base
+            clients = Client.objects.all()
+            
+            # Application des filtres
+            if type_client:
+                clients = clients.filter(type_client=type_client)
+            
+            if statut:
+                clients = clients.filter(statut=statut)
+            
+            if search:
+                clients = clients.filter(
+                    Q(nom__icontains=search) |
+                    Q(prenoms__icontains=search) |
+                    Q(raison_sociale__icontains=search) |
+                    Q(reference_client__icontains=search) |
+                    Q(telephone_1__icontains=search) |
+                    Q(email__icontains=search) |
+                    Q(ville__icontains=search)
+                )
+            
+            # Tri par défaut
+            clients = clients.order_by('-date_creation')
+            
+            # Pagination
+            start_index = (page - 1) * page_size
+            end_index = start_index + page_size
+            
+            total_clients = clients.count()
+            clients_page = clients[start_index:end_index]
+            
+            # Sérialisation
+            serializer = ClientListSerializer(clients_page, many=True)
+            
+            return Response({
+                'success': True,
+                'clients': serializer.data,
+                'pagination': {
+                    'page': page,
+                    'page_size': page_size,
+                    'total': total_clients,
+                    'pages': (total_clients + page_size - 1) // page_size
+                },
+                'filters': {
+                    'type_client': type_client,
+                    'statut': statut,
+                    'search': search
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des clients: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Erreur lors de la récupération des clients',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ClientSearchAPIView(APIView):
+    """
+    API View pour la recherche avancée de clients
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Recherche avancée dans les clients
+        """
+        try:
+            query = request.GET.get('q', '')
+            
+            if not query or len(query) < 2:
+                return Response({
+                    'success': False,
+                    'message': 'Le terme de recherche doit contenir au moins 2 caractères'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Recherche dans tous les champs pertinents
+            clients = Client.objects.filter(
+                Q(nom__icontains=query) |
+                Q(prenoms__icontains=query) |
+                Q(raison_sociale__icontains=query) |
+                Q(reference_client__icontains=query) |
+                Q(telephone_1__icontains=query) |
+                Q(telephone_2__icontains=query) |
+                Q(email__icontains=query) |
+                Q(adresse__icontains=query) |
+                Q(ville__icontains=query) |
+                Q(commune__icontains=query) |
+                Q(representant_legal_nom__icontains=query) |
+                Q(numero_rccm__icontains=query) |
+                Q(numero_cc__icontains=query)
+            ).order_by('-date_creation')[:50]  # Limite pour les performances
+            
+            serializer = ClientListSerializer(clients, many=True)
+            
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data),
+                'query': query
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la recherche: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Erreur lors de la recherche',
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

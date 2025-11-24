@@ -7,7 +7,7 @@ from .models import (
     Document, 
     SignatureDocument,
     HistoriqueDocument, 
-    EtapeDossier
+    EtapeDossier 
 )
 from rest_framework import serializers
 from account.models import Utilisateur

@@ -50,9 +50,9 @@ const router = createRouter({
     },
 
     {
-      path:'/add-firm',
-      name:'add firm',
-      component:() => import('@/components/forms/customerCompanyForm.vue')
+      path:'/customer-list',
+      name:'getCustomer',
+      component:() => import('@/views/dashboarCustomer.vue')
     }
   ],
 })
