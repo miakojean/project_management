@@ -41,6 +41,8 @@
                 <firmForm 
                     v-else-if="entityType === 'PERSONNE_MORALE'"
                     @prevstep="goToPreviousStep"
+                    @submit="handleFormSubmit"
+                    @notification="handleNotification"
                 />
             </div>
 

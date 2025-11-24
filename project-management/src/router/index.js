@@ -47,6 +47,12 @@ const router = createRouter({
       name:'customer',
       component: () => import('@/components/section/newCustomer.vue'),
       meta: { requiresAuth: true }
+    },
+
+    {
+      path:'/add-firm',
+      name:'add firm',
+      component:() => import('@/components/forms/customerCompanyForm.vue')
     }
   ],
 })

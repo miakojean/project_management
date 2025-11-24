@@ -272,6 +272,10 @@ export default {
                 formData.charge_de_clientele = currentAgent;
                 formData.type_client = 'PERSONNE_PHYSIQUE';
 
+                setTimeout(()=> {
+                    router.push('/dashboard')
+                }, 6000)
+
                 return response;
 
             } catch (error) {

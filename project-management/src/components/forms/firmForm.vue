@@ -1,5 +1,15 @@
 <template>
     <form class="form-container" @submit.prevent="handleSubmit">
+        
+        <!-- Notification d'erreur -->
+        <div v-if="errorMessage" class="error-banner">
+            <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <span class="error-text">{{ errorMessage }}</span>
+                <button class="error-close" @click="clearError">×</button>
+            </div>
+        </div>
+        
         <div class="form-grid">
             
             <div class="form-row">
@@ -7,14 +17,14 @@
                     identifiant="Raison morale" 
                     label="Raison morale" 
                     placeholder="Entrer le nom l'entreprise"
-                    v-model="formData.nom"
+                    v-model="formData.raison_sociale"
                     :required="true"
                 />
                 <inputfamily 
                     identifiant="Forme juridique" 
                     label="Forme juridique" 
                     placeholder="Entrer la forme juridique"
-                    v-model="formData.prenoms"
+                    v-model="formData.forme_juridique"
                     :required="true"
                 />
                 <inputfamily 
@@ -22,7 +32,7 @@
                     label="Numéro RCCM" 
                     placeholder="Entrer votre uméro rccm"
                     type="texte"
-                    v-model="formData.date_naissance"
+                    v-model="formData.numero_rccm"
                 />
             </div>
             
@@ -31,13 +41,13 @@
                     identifiant="CompteContribuable" 
                     label="Numéro Compte Contribuable" 
                     placeholder="Numéro Compte Contribuable"
-                    v-model="formData.lieu_naissance"
+                    v-model="formData.numero_cc"
                 />
                 <inputfamily 
                     identifiant="Capitalsocial" 
                     label="Capital social" 
                     placeholder="Votre Capital social"
-                    v-model="formData.lieu_naissance"
+                    v-model="formData.capital_social"
                 />
                 <inputfamily 
                     identifiant="adresse" 
@@ -88,7 +98,7 @@
                 />
                 <inputfamily 
                     identifiant="profession" 
-                    label="Profession" 
+                    label="Profession du représentant légal" 
                     placeholder="Entrer la profession"
                     v-model="formData.representant_legal_fonction"
                 />
@@ -98,7 +108,7 @@
         <div class="form-actions">
             <prevButton @click="handlePrevStep"/>
             <mainButton 
-                :loading="isLoading"
+                :isloading="isLoading"
                 label="Ajouter client"
                 type="submit"
             >
@@ -109,68 +119,190 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import api from '@/_services/api';
+
 export default {
-    name: 'ClientPhysiqueForm',
+    name: 'ClientMoralForm',
     components: {
         inputfamily,
         mainButton,
         prevButton,
     },
-    emits: ['submit', 'prevstep'],
+    emits: ['submit', 'prevstep', 'notification'],
     setup(props, { emit }) {
         const isLoading = ref(false);
-        
+        const errorMessage = ref('');
+        const fieldErrors = reactive({});
+        const authStore = useAuthStore();
+        const router = useRouter();
+
+        const { user, isInitialized } = storeToRefs(authStore);
+
         const formData = reactive({
-            type:'PERSONNE_PHYSIQUE',
-            nom: '',
-            prenoms: '',
-            date_naissance: '',
-            lieu_naissance: '',
+            type_client: 'PERSONNE_MORALE',
+            raison_sociale: '',
+            forme_juridique: '',
+            numero_rccm: '',
+            numero_cc: '',
+            capital_social: '',
             adresse: '',
             ville: '',
-            commune:'',
+            commune: '',
             telephone_1: '',
             telephone_2: '',
             email: '',
             representant_legal_nom: '',
-            representant_legal_fonction:'',
-            charge_de_clientele:'',
+            representant_legal_fonction: '',
+            charge_de_clientele: '',
         });
+
+        const clearError = () => {
+            errorMessage.value = '';
+            Object.keys(fieldErrors).forEach(key => {
+                fieldErrors[key] = '';
+            });
+        };
+
+        const isValidEmail = (email) => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        };
+
+        const isValidPhone = (phone) => {
+            const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
+            return phoneRegex.test(phone.replace(/\s/g, ''));
+        };
+
+        const validateForm = () => {
+            clearError();
+            let isValid = true;
+
+            if (!formData.raison_sociale.trim()) {
+                fieldErrors.raison_sociale = 'La raison sociale est obligatoire';
+                isValid = false;
+            }
+
+            if (!formData.adresse.trim()) {
+                fieldErrors.adresse = 'L\'adresse est obligatoire';
+                isValid = false;
+            }
+
+            if (!formData.representant_legal_fonction.trim()) {
+                fieldErrors.representant_legal_fonction = 'La fonction du représentant légal ne peut être vide';
+                isValid = false;
+            }
+
+            if (!formData.representant_legal_nom.trim()) {
+                fieldErrors.representant_legal_nom = 'Le nom du représentant légal ne peut être vide';
+                isValid = false;
+            }
+
+            // Validation email si fourni
+            if (formData.email && !isValidEmail(formData.email)) {
+                fieldErrors.email = 'Format d\'email invalide';
+                isValid = false;
+            }
+
+            // Validation téléphone si fourni
+            if (formData.telephone_1 && !isValidPhone(formData.telephone_1)) {
+                fieldErrors.telephone_1 = 'Format de téléphone invalide';
+                isValid = false;
+            }
+
+            return isValid;
+        };
+
+        watch(user, (newUser) => {
+            console.log("👀 Watch user déclenché:", newUser);
+            if (newUser && newUser.id) {
+                formData.charge_de_clientele = newUser.id;
+                console.log("✅ ID assigné:", formData.charge_de_clientele);
+            }
+        }, { immediate: true });
 
         const handlePrevStep = () => {
             emit('prevstep');
         };
 
-        const handleSubmit = async () => {
-            isLoading.value = true;
-            
-            try {
-                // Validation des champs requis
-                if (!formData.nomComplet || !formData.prenoms || !formData.email) {
-                    alert('Veuillez remplir les champs obligatoires');
-                    return;
-                }
+        onMounted(async () => {
+            if (!user.value && !isInitialized.value) {
+                console.log("🔄 User vide, tentative d'initialisation...");
+                await authStore.initializeAuth();
+            }
+        });
 
-                // Simulation d'appel API
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Émission des données
+        const handleSubmit = async () => {
+            if (!validateForm()) {
+                return;
+            }
+
+            isLoading.value = true;
+
+            if (!formData.charge_de_clientele && user.value) {
+                formData.charge_de_clientele = user.value.id;
+            }
+
+            try {
+                console.log("Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
+
+                const response = await api.post('manager/clients/ajouter/', formData);
+
+                emit('notification', {
+                    type: 'success',
+                    message: 'Client de type firme ajouté avec succès',
+                    duration: 5000
+                });
+
                 emit('submit', {
                     ...formData,
-                    type: 'physique'
+                    type_client: 'PERSONNE_MORALE'
                 });
 
-                // Réinitialisation du formulaire
-                Object.keys(formData).forEach(key => {
-                    formData[key] = '';
-                });
+                setTimeout(()=> {
+                    router.push('/dashboard')
+                }, 6000)
+
+                return response;
 
             } catch (error) {
                 console.error('Erreur lors de la soumission:', error);
+
+                let errorMsg = 'Une erreur est survenue lors de l\'ajout du client';
+
+                if (error.response) {
+                    // Gestion des erreurs de l'API
+                    if (error.response.status === 400) {
+                        errorMsg = 'Données invalides. Vérifiez les informations saisies.';
+                        // Traitement des erreurs de champ spécifiques
+                        if (error.response.data) {
+                            Object.keys(error.response.data).forEach(field => {
+                                const fieldName = field.replace(/_/g, ' ');
+                                fieldErrors[field] = Array.isArray(error.response.data[field])
+                                    ? error.response.data[field][0]
+                                    : error.response.data[field];
+                            });
+                        }
+                    } else if (error.response.status === 500) {
+                        errorMsg = 'Erreur serveur. Veuillez réessayer plus tard.';
+                    }
+                }
+
+                errorMessage.value = errorMsg;
+
+                // Émettre une notification d'erreur
+                emit('notification', {
+                    type: 'error',
+                    message: errorMsg,
+                    duration: 8000
+                });
+
             } finally {
                 isLoading.value = false;
             }
@@ -179,6 +311,9 @@ export default {
         return {
             isLoading,
             formData,
+            errorMessage,
+            fieldErrors,
+            clearError,
             handleSubmit,
             handlePrevStep
         };
