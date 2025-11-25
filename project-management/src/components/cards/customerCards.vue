@@ -1,151 +1,251 @@
 <template>
-    <div class="card">
-        <div class="card__header">
-            <span class="label">Entreprise</span>
-        </div>
+  <article class="card">
+    <div class="card__header">
+      <span class="badge" :class="badgeClass">{{ typeClient }}</span>
+      </div>
 
-        <div class="card__body">
-            <!-- Tu pourras ajouter ici le contenu de la carte -->
-            <h4>ADN consulting</h4>
-            <p class="placeholder-text">
-                Informations de lentité juridique (raison sociale, SIREN, adresse, etc.)
-            </p>
+    <div class="card__body">
+      <div class="company-logo">
+        <span>{{ initiales }}</span>
+      </div>
 
-            <div class="affairs__details">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                </svg>
-                <p>9</p>
-            </div>
+      <div class="content">
+        <h4 class="company-name" :title="customerName">{{ customerName }}</h4>
+        
+        <div class="info-group">
+          <div class="info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
+              <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625z" />
+              <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+            </svg>
+            <span class="info-text">{{ description }}</span>
+          </div>
+          
+          <div class="info-item" v-if="location">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
+              <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+            </svg>
+            <span class="info-text">{{ location }}</span>
+          </div>
         </div>
-
-        <div class="card__footer">
-            <button class="btn-primary">Ouvrir</button>
-        </div>
+      </div>
     </div>
+
+    <div class="card__footer">
+      <button class="btn-ghost">Détails</button>
+      <button class="btn-primary">
+        Ouvrir le dossier
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </button>
+    </div>
+  </article>
 </template>
 
 <script>
 export default {
-  name: 'LegalEntityCard'
+  name: 'LegalEntityCard',
+  props: {
+    customerName: {
+      type: String,
+      default: 'Tech Solutions SAS'
+    },
+    description: {
+      type: String,
+      default: 'SIREN: 892 102 921'
+    },
+    location: {
+      type: String,
+      default: 'Paris, France'
+    },
+    typeClient: {
+      type: String,
+      default: 'Entreprise'
+    }
+  },
+  computed: {
+    // Génère les initiales pour le logo (ex: "Tech Solutions" -> "TS")
+    initiales() {
+      return this.customerName
+        .split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+    },
+    // Permet de varier la couleur du badge selon le type
+    badgeClass() {
+      return this.typeClient.toLowerCase() === 'particulier' ? 'badge-purple' : 'badge-blue';
+    }
+  }
 }
 </script>
 
 <style scoped>
+/* Variables locales pour faciliter la maintenance */
 .card {
-  width: 380px;
-  height: 340px;
+  --primary: #0b79d0;
+  --primary-dark: #074e8c;
+  --bg-soft: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  
+  width: 100%;
+  max-width: 380px; /* Flexibilité responsive */
+  /* Suppression de height fixe pour éviter les problèmes de contenu */
   background: #ffffff;
-  border-radius: 1.2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0; /* Bordure subtile pour mieux définir la carte */
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
 }
 
 .card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
+/* HEADER */
 .card__header {
-  padding: 1.25rem 1.5rem 0;
-  text-align: left;
+  padding: 1.25rem 1.5rem 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
-.label {
+.badge {
   display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #e6f6fe 0%, #c3e7fd 100%);
-  color: #0b79d0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 2rem;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(11, 121, 208, 0.15);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
+.badge-blue {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.badge-purple {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+/* BODY */
 .card__body {
+  padding: 0.5rem 1.5rem 1.5rem;
   flex: 1;
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.card__body h4 {
-    font-size: 1.5rem;
-    font-weight: 600;
+/* Avatar/Logo placeholder */
+.company-logo {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: var(--text-muted);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
 }
 
-.affairs__details{
-    width: 100%;
-    display:flex;
-    justify-content:start;
-    align-items: center;
-    gap: 1rem;
-    font-size:1.2rem;
-    color:#64748b;
-}
-
-.placeholder-text {
-  color: #64748b;
-  font-size: 0.95rem;
-  line-height: 1.6;
+.company-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
   margin: 0;
+  line-height: 1.3;
+  /* Truncate text if too long */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Footer avec boutons */
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  color: #94a3b8; /* Plus clair que le texte */
+}
+
+/* FOOTER */
 .card__footer {
   padding: 1rem 1.5rem;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
+  background: var(--bg-soft);
   border-top: 1px solid #f1f5f9;
-  background: #fafafa;
+  display: flex;
+  justify-content: space-between; /* Espace entre les boutons */
+  align-items: center;
+  gap: 1rem;
 }
 
-.btn-outline,
-.btn-primary {
-  padding: 0.55rem 1.2rem;
-  border-radius: 0.6rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+/* BOUTONS */
+button {
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-family: inherit;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
 }
 
-.btn-outline {
+.btn-ghost {
   background: transparent;
-  border: 2px solid #cbd5e1;
-  color: #475569;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.5rem 0; /* Padding réduit pour ressembler à un lien */
 }
-
-.btn-outline:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
+.btn-ghost:hover {
+  color: var(--text-main);
+  text-decoration: underline;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0b79d0 0%, #085fa8 100%);
+  background: var(--primary);
   border: none;
   color: white;
-  box-shadow: 0 4px 12px rgba(11, 121, 208, 0.3);
+  padding: 0.6rem 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(11, 121, 208, 0.2);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #086bb8 0%, #074e8c 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(11, 121, 208, 0.4);
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(11, 121, 208, 0.3);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .card {
-    width: 100%;
-    max-width: 360px;
-  }
+.btn-icon {
+  width: 16px;
+  height: 16px;
 }
 </style>

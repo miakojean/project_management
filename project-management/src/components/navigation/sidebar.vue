@@ -25,15 +25,21 @@
                 <h5 class="section-title">Gestion</h5>
                 <ul class="nav-list">
                     <li 
-                        v-for="item in managementItems" 
-                        :key="item.id"
-                        :class="['nav-item', { 'active': activeItem === item.id }]"
-                        @click="setActive(item.id)"
-                    >
+                            v-for="item in managementItems" 
+                            :key="item.id"
+                            :class="['nav-item', { 'active': isActive(item.route) }]"
+                            @click="navigateTo(item.route)"
+                        >
                         <div class="nav-link">
                             <span class="nav-icon" v-html="item.icon"></span>
                             <span class="nav-text">{{ item.label }}</span>
-                            <span v-if="item.count" class="nav-count">{{ item.count }}</span>
+                            <!-- CORRECTION : Utilisation correcte du computed -->
+                            <span v-if="item.id === 'getCustomer'" class="nav-count">
+                                {{ customersCount }}
+                            </span>
+                            <span v-else-if="item.count" class="nav-count">
+                                {{ item.count }}
+                            </span>
                         </div>
                     </li>
                 </ul>
@@ -68,9 +74,11 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useCustomerStore } from '@/stores/custumerStore';
 import brand from './brand.vue';
 
 export default {
@@ -79,8 +87,11 @@ export default {
         brand
     },
     setup() {
+        const route = useRoute();
         const router = useRouter();
         const authStore = useAuthStore();
+        // CORRECTION : Nom correct du store
+        const customerStore = useCustomerStore();
         
         // Réactives
         const activeItem = ref('dashboard');
@@ -91,6 +102,7 @@ export default {
             {
                 id: 'dashboard',
                 label: 'Dashboard',
+                route:'dashboard',
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
                 </svg>`,
@@ -101,13 +113,6 @@ export default {
                 badge: '12',
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                </svg>`,
-            },
-            {
-                id: 'documents',
-                label: 'Documents',
-                icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>`,
             },
             {
@@ -123,7 +128,7 @@ export default {
             {
                 id: 'getCustomer',
                 label: 'Clients',
-                count: 45,
+                route:'getCustomer',
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                 </svg>`,
@@ -154,7 +159,28 @@ export default {
             },
         ]);
 
-        // Computed
+        const currentActiveTab = computed(() => {
+            return route.name || 'dashboard';
+        });
+
+        const isActive = (routeName) => {
+            return currentActiveTab.value === routeName;
+        };
+
+        const navigateTo = (routeName) => {
+            if (authStore.isAuthenticated) {
+                router.push({ name: routeName });
+            } else {
+                router.push('/login');
+            }
+        };
+
+        // CORRECTION : Computed pour le nombre de clients
+        const customersCount = computed(() => {
+            console.log('📊 Nombre de clients dans sidebar:', customerStore.customersStats.total);
+            return customerStore.customersStats.total;
+        });
+
         const userName = computed(() => {
             return authStore.user ? 
                 `${authStore.user.first_name || ''} ${authStore.user.last_name || ''}`.trim() || 
@@ -186,7 +212,6 @@ export default {
 
         const toggleProfileMenu = () => {
             console.log('👤 Toggle profile menu');
-            // Logique pour afficher/masquer le menu profil
         };
 
         const loadCurrentUser = async () => {
@@ -212,6 +237,16 @@ export default {
             }
         };
 
+        const loadCustomers = async () => {
+            try {
+                console.log('🔄 Chargement des clients dans sidebar...');
+                await customerStore.fetchCustomers();
+                console.log('✅ Clients chargés dans sidebar:', customerStore.customersStats.total);
+            } catch (error) {
+                console.error('❌ Erreur chargement clients sidebar:', error);
+            }
+        };
+
         const logout = async () => {
             if (isLoggingOut.value) return;
             
@@ -233,19 +268,42 @@ export default {
         };
 
         // Lifecycle
-        onMounted(() => {
-            loadCurrentUser();
+        onMounted(async () => {
+            try {
+                await loadCurrentUser();
+                await loadCustomers();
+            } catch (error) {
+                console.error('❌ Erreur initialisation sidebar:', error);
+            }
         });
 
-        // Return
+        // Watch pour surveiller les changements du nombre de clients
+        watch(
+            () => customerStore.customersStats.total,
+            (newCount) => {
+                console.log('🔄 Nombre de clients mis à jour:', newCount);
+            }
+        );
+
         return {
+
+            // Route
+            route,
+
+            // Stores
+            customerStore,
+            
             // Réactives
             activeItem,
             isLoggingOut,
             mainMenuItems,
             managementItems,
+            isActive,
+            navigateTo,
+            currentActiveTab,
             
             // Computed
+            customersCount, // ✅ Ajout du computed
             userName,
             userRole,
             userAvatar,
