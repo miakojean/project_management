@@ -1,8 +1,8 @@
 <template>
-  <article class="card">
+  <article class="card" @click="emitClick">
     <div class="card__header">
       <span class="badge" :class="badgeClass">{{ typeClient }}</span>
-      </div>
+    </div>
 
     <div class="card__body">
       <div class="company-logo">
@@ -32,8 +32,9 @@
     </div>
 
     <div class="card__footer">
-      <button class="btn-ghost">Détails</button>
-      <button class="btn-primary">
+      <button class="btn-ghost" @click.stop="emitClick">Détails</button>
+      
+      <button class="btn-primary" @click.stop="openFolder">
         Ouvrir le dossier
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -65,10 +66,10 @@ export default {
     }
   },
 
-  emits:['handleCustomer'],
+  // Déclaration de l'événement
+  emits: ['handleCustomer'],
 
   computed: {
-    // Génère les initiales pour le logo (ex: "Tech Solutions" -> "TS")
     initiales() {
       return this.customerName
         .split(' ')
@@ -77,16 +78,26 @@ export default {
         .join('')
         .toUpperCase();
     },
-    // Permet de varier la couleur du badge selon le type
     badgeClass() {
       return this.typeClient.toLowerCase() === 'particulier' ? 'badge-purple' : 'badge-blue';
+    }
+  },
+
+  methods: {
+    // 3. La méthode qui envoie le signal au parent
+    emitClick() {
+      this.$emit('handleCustomer');
+    },
+    openFolder() {
+      // Logique future pour ouvrir le dossier directement
+      console.log('Ouverture du dossier...');
     }
   }
 }
 </script>
 
 <style scoped>
-/* Variables locales pour faciliter la maintenance */
+/* Variables locales */
 .card {
   --primary: #0b79d0;
   --primary-dark: #074e8c;
@@ -95,16 +106,18 @@ export default {
   --text-muted: #64748b;
   
   width: 100%;
-  max-width: 380px; /* Flexibilité responsive */
-  /* Suppression de height fixe pour éviter les problèmes de contenu */
+  max-width: 380px; 
   background: #ffffff;
-  border: 1px solid #e2e8f0; /* Bordure subtile pour mieux définir la carte */
+  border: 1px solid #e2e8f0; 
   border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
+  
+  /* 4. IMPORTANT : Indiquer que la carte est cliquable */
+  cursor: pointer;
 }
 
 .card:hover {
@@ -149,7 +162,6 @@ export default {
   gap: 1rem;
 }
 
-/* Avatar/Logo placeholder */
 .company-logo {
   width: 48px;
   height: 48px;
@@ -170,7 +182,6 @@ export default {
   color: var(--text-main);
   margin: 0;
   line-height: 1.3;
-  /* Truncate text if too long */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -195,7 +206,7 @@ export default {
 .icon {
   width: 18px;
   height: 18px;
-  color: #94a3b8; /* Plus clair que le texte */
+  color: #94a3b8; 
 }
 
 /* FOOTER */
@@ -204,7 +215,7 @@ export default {
   background: var(--bg-soft);
   border-top: 1px solid #f1f5f9;
   display: flex;
-  justify-content: space-between; /* Espace entre les boutons */
+  justify-content: space-between; 
   align-items: center;
   gap: 1rem;
 }
@@ -223,7 +234,7 @@ button {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 0.5rem 0; /* Padding réduit pour ressembler à un lien */
+  padding: 0.5rem 0; 
 }
 .btn-ghost:hover {
   color: var(--text-main);
