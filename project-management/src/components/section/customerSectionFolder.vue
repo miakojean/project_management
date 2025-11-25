@@ -1,7 +1,5 @@
 <template>
     <section class="flex flex-col min-h-screen gap-2">
-       
-        <backNav/>
 
         <div class="grid grid-cols-2 gap-6 flex-1">
             <!-- Colonne gauche fixe -->
@@ -33,13 +31,11 @@
 <script>
 import cardsaffairs from '../cards/cardsaffairs.vue';
 import documentList from '../items/documentList.vue';
-import backNav from '../navigation/backNav.vue';
 
 export default {
     components: {
         cardsaffairs,
         documentList,
-        backNav
     },
     methods: {
         handleView() {

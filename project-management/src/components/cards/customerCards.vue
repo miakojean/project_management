@@ -64,6 +64,9 @@ export default {
       default: 'Entreprise'
     }
   },
+
+  emits:['handleCustomer'],
+
   computed: {
     // Génère les initiales pour le logo (ex: "Tech Solutions" -> "TS")
     initiales() {

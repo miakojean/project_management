@@ -1,9 +1,7 @@
 <template>
     <aside class="sidebar-area">
-        <!-- Brand / Logo -->
         <brand/>
 
-        <!-- Navigation principale -->
         <nav class="main-nav">
             <ul class="nav-list">
                 <li 
@@ -20,7 +18,6 @@
                 </li>
             </ul>
 
-            <!-- Section séparée -->
             <div class="nav-section">
                 <h5 class="section-title">Gestion</h5>
                 <ul class="nav-list">
@@ -33,7 +30,6 @@
                         <div class="nav-link">
                             <span class="nav-icon" v-html="item.icon"></span>
                             <span class="nav-text">{{ item.label }}</span>
-                            <!-- CORRECTION : Utilisation correcte du computed -->
                             <span v-if="item.id === 'getCustomer'" class="nav-count">
                                 {{ customersCount }}
                             </span>
@@ -46,9 +42,7 @@
             </div>
         </nav>
 
-        <!-- Section du bas (profil + déconnexion) -->
         <div class="sidebar-footer">
-            <!-- Profil utilisateur -->
             <div class="user-profile" @click="toggleProfileMenu">
                 <div class="user-avatar">
                     <img :src="userAvatar" :alt="userName">
@@ -62,7 +56,6 @@
                 </svg>
             </div>
 
-            <!-- Bouton de déconnexion -->
             <button class="logout-btn" @click="logout" :disabled="isLoggingOut">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
@@ -75,10 +68,9 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { useRoute } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useCustomerStore } from '@/stores/custumerStore';
+import { useCustomerStore } from '@/stores/custumerStore'; // Garde le chemin tel quel (attention à la typo 'custumer' dans ton projet)
 import brand from './brand.vue';
 
 export default {
@@ -90,11 +82,9 @@ export default {
         const route = useRoute();
         const router = useRouter();
         const authStore = useAuthStore();
-        // CORRECTION : Nom correct du store
         const customerStore = useCustomerStore();
         
         // Réactives
-        const activeItem = ref('dashboard');
         const isLoggingOut = ref(false);
         
         // Données des menus
@@ -168,24 +158,18 @@ export default {
         };
 
         const navigateTo = (routeName) => {
-            if (authStore.isAuthenticated) {
-                router.push({ name: routeName });
-            } else {
-                router.push('/login');
-            }
+            // Navigation simple : on laisse le route guard gérer l'auth
+            router.push({ name: routeName });
         };
 
-        // CORRECTION : Computed pour le nombre de clients
         const customersCount = computed(() => {
-            console.log('📊 Nombre de clients dans sidebar:', customerStore.customersStats.total);
-            return customerStore.customersStats.total;
+            return customerStore.customersStats.total || 0;
         });
 
         const userName = computed(() => {
-            return authStore.user ? 
-                `${authStore.user.first_name || ''} ${authStore.user.last_name || ''}`.trim() || 
-                authStore.user.username : 
-                'Utilisateur';
+            if (!authStore.user) return 'Utilisateur';
+            return `${authStore.user.first_name || ''} ${authStore.user.last_name || ''}`.trim() || 
+                authStore.user.username || 'Utilisateur';
         });
 
         const userRole = computed(() => {
@@ -199,51 +183,21 @@ export default {
 
         // Methods
         const setActive = (itemId) => {
-            activeItem.value = itemId;
-            console.log('📍 Navigation vers:', itemId);
-            
-            if (authStore.isAuthenticated) {
-                router.push({ name: itemId });
-            } else {
-                console.log('🚫 Non authentifié, redirection login');
-                router.push('/login');
-            }
+            router.push({ name: itemId });
         };
 
         const toggleProfileMenu = () => {
             console.log('👤 Toggle profile menu');
         };
 
-        const loadCurrentUser = async () => {
-            try {
-                console.log('🔄 Chargement utilisateur dans sidebar...');
-                
-                if (!authStore.isAuthenticated) {
-                    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-                    if (!token) {
-                        console.log('🚫 Pas de token, redirection login');
-                        router.push('/login');
-                        return;
-                    }
-                    
-                    await authStore.fetchCurrentUser();
-                }
-                
-                console.log('✅ Utilisateur chargé dans sidebar');
-                
-            } catch (error) {
-                console.error('❌ Erreur chargement utilisateur sidebar:', error);
-                router.push('/login');
-            }
-        };
-
+        // Chargement des données métier uniquement
         const loadCustomers = async () => {
             try {
                 console.log('🔄 Chargement des clients dans sidebar...');
                 await customerStore.fetchCustomers();
-                console.log('✅ Clients chargés dans sidebar:', customerStore.customersStats.total);
             } catch (error) {
-                console.error('❌ Erreur chargement clients sidebar:', error);
+                // On ne bloque pas l'UI et on ne déconnecte pas si ça échoue
+                console.warn('⚠️ Erreur non critique chargement clients sidebar:', error);
             }
         };
 
@@ -258,56 +212,40 @@ export default {
             
             try {
                 await authStore.logout();
-                router.push('/login');
             } catch (error) {
                 console.error('❌ Erreur déconnexion:', error);
-                router.push('/login');
             } finally {
+                // On force la redirection vers login quoi qu'il arrive
                 isLoggingOut.value = false;
+                router.push('/login');
             }
         };
 
-        // Lifecycle
+        // Lifecycle simplifié : Pas de vérification d'auth ici !
         onMounted(async () => {
-            try {
-                await loadCurrentUser();
-                await loadCustomers();
-            } catch (error) {
-                console.error('❌ Erreur initialisation sidebar:', error);
-            }
+            // On ne charge que les stats utiles à la sidebar
+            await loadCustomers();
+            await authStore.fetchCurrentUser();
+
         });
 
-        // Watch pour surveiller les changements du nombre de clients
-        watch(
-            () => customerStore.customersStats.total,
-            (newCount) => {
-                console.log('🔄 Nombre de clients mis à jour:', newCount);
-            }
-        );
-
         return {
-
             // Route
             route,
-
             // Stores
             customerStore,
-            
             // Réactives
-            activeItem,
             isLoggingOut,
             mainMenuItems,
             managementItems,
             isActive,
             navigateTo,
             currentActiveTab,
-            
             // Computed
-            customersCount, // ✅ Ajout du computed
+            customersCount,
             userName,
             userRole,
             userAvatar,
-            
             // Methods
             setActive,
             toggleProfileMenu,
@@ -318,299 +256,5 @@ export default {
 </script>
 
 <style scoped>
-.sidebar-area {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: #ffffff;
-}
 
-/* Brand / Logo */
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1.5rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.brand-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, #2563eb 100%);
-    border-radius: 0.75rem;
-    color: white;
-}
-
-.brand-icon svg {
-    width: 24px;
-    height: 24px;
-}
-
-.brand h4 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
-}
-
-/* Navigation principale */
-.main-nav {
-    flex: 1;
-    padding: 1rem 0;
-    overflow-y: auto;
-}
-
-.nav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.nav-item {
-    margin: 0.25rem 0.75rem;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: #6b7280;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.nav-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-.nav-icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.nav-text {
-    flex: 1;
-}
-
-.nav-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 0.375rem;
-    background: #ef4444;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 9999px;
-}
-
-.nav-count {
-    color: #9ca3af;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-/* État actif */
-.nav-item.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
-}
-
-.nav-item.active .nav-link {
-    color: var(--primary-color, #3b82f6);
-}
-
-.nav-item.active .nav-icon {
-    color: var(--primary-color, #3b82f6);
-}
-
-/* Hover */
-.nav-item:not(.active):hover {
-    background: #f9fafb;
-}
-
-.nav-item:not(.active):hover .nav-link {
-    color: #374151;
-}
-
-/* Section séparée */
-.nav-section {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #f3f4f6;
-}
-
-.section-title {
-    padding: 0 1.5rem;
-    margin: 0 0 0.75rem 0;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #9ca3af;
-}
-
-/* Footer de la sidebar */
-.sidebar-footer {
-    padding: 1rem;
-    border-top: 1px solid #f3f4f6;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-/* Profil utilisateur */
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.user-profile:hover {
-    background: #f9fafb;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.user-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.user-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.user-role {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.chevron-icon {
-    width: 16px;
-    height: 16px;
-    color: #9ca3af;
-    transition: transform 0.2s ease;
-}
-
-.user-profile:hover .chevron-icon {
-    transform: translateY(-2px);
-}
-
-/* Bouton de déconnexion */
-.logout-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem;
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fee2e2;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.logout-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.logout-btn svg {
-    width: 18px;
-    height: 18px;
-}
-
-.logout-btn:hover:not(:disabled) {
-    background: #fee2e2;
-    border-color: #fecaca;
-    transform: translateY(-1px);
-}
-
-/* Scrollbar personnalisée */
-.main-nav::-webkit-scrollbar {
-    width: 4px;
-}
-
-.main-nav::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.main-nav::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
-    border-radius: 2px;
-}
-
-.main-nav::-webkit-scrollbar-thumb:hover {
-    background: #d1d5db;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .brand h4 {
-        display: none;
-    }
-    
-    .nav-text,
-    .nav-badge,
-    .nav-count,
-    .user-info,
-    .logout-btn span {
-        display: none;
-    }
-    
-    .nav-item {
-        margin: 0.25rem 0.5rem;
-    }
-    
-    .nav-link {
-        justify-content: center;
-        padding: 0.75rem;
-    }
-}
 </style>

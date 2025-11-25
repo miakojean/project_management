@@ -29,6 +29,7 @@
                     :customer="customer"
                     :customerName="customer.nom_complet"
                     :typeClient="customer.type_client"
+                    @handle-customer="openModal(customer)"
                 />
             </div>
             
@@ -92,6 +93,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modale -->
+        <customerModale 
+            :is-open="isOpen"
+            :customer="selectedCustomer"
+            @update:is-open="isOpen = $event"
+            @close="closeModal"
+        />
     </div>
 </template>
 
@@ -99,10 +108,12 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import customerCards from '../cards/customerCards.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
+import customerModale from '../modales/customerModale.vue';
 
 export default {
     components: {
-        customerCards
+        customerCards,
+        customerModale,
     },
     setup() {
         const store = useCustomerStore();
@@ -110,6 +121,10 @@ export default {
         // Données réactives
         const currentPage = ref(1);
         const pageSize = ref(6);
+
+        // Gestion de la modale
+        const isOpen = ref(false);
+        const selectedCustomer = ref(null);
 
         // Computed properties basées sur le store
         const totalCustomers = computed(() => store.customers.length);
@@ -190,6 +205,17 @@ export default {
             }
         };
 
+        // Méthodes pour la modale
+        const openModal = (customer) => {
+            selectedCustomer.value = customer;
+            isOpen.value = true;
+        };
+
+        const closeModal = () => {
+            isOpen.value = false;
+            selectedCustomer.value = null;
+        };
+
         // Watcher pour reset la pagination si les données changent
         watch(
             () => store.customers,
@@ -202,6 +228,13 @@ export default {
         );
 
         return {
+            // Gestion modale
+            isOpen,
+            selectedCustomer,
+            openModal,
+            closeModal,
+
+            // Pagination et données
             store,
             currentPage,
             pageSize,

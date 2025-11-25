@@ -125,9 +125,9 @@ export default {
 
                 if (token) {
                     // Stockage des tokens
-                    sessionStorage.setItem('authToken', token);
+                    localStorage.setItem('authToken', token);
                     if (refreshToken) {
-                        sessionStorage.setItem('refresh', refreshToken);
+                        localStorage.setItem('refresh', refreshToken);
                     }
                     
                     // Redirection

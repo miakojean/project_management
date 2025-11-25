@@ -198,7 +198,7 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding-top:4rem;
+    padding-top:2rem;
     width: 100%;
     max-width: 900px;
     animation: fadeIn 0.3s ease;
@@ -210,7 +210,6 @@ export default {
     align-items: center;
     justify-content: start;
     gap: 1rem;
-    margin-bottom: 2rem;
 }
 
 .form__title h4{

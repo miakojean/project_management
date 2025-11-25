@@ -4,6 +4,7 @@
 @plugin "daisyui";
 
 @import "./_form.css";
+@import "./nav.css";
 
 *{
   margin: 0;

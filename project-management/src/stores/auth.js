@@ -12,89 +12,103 @@ export const useAuthStore = defineStore('auth', () => {
 
     // --- GETTERS ---
     const isAuthenticated = computed(() => !!user.value);
-    
-    // Exemple d'accès direct aux attributs en cache
     const userProfile = computed(() => user.value || {}); 
 
     // --- ACTIONS PRIVÉES (Gestion du cache) ---
     
-    // Sauvegarder l'user dans le storage
     function cacheUser(userData) {
         try {
-            // On ne garde que les infos nécessaires, pas tout
             const safeData = {
                 id: userData.id,
                 first_name: userData.first_name,
                 last_name: userData.last_name,
                 email: userData.email,
                 category_title: userData.category_title
-                // Surtout PAS de password ici
             };
-            sessionStorage.setItem('cachedUser', JSON.stringify(safeData));
-            user.value = userData; // Mise à jour du state Pinia
+            localStorage.setItem('cachedUser', JSON.stringify(safeData));
+            user.value = userData;
+            console.log('💾 Utilisateur mis en cache:', safeData);
         } catch (e) {
-            console.error('Erreur sauvegarde cache utilisateur', e);
+            console.error('❌ Erreur sauvegarde cache utilisateur:', e);
         }
     }
 
-    // Récupérer l'user depuis le storage
     function loadUserFromCache() {
         try {
-            const cached = sessionStorage.getItem('cachedUser');
+            const cached = localStorage.getItem('cachedUser');
             if (cached) {
                 user.value = JSON.parse(cached);
+                console.log('⚡ Utilisateur chargé depuis le cache');
                 return true;
             }
         } catch (e) {
-            sessionStorage.removeItem('cachedUser');
+            console.error('❌ Erreur chargement cache:', e);
+            localStorage.removeItem('cachedUser');
         }
         return false;
     }
 
-    // Nettoyer le cache
     function clearUserCache() {
+        localStorage.removeItem('cachedUser');
         sessionStorage.removeItem('cachedUser');
         user.value = null;
+        console.log('🗑️ Cache utilisateur nettoyé');
     }
 
     // --- ACTIONS PUBLIQUES ---
 
     async function initializeAuth() {
-        if (isInitialized.value) return;
-        
-        // 1. D'abord, on essaie de charger depuis le cache pour un affichage immédiat
-        const hasCachedUser = loadUserFromCache();
-        if (hasCachedUser) {
-            console.log('⚡ Utilisateur chargé depuis le cache (affichage rapide)');
+        if (isInitialized.value) {
+            console.log('✅ Auth déjà initialisé');
+            return;
         }
-
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        
+        console.log('🚀 Initialisation de l\'authentification...');
+        
+        // 1. Charger depuis le cache pour affichage immédiat
+        const hasCachedUser = loadUserFromCache();
+        
+        // 2. Vérifier si on a un token
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
         if (token) {
-            // 2. On lance quand même une requête pour vérifier que les données sont à jour (Hydratation)
-            // C'est transparent pour l'utilisateur
+            console.log('🔑 Token trouvé, vérification en cours...');
+            
+            // 3. Vérifier que le token est toujours valide
             try {
                 await fetchCurrentUser();
+                console.log('✅ Token valide, utilisateur chargé');
             } catch (e) {
-                // Si le token est invalide, on nettoie tout
-                if (!hasCachedUser) await logout(); 
+                console.error('❌ Token invalide, déconnexion:', e);
+                // Si le token est invalide, on déconnecte
+                await logout();
             }
         } else {
-             // Pas de token, on nettoie tout par sécurité
-             clearUserCache();
+            console.log('⚠️ Pas de token trouvé');
+            // Pas de token, on nettoie tout
+            clearUserCache();
         }
         
         isInitialized.value = true;
+        console.log('✅ Initialisation terminée');
     }
 
     async function fetchCurrentUser() {
         isLoading.value = true;
+        error.value = null;
+        
         try {
+            console.log('👤 Récupération des données utilisateur...');
             const userData = await authService.getCurrentUser();
-            // On met à jour Pinia ET le Cache
-            cacheUser(userData); 
+            
+            // ✅ Mettre à jour Pinia ET le cache
+            cacheUser(userData);
+            console.log('✅ Utilisateur récupéré:', userData);
+            
             return user.value;
         } catch (err) {
+            console.error('❌ Erreur récupération utilisateur:', err);
+            error.value = err.message;
             throw err;
         } finally {
             isLoading.value = false;
@@ -103,19 +117,39 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function login(credentials) {
         isLoading.value = true;
+        error.value = null;
+        
         try {
-            const response = await authService.login(credentials);
+            console.log('🔐 Connexion en cours...');
             
+            // ✅ 1. Effectuer le login
+            const response = await authService.login(credentials);
+            console.log('✅ Login réussi');
+            
+            // ✅ 2. Attendre un peu pour s'assurer que les tokens sont stockés
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // ✅ 3. Récupérer les infos utilisateur
             if (response.data && response.data.user) {
-                // Si le login renvoie déjà l'user, on le cache direct
+                console.log('✅ Utilisateur reçu dans la réponse login');
                 cacheUser(response.data.user);
             } else {
-                // Sinon on va le chercher
+                console.log('📡 Récupération des infos utilisateur...');
                 await fetchCurrentUser();
             }
             
+            console.log('✅ Connexion terminée avec succès');
             return response;
+            
         } catch (err) {
+            console.error('❌ Erreur lors de la connexion:', err);
+            error.value = err.response?.data?.message || err.message || 'Erreur de connexion';
+            
+            // ✅ Nettoyer en cas d'erreur
+            clearUserCache();
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refresh');
+            
             throw err;
         } finally {
             isLoading.value = false;
@@ -123,23 +157,38 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function logout() {
+        console.log('🚪 Déconnexion...');
+        
         try {
             await authService.logout();
+        } catch (err) {
+            console.error('❌ Erreur lors de la déconnexion:', err);
         } finally {
-            // Nettoyage complet
+            // ✅ Nettoyage complet
             clearUserCache();
             isInitialized.value = false;
-            // On nettoie aussi les tokens (géré dans api.js normalement, mais par sécurité)
+            
+            // Nettoyer aussi les tokens
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refresh');
             sessionStorage.removeItem('authToken');
             sessionStorage.removeItem('refresh');
+            
+            console.log('✅ Déconnexion terminée');
         }
     }
 
     return {
+        // State
         user,
-        userProfile, // Nouveau getter pratique
         isLoading,
+        error,
+        
+        // Getters
         isAuthenticated,
+        userProfile,
+        
+        // Actions
         login,
         logout,
         initializeAuth,
