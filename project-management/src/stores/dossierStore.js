@@ -40,11 +40,13 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
-            const response = await api.get('manager/affairs/', { params });
-            dossiers.value = response.data;
+            const response = await api.get(`/manager/affairs`, { params });
+            dossiers.value = response.data.data.dossiers;
+            stats.value = response.data.data.metadata;
+            console.log("Les statistiques", stats.value)
             return response.data;
         } catch (err) {
-            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers';
+            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers';  
             throw err;
         } finally {
             loading.value = false;

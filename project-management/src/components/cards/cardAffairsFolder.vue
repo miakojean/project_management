@@ -27,7 +27,7 @@
                 <span class="value">{{ typeText }}</span>
             </div>
             <div class="info-row">
-                <span class="label">Ouverture:</span>
+                <span class="label">Date d'ouverture:</span>
                 <span class="value">{{ dateOuverture }}</span>
             </div>
             <div v-if="dateEcheance" class="info-row">

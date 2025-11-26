@@ -343,18 +343,33 @@ class DossierSerializer(serializers.ModelSerializer):
                 })
         return data
 
-
 class DossierListSerializer(serializers.ModelSerializer):
     """Serializer allégé pour les listes (Tableaux de bord)"""
     client_nom = serializers.ReadOnlyField(source='client.nom_complet')
+    date_creation_formatee = serializers.SerializerMethodField()
+    date_echeance_formatee = serializers.SerializerMethodField()
     
     class Meta:
         model = Dossier
         fields = [
             'id', 'reference_dossier', 'titre', 'type_dossier', 
             'statut', 'priorite', 'client_nom', 'date_echeance', 
-            'est_en_retard', 'taux_avancement'
+            'est_en_retard', 'taux_avancement', 'date_creation',
+            'date_creation_formatee', 'date_echeance_formatee'  # Ajout des champs formatés
         ]
+
+    def get_date_creation_formatee(self, obj):
+        """Formate la date de création"""
+        if obj.date_creation:
+            # Format: "15 déc. 2023" ou selon votre préférence
+            return obj.date_creation.strftime('%d %b %Y')
+        return None
+
+    def get_date_echeance_formatee(self, obj):
+        """Formate la date d'échéance"""
+        if obj.date_echeance:
+            return obj.date_echeance.strftime('%d %b %Y')
+        return None
 
 # Serializer pour CategorieDocument
 class CategorieDocumentSerializer(serializers.ModelSerializer):

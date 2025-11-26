@@ -174,7 +174,7 @@ export default {
         });
 
         const dossiersCount = computed(() => {
-            return dossierStore.totalDossiers || 0;
+            return dossierStore.totalDossiers || dossierStore.stats.count || 0;
         })
 
         const userName = computed(() => {
