@@ -13,23 +13,71 @@
 
             <!-- Content -->
             <div class="modal-content">
-                <div v-if="customer" class="customer-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Nom complet :</span>
-                        <span class="detail-value">{{ customer.nom_complet }}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Type de client :</span>
-                        <span class="detail-value">{{ customer.type_client }}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">ID :</span>
-                        <span class="detail-value">{{ customer.id }}</span>
-                    </div>
-                    <!-- Ajoutez d'autres champs selon votre structure de données -->
+                <!-- Loading State -->
+                <div v-if="loading" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Chargement des dossiers...</p>
                 </div>
+
+                <!-- Error State -->
+                <div v-else-if="error" class="error-state">
+                    <p>Erreur: {{ error }}</p>
+                    <button @click="loadCustomerDossiers" class="retry-btn">Réessayer</button>
+                </div>
+
+                <!-- Data Display -->
+                <div v-else-if="customer" class="customer-details">
+                    <!-- Informations client -->
+                    <div class="customer-info">
+                        <div class="detail-row">
+                            <span class="detail-label">Nom complet :</span>
+                            <span class="detail-value">{{ customer.nom_complet }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Type de client :</span>
+                            <span class="detail-value">{{ customer.type_client }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Nombre de dossiers :</span>
+                            <span class="detail-value">{{ customerDossiers.length }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Liste des dossiers -->
+                    <div class="dossiers-section">
+                        <h3>Dossiers du client</h3>
+                        
+                        <!-- Si des dossiers existent -->
+                        <div v-if="customerDossiers.length > 0" class="dossiers-list">
+                            <div v-for="dossier in customerDossiers" :key="dossier.id" class="dossier-item">
+                                <span class="dossier-reference">{{ dossier.reference_dossier }}</span>
+                                <span class="dossier-titre">{{ dossier.titre }}</span>
+                                <span class="dossier-statut" :class="dossier.statut.toLowerCase()">
+                                    {{ dossier.statut }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Si aucun dossier -->
+                        <div v-else class="no-dossiers">
+                            <emptyCards 
+                                title="Aucun dossier"
+                                description="Ce client n'a pas encore de dossiers."
+                                action-text="Créer un dossier"
+                                @action="createNewDossier"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fallback si pas de client -->
                 <div v-else class="no-customer">
-                    <p>Aucune information client disponible</p>
+                    <emptyCards 
+                        title="Client non trouvé"
+                        description="Les informations du client ne sont pas disponibles."
+                        action-text="Fermer"
+                        @action="closeModal"
+                    />
                 </div>
             </div>
 
@@ -38,8 +86,8 @@
                 <button @click="closeModal" class="btn-secondary">
                     Fermer
                 </button>
-                <button v-if="customer" @click="editCustomer" class="btn-primary">
-                    Modifier
+                <button v-if="customer && !loading && !error" @click="createNewDossier" class="btn-primary">
+                    Créer un dossier
                 </button>
             </div>
         </div>
@@ -48,6 +96,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import emptyCards from '../cards/emptyCards.vue'
+import { useDossierStore } from '@/stores/dossierStore'
+
+const dossierStore = useDossierStore();
 
 // Props
 const props = defineProps({
@@ -62,15 +114,23 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['update:isOpen', 'close'])
+const emit = defineEmits(['update:isOpen', 'close', 'create-dossier'])
 
 // États réactifs
 const isMobile = ref(false)
+const loading = ref(false)
+const error = ref(null)
+const customerDossiers = ref([])
+
+// Computed
+const hasDossiers = computed(() => customerDossiers.value.length > 0)
 
 // Méthodes
 const closeModal = () => {
     emit('update:isOpen', false)
     emit('close')
+    // Reset states quand la modale se ferme
+    resetStates()
 }
 
 const handleOverlayClick = (event) => {
@@ -79,10 +139,33 @@ const handleOverlayClick = (event) => {
     }
 }
 
-const editCustomer = () => {
-    // Logique pour éditer le client
-    console.log('Édition du client:', props.customer)
-    // Vous pouvez émettre un événement ou naviguer vers une page d'édition
+const createNewDossier = () => {
+    if (props.customer) {
+        emit('create-dossier', props.customer)
+        closeModal()
+    }
+}
+
+const loadCustomerDossiers = async () => {
+    if (!props.customer?.id) return
+    
+    loading.value = true
+    error.value = null
+    
+    try {
+        customerDossiers.value = await dossierStore.fetchDossiersByClient(props.customer.id)
+    } catch (err) {
+        error.value = err.message || 'Erreur lors du chargement des dossiers'
+        console.error('Erreur chargement dossiers:', err)
+    } finally {
+        loading.value = false
+    }
+}
+
+const resetStates = () => {
+    loading.value = false
+    error.value = null
+    customerDossiers.value = []
 }
 
 const checkScreenSize = () => {
@@ -99,15 +182,27 @@ onUnmounted(() => {
     window.removeEventListener('resize', checkScreenSize)
 })
 
-// Watch pour gérer le overflow du body
+// Watchers
 watch(() => props.isOpen, (newValue) => {
     if (newValue) {
         document.body.style.overflow = 'hidden'
         checkScreenSize()
+        
+        // Charger les dossiers quand la modale s'ouvre
+        if (props.customer?.id) {
+            loadCustomerDossiers()
+        }
     } else {
         document.body.style.overflow = ''
     }
 })
+
+// Surveiller les changements de client (au cas où le même composant est réutilisé)
+watch(() => props.customer, (newCustomer) => {
+    if (newCustomer?.id && props.isOpen) {
+        loadCustomerDossiers()
+    }
+}, { deep: true })
 </script>
 
 <style scoped>
@@ -132,6 +227,7 @@ watch(() => props.isOpen, (newValue) => {
     max-width: 600px;
     display: flex;
     flex-direction: column;
+    gap:1rem;
     animation: slideIn 0.3s ease-out;
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
 }

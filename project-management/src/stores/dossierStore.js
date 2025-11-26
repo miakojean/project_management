@@ -1,0 +1,256 @@
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import api from "@/_services/api";
+
+export const useDossierStore = defineStore('dossier', () => {
+    // State
+    const dossiers = ref([]);
+    const currentDossier = ref(null);
+    const loading = ref(false);
+    const error = ref(null);
+    const stats = ref({});
+
+    // Getters
+    const totalDossiers = computed(() => dossiers.value.length);
+    
+    const dossiersActifs = computed(() => 
+        dossiers.value.filter(d => 
+            ['NOUVEAU', 'EN_COURS', 'EN_ATTENTE'].includes(d.statut)
+        )
+    );
+    
+    const dossiersEnRetard = computed(() => 
+        dossiers.value.filter(d => d.est_en_retard)
+    );
+    
+    const dossiersParStatut = computed(() => {
+        const grouped = {};
+        dossiers.value.forEach(dossier => {
+            if (!grouped[dossier.statut]) {
+                grouped[dossier.statut] = [];
+            }
+            grouped[dossier.statut].push(dossier);
+        });
+        return grouped;
+    });
+
+    // Actions
+    async function fetchDossiers(params = {}) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const response = await api.get('manager/affairs/', { params });
+            dossiers.value = response.data;
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function fetchDossierById(id) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const response = await api.get(`/dossiers/${id}/`);
+            currentDossier.value = response.data;
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function fetchDossiersByClient(clientId) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const response = await api.get(`manager/affairs?client_id=${clientId}`);
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers du client';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function createDossier(dossierData) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const response = await api.post('/dossiers/', dossierData);
+            dossiers.value.unshift(response.data);
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors de la création du dossier';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function updateDossier(id, dossierData, partial = false) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const method = partial ? 'patch' : 'put';
+            const response = await api[method](`/dossiers/${id}/`, dossierData);
+            
+            // Mettre à jour dans la liste
+            const index = dossiers.value.findIndex(d => d.id === id);
+            if (index !== -1) {
+                dossiers.value[index] = response.data;
+            }
+            
+            // Mettre à jour le dossier courant si c'est le même
+            if (currentDossier.value && currentDossier.value.id === id) {
+                currentDossier.value = response.data;
+            }
+            
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors de la mise à jour du dossier';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function deleteDossier(id) {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            await api.delete(`/dossiers/${id}/`);
+            
+            // Retirer de la liste
+            const index = dossiers.value.findIndex(d => d.id === id);
+            if (index !== -1) {
+                dossiers.value.splice(index, 1);
+            }
+            
+            // Vider le dossier courant si c'est le même
+            if (currentDossier.value && currentDossier.value.id === id) {
+                currentDossier.value = null;
+            }
+            
+            return true;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors de la suppression du dossier';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function fetchDossierStats() {
+        loading.value = true;
+        error.value = null;
+        
+        try {
+            const response = await api.get('/manager/affairs');
+            stats.value = response.data;
+            return response.data;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors du chargement des statistiques';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function updateDossierStatus(id, newStatus) {
+        return await updateDossier(id, { statut: newStatus }, true);
+    }
+
+    async function updateDossierPriority(id, newPriority) {
+        return await updateDossier(id, { priorite: newPriority }, true);
+    }
+
+    async function addCollaboratorToDossier(id, collaboratorId) {
+        try {
+            const dossier = await fetchDossierById(id);
+            const currentCollaborateurs = dossier.collaborateurs || [];
+            
+            if (!currentCollaborateurs.includes(collaboratorId)) {
+                const updatedCollaborateurs = [...currentCollaborateurs, collaboratorId];
+                return await updateDossier(id, { collaborateurs: updatedCollaborateurs });
+            }
+            
+            return dossier;
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors de l\'ajout du collaborateur';
+            throw err;
+        }
+    }
+
+    async function removeCollaboratorFromDossier(id, collaboratorId) {
+        try {
+            const dossier = await fetchDossierById(id);
+            const currentCollaborateurs = dossier.collaborateurs || [];
+            
+            const updatedCollaborateurs = currentCollaborateurs.filter(collabId => collabId !== collaboratorId);
+            return await updateDossier(id, { collaborateurs: updatedCollaborateurs });
+        } catch (err) {
+            error.value = err.response?.data?.error || 'Erreur lors de la suppression du collaborateur';
+            throw err;
+        }
+    }
+
+    // Reset state
+    function resetCurrentDossier() {
+        currentDossier.value = null;
+    }
+
+    function resetError() {
+        error.value = null;
+    }
+
+    function reset() {
+        dossiers.value = [];
+        currentDossier.value = null;
+        stats.value = {};
+        error.value = null;
+    }
+
+    return {
+        // State
+        dossiers,
+        currentDossier,
+        loading,
+        error,
+        stats,
+        
+        // Getters
+        totalDossiers,
+        dossiersActifs,
+        dossiersEnRetard,
+        dossiersParStatut,
+        
+        // Actions
+        fetchDossiers,
+        fetchDossierById,
+        fetchDossiersByClient,
+        createDossier,
+        updateDossier,
+        deleteDossier,
+        fetchDossierStats,
+        updateDossierStatus,
+        updateDossierPriority,
+        addCollaboratorToDossier,
+        removeCollaboratorFromDossier,
+        resetCurrentDossier,
+        resetError,
+        reset
+    };
+});

@@ -7,7 +7,11 @@ from .views import (
     ClientListAPIView,
     ClientSearchAPIView
 )
-from .view.affairs_views import DossierCreateAPIView
+from .view.affairs_views import (
+    DossierCreateAPIView,
+    DossierListCreateAPIView,
+    DossierStatsAPIView,
+)
 
 router = DefaultRouter()
 router.register(r'dossiers', DossierCreateAPIView, basename='dossier')
@@ -23,5 +27,7 @@ urlpatterns = [
     path('clients/ajouter-avec-dossier/', ClientWithDossierCreateAPIView.as_view(), name='client-with-dossier-create'),
 
     # View to manage affairs
-    path('dossier/create/', DossierCreateAPIView.as_view(), name="create-affairs")
+    path('dossier/create/', DossierCreateAPIView.as_view(), name="create-affairs"),
+    path('affairs', DossierListCreateAPIView.as_view(), name="manage-affairs"),
+    path('affairs/stats', DossierStatsAPIView.as_view(), name="affairs-stats")
 ]

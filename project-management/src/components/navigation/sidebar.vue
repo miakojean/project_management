@@ -7,13 +7,17 @@
                 <li 
                     v-for="item in mainMenuItems" 
                     :key="item.id"
-                    :class="['nav-item', { 'active': activeItem === item.id }]"
-                    @click="setActive(item.id)"
+                    :class="['nav-item', { 'active': isActive(item.route) }]"
+                    @click="navigateTo(item.route)"
                 >
                     <div class="nav-link">
                         <span class="nav-icon" v-html="item.icon"></span>
                         <span class="nav-text">{{ item.label }}</span>
-                        <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+                        <!-- Ajout du badge pour les dossiers -->
+                        <span v-if="item.id === 'dossiers'" class="nav-count">
+                            {{ dossiersCount }}
+                        </span>
+                        <span v-else-if="item.badge" class="nav-badge">{{ item.badge }}</span>
                     </div>
                 </li>
             </ul>
@@ -70,7 +74,8 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useCustomerStore } from '@/stores/custumerStore'; // Garde le chemin tel quel (attention à la typo 'custumer' dans ton projet)
+import { useCustomerStore } from '@/stores/custumerStore';
+import { useDossierStore } from '@/stores/dossierStore';
 import brand from './brand.vue';
 
 export default {
@@ -83,6 +88,7 @@ export default {
         const router = useRouter();
         const authStore = useAuthStore();
         const customerStore = useCustomerStore();
+        const dossierStore = useDossierStore();
         
         // Réactives
         const isLoggingOut = ref(false);
@@ -100,7 +106,7 @@ export default {
             {
                 id: 'dossiers',
                 label: 'Dossiers',
-                badge: '12',
+                route: 'dashboard', // Ajouter la route
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                 </svg>`,
@@ -108,6 +114,7 @@ export default {
             {
                 id: 'calendrier',
                 label: 'Calendrier',
+                route: 'calendrier', // Ajouter la route
                 icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                 </svg>`,
@@ -166,6 +173,10 @@ export default {
             return customerStore.customersStats.total || 0;
         });
 
+        const dossiersCount = computed(() => {
+            return dossierStore.totalDossiers || 0;
+        })
+
         const userName = computed(() => {
             if (!authStore.user) return 'Utilisateur';
             return `${authStore.user.first_name || ''} ${authStore.user.last_name || ''}`.trim() || 
@@ -201,6 +212,15 @@ export default {
             }
         };
 
+        const loadDossiers = async () => {
+            try {
+                console.log('🔄 Chargement des dossiers dans sidebar...');
+                await dossierStore.fetchDossiers();
+            } catch (error) {
+                console.warn('⚠️ Erreur non critique chargement dossiers sidebar:', error);
+            }
+        };
+
         const logout = async () => {
             if (isLoggingOut.value) return;
             
@@ -225,6 +245,7 @@ export default {
         onMounted(async () => {
             // On ne charge que les stats utiles à la sidebar
             await loadCustomers();
+            await loadDossiers();
             await authStore.fetchCurrentUser();
 
         });
@@ -234,6 +255,7 @@ export default {
             route,
             // Stores
             customerStore,
+            dossierStore,
             // Réactives
             isLoggingOut,
             mainMenuItems,
@@ -243,6 +265,7 @@ export default {
             currentActiveTab,
             // Computed
             customersCount,
+            dossiersCount, // EXPOSER dossiersCount
             userName,
             userRole,
             userAvatar,
