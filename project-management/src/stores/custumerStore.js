@@ -28,6 +28,11 @@ export const useCustomerStore = defineStore('customer', () => {
     const getPagination = computed(() => pagination.value);
     const getFilters = computed(() => filters.value);
 
+    // --- ATTACH CUSTOMER ---
+    function attachCustomer(customer){
+        currentCustomer.value = customer
+    }
+
     // Clients par type
     const physicalCustomers = computed(() => 
         customers.value.filter(c => c.type_client === 'PERSONNE_PHYSIQUE')
@@ -327,6 +332,9 @@ export const useCustomerStore = defineStore('customer', () => {
         physicalCustomers,
         moralCustomers,
         customersStats,
+
+        //
+        attachCustomer,
 
         // Actions
         fetchCustomers,

@@ -1,150 +1,172 @@
 <template>
     <form class="form-container" @submit.prevent="handleSubmit">
-        
-        <!-- Notification d'erreur -->
         <div v-if="errorMessage" class="error-banner">
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
                 <span class="error-text">{{ errorMessage }}</span>
+                <button class="error-close" @click="clearError">×</button>
             </div>
         </div>
 
-        <h4>Constitution du dossier</h4>
-        
+        <!-- Afficher le client sélectionné -->
+        <div v-if="currentClient" class="client-info-banner">
+            <strong>Client sélectionné :</strong> {{ currentClient.nom_complet }} 
+            ({{ currentClient.reference_client }})
+        </div>
+        <div v-else class="client-warning">
+            ⚠️ Aucun client sélectionné
+        </div>
+
         <div class="form-grid">
             
             <div class="form-row">
                 <inputfamily 
-                    identifiant="titre" 
-                    label="Nom du dossier" 
+                    identifiant="FolderName"
+                    label="Nom de dossier *"
                     placeholder="Entrer le nom du dossier"
                     v-model="formData.titre"
-                    :required="true"
                     :error="fieldErrors.titre"
                 />
                 <selectfamily 
-                    identifiant="type_dossier"
-                    label="Type de dossier"
+                    label="Type de dossier *"
                     :options="dossierTypes"
                     v-model="formData.type_dossier"
-                    :required="true"
                     :error="fieldErrors.type_dossier"
                 />
-                <selectfamily 
-                    identifiant="priorite"
-                    label="Priorité"
-                    :options="priorities"
+                <selectfamily
+                    label="Priorité *" 
+                    :options="priority"
                     v-model="formData.priorite"
-                    :required="true"
                     :error="fieldErrors.priorite"
                 />
             </div>
 
             <div class="form-row">
-                <inputArea
-                    identifiant="observation" 
-                    label="Observation" 
-                    placeholder="Faire une observation"
-                    v-model="formData.observation"
-                    :error="fieldErrors.observation"
-                />
-                <inputArea  
-                    identifiant="description" 
-                    label="Description" 
-                    placeholder="Faire une description"
-                    type="text"
-                    v-model="formData.description"
-                    :error="fieldErrors.description"
-                />
-                <inputfamily
-                    identifiant="date_echeance"
+                <inputfamily 
+                    identifiant="OpenedDate"
                     label="Date d'échéance"
-                    placeholder="JJ/MM/AAAA"
-                    type="date"
+                    placeholder="Entrer la date d'échéance"
                     v-model="formData.date_echeance"
-                    :error="fieldErrors.date_echeance"
+                    type="date"
+                />
+                <inputArea 
+                    label="Observations"
+                    placeholder="Entrer une observation sur le dossier"
+                    v-model="formData.observations"
+                />
+                <inputArea 
+                    label="Description *"
+                    placeholder="Entrer une description relative au dossier"
+                    v-model="formData.description"
+                    :show-validation="showValidation"
+                    error-message="La description est obligatoire"
                 />
             </div>
-        </div>
 
-        <div class="form-actions">
-            <prevButton @click="handlePrevStep"/>
-            <mainButton 
-                :isloading="isLoading"
-                label="Créer le dossier"
-                type="submit"
-            />
+            <div class="form-actions">
+                <prevButton @click="handlePrev"/>
+                <mainButton
+                    :isloading="isLoading"
+                    label="Créer dossier"
+                    type="submit"
+                />
+            </div>
+
         </div>
     </form>
 </template>
 
 <script>
-import { ref, reactive, watch, onMounted } from 'vue';
+import { reactive, ref, onMounted, watch, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import inputfamily from '../input/inputfamily.vue';
 import selectfamily from '../input/selectfamily.vue';
+import inputArea from '../input/inputArea.vue';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
-import inputArea from '../input/inputArea.vue';
+
 import { useAuthStore } from '@/stores/auth';
+import { useDossierStore } from '@/stores/dossierStore';
 import { useCustomerStore } from '@/stores/custumerStore';
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import api from '@/_services/api';
 
 export default {
-    name: 'DossierCreationForm',
+    name: 'CreateDossierForm',
     components: {
         inputfamily,
         selectfamily,
         inputArea,
         mainButton,
-        prevButton,
+        prevButton
     },
-    props: {
-        selectedClient: {
-            type: Object,
-            default: null
-        }
-    },
-    emits: ['submit', 'prevstep', 'notification'],
-    setup(props, { emit }) {
+
+    setup() {
+        const router = useRouter();
         const isLoading = ref(false);
         const errorMessage = ref('');
+        const showValidation = ref(false);
         const fieldErrors = reactive({});
-        const router = useRouter();
 
         // Stores
         const authStore = useAuthStore();
         const customerStore = useCustomerStore();
+        const dossierStore = useDossierStore();
+
+        // Computed pour le client actuel
+        const currentClient = computed(() => {
+            return customerStore.currentCustomer || customerStore.getCurrentCustomer;
+        });
 
         // Options pour les selects - CORRECTION DU MAPPING
-        const priorities = ref([
-            { value: 'Basse', label: 'Basse' },
-            { value: 'Normale', label: 'Normale' },
-            { value: 'Haute', label: 'Haute' },
-            { value: 'Urgente', label: 'Urgente' }
+        const priority = ref([
+            { value: 'HAUTE', label: 'Haute' },
+            { value: 'NORMALE', label: 'Normale' },
+            { value: 'BASSE', label: 'Basse' },
+            { value: 'URGENTE', label: 'Urgente' }
         ]);
 
         const dossierTypes = ref([
-            { value: 'JUDICIAIRE', label: 'Judiciaire' },
-            { value: 'ADMINISTRATIF', label: 'Administratif' },
-            { value: 'CONSEIL', label: 'Conseil' },
+            { value: 'CONSTITUTION', label: 'Constitution de société' },
+            { value: 'MODIFICATION', label: 'Modification statutaire' },
+            { value: 'DISSOLUTION', label: 'Dissolution/Liquidation' },
+            { value: 'FUSION_ACQUISITION', label: 'Fusion/Acquisition' },
+            { value: 'CONSEIL', label: 'Conseil juridique' },
+            { value: 'CONTRAT', label: 'Rédaction de contrat' },
+            { value: 'AUDIT', label: 'Audit juridique' },
+            { value: 'PROPRIETE_INTELLECTUELLE', label: 'Propriété intellectuelle' },
+            { value: 'RECOUVREMENT', label: 'Recouvrement de créances' },
+            { value: 'CONTENTIEUX', label: 'Contentieux commercial' },
             { value: 'AUTRE', label: 'Autre' }
         ]);
 
-        // Structure des données CORRIGÉE
+        // Données du formulaire
         const formData = reactive({
             titre: "",
             type_dossier: "",
-            client: "", // Sera rempli via props.selectedClient
-            description: "",
-            priorite: "Normale", // Valeur par défaut
+            client: "", // Sera rempli automatiquement
+            priorite: "NORMALE", // Valeur par défaut
             date_echeance: "",
-            observation: "",
-            collaborateurs: [],
-            charge_de_clientele: "" // Sera rempli via user.id
+            observations: "",
+            description: "",
+            charge_de_clientele: "" // Sera rempli automatiquement
         });
 
+        // Watch pour mettre à jour automatiquement l'ID client
+        watch(currentClient, (newClient) => {
+            if (newClient && newClient.id) {
+                formData.client = newClient.id;
+                console.log("✅ Client ID assigné:", formData.client);
+            }
+        }, { immediate: true });
+
+        // Watch pour l'utilisateur connecté
+        watch(() => authStore.user, (newUser) => {
+            if (newUser && newUser.id) {
+                formData.charge_de_clientele = newUser.id;
+                console.log("✅ Agent ID assigné:", formData.charge_de_clientele);
+            }
+        }, { immediate: true });
+
+        // Fonctions
         const clearError = () => {
             errorMessage.value = '';
             Object.keys(fieldErrors).forEach(key => {
@@ -152,12 +174,16 @@ export default {
             });
         };
 
-        // VALIDATION CORRECTE POUR UN DOSSIER
-        const validateForm = () => {
+        const handlePrev = () => {
+            router.back();
+        };
+
+        const isValid = () => {
             clearError();
+            showValidation.value = true;
             let isValid = true;
 
-            // Validation des champs obligatoires pour un dossier
+            // Validation des champs obligatoires seulement
             if (!formData.titre.trim()) {
                 fieldErrors.titre = 'Le nom du dossier est obligatoire';
                 isValid = false;
@@ -173,140 +199,107 @@ export default {
                 isValid = false;
             }
 
-            // Vérifier qu'un client est sélectionné
+            if (!formData.description.trim()) {
+                fieldErrors.description = 'La description est obligatoire';
+                isValid = false;
+            }
+
+            // Vérification du client
             if (!formData.client) {
                 errorMessage.value = 'Aucun client sélectionné pour ce dossier';
                 isValid = false;
             }
 
-            // Validation de la date d'échéance si fournie
-            if (formData.date_echeance) {
-                const selectedDate = new Date(formData.date_echeance);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                if (selectedDate < today) {
-                    fieldErrors.date_echeance = 'La date d\'échéance ne peut pas être dans le passé';
-                    isValid = false;
-                }
+            // Vérification de l'agent
+            if (!formData.charge_de_clientele) {
+                errorMessage.value = 'Agent non identifié';
+                isValid = false;
             }
 
             return isValid;
         };
 
-        // WATCHERS POUR REMPLIR AUTOMATIQUEMENT LES IDs
-        watch(() => props.selectedClient, (newClient) => {
-            if (newClient && newClient.id) {
-                formData.client = newClient.id;
-                console.log("✅ Client ID assigné:", formData.client);
-            }
-        }, { immediate: true });
-
-        watch(user, (newUser) => {
-            console.log("👀 Watch user déclenché:", newUser);
-            if (newUser && newUser.id) {
-                formData.charge_de_clientele = newUser.id;
-                console.log("✅ Agent ID assigné:", formData.charge_de_clientele);
-            }
-        }, { immediate: true });
-
-        const handlePrevStep = () => {
-            emit('prevstep');
+        const getCredentials = () => {
+            return authStore.isAuthenticated;
         };
 
-        onMounted(async () => {
-            if (!user.value && !isInitialized.value) {
-                console.log("🔄 User vide, tentative d'initialisation...");
-                await authStore.initializeAuth();
-            }
-            else{
-                console.log("Utilisateur selectionné", authStore.userProfile)
-            }
-        });
-
+        // Fonction pour créer un dossier
         const handleSubmit = async () => {
-            if (!validateForm()) {
+            console.log("🔄 Début de la création du dossier...");
+            
+            if (!isValid() || !getCredentials()) {
+                isLoading.value = false;
                 return;
             }
 
             isLoading.value = true;
 
-            // S'assurer que les IDs sont bien définis
-            if (!formData.charge_de_clientele && user.value) {
-                formData.charge_de_clientele = user.value.id;
-            }
-
             try {
-                console.log("📦 Données du dossier à envoyer:", JSON.stringify(formData, null, 2));
+                console.log("📦 Données à envoyer:", JSON.stringify(formData, null, 2));
 
-                // UTILISER LE BON ENDPOINT POUR LES DOSSIERS
-                const response = await api.post('dossiers/creer/', formData);
+                // Utiliser le store pour créer le dossier
+                const nouveauDossier = await dossierStore.createDossier(formData);
+                
+                console.log("✅ Dossier créé avec succès:", nouveauDossier);
 
-                emit('notification', {
-                    type: 'success',
-                    message: 'Dossier créé avec succès',
-                    duration: 5000
-                });
-
-                emit('submit', formData);
-
-                // Redirection après succès
-                setTimeout(() => {
-                    router.push('/dashboard');
-                }, 3000);
-
-                return response;
+                // Redirection ou autre action après succès
+                router.push('/dossiers');
 
             } catch (error) {
-                console.error('❌ Erreur lors de la création du dossier:', error);
-
-                let errorMsg = 'Une erreur est survenue lors de la création du dossier';
-
-                if (error.response) {
-                    if (error.response.status === 400) {
-                        errorMsg = 'Données invalides. Vérifiez les informations saisies.';
-                        if (error.response.data) {
-                            Object.keys(error.response.data).forEach(field => {
-                                const fieldName = field.replace(/_/g, ' ');
-                                fieldErrors[field] = Array.isArray(error.response.data[field])
-                                    ? error.response.data[field][0]
-                                    : error.response.data[field];
-                            });
-                        }
-                    } else if (error.response.status === 500) {
-                        errorMsg = 'Erreur serveur. Veuillez réessayer plus tard.';
-                    } else if (error.response.status === 403) {
-                        errorMsg = 'Vous n\'avez pas les permissions pour créer un dossier.';
-                    }
-                } else if (error.request) {
-                    errorMsg = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+                console.error('❌ Erreur création dossier:', error);
+                
+                // Gestion des erreurs
+                if (dossierStore.error) {
+                    errorMessage.value = dossierStore.error;
+                } else if (error.response?.data?.errors) {
+                    // Traitement des erreurs de validation de l'API
+                    Object.keys(error.response.data.errors).forEach(field => {
+                        const fieldName = field.replace(/_/g, ' ');
+                        fieldErrors[field] = Array.isArray(error.response.data.errors[field])
+                            ? error.response.data.errors[field][0]
+                            : error.response.data.errors[field];
+                    });
+                    errorMessage.value = 'Veuillez corriger les erreurs dans le formulaire';
+                } else {
+                    errorMessage.value = error.response?.data?.message || error.message || 'Erreur lors de la création du dossier';
                 }
-
-                errorMessage.value = errorMsg;
-
-                emit('notification', {
-                    type: 'error',
-                    message: errorMsg,
-                    duration: 8000
-                });
-
             } finally {
                 isLoading.value = false;
             }
         };
 
+        onMounted(() => {
+            console.log('🔍 Client sélectionné:', currentClient.value);
+            console.log('🔍 Utilisateur connecté:', authStore.user);
+            
+            // S'assurer que l'initialisation est faite
+            if (!authStore.user) {
+                authStore.initializeAuth();
+            }
+        });
+
         return {
+            // Stores
+            authStore,
+            dossierStore,
+            customerStore,
+
+            // State
             isLoading,
-            priorities,
+            errorMessage,
+            showValidation,
+            fieldErrors,
+            currentClient,
+
+            // Form
+            priority,
             dossierTypes,
             formData,
-            errorMessage,
-            fieldErrors,
-            clearError,
+
+            // Functions
             handleSubmit,
-            handlePrevStep,
-            authStore,
-            customerStore
+            handlePrev,
+            clearError
         };
     }
 };
@@ -315,9 +308,9 @@ export default {
 <style scoped>
 .form-container {
     width: 100%;
-    max-width: 1000px; /* Augmenté un peu pour accommoder 3 colonnes */
+    max-width: 1000px;
     margin: 0 auto;
-    padding-top: 4rem;
+    padding-top: 2rem;
 }
 
 .form-grid {
@@ -329,7 +322,6 @@ export default {
 
 .form-row {
     display: grid;
-    /* C'est ici que se joue le 3 par 3 */
     grid-template-columns: repeat(3, 1fr); 
     gap: 1rem;
     align-items: start;
@@ -337,24 +329,69 @@ export default {
 
 .form-actions {
     display: flex;
-    justify-content: center;
+    justify-content:end;
+    gap: 2rem;
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
     width: 100%;
-    gap: 1rem;
+}
+
+/* Bannière d'erreur */
+.error-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    animation: slideDown 0.3s ease;
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.error-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.error-text {
+    color: #dc2626;
+    font-weight: 500;
+    flex: 1;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #dc2626;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.error-close:hover {
+    background-color: #fecaca;
 }
 
 /* Responsive */
 @media (max-width: 992px) {
-    /* Sur tablette moyenne, on passe à 2 colonnes */
     .form-row {
         grid-template-columns: 1fr 1fr;
     }
 }
 
 @media (max-width: 600px) {
-    /* Sur mobile, on passe à 1 colonne */
     .form-row {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -367,9 +404,24 @@ export default {
     .form-container {
         padding: 0 1rem;
     }
+
+    .error-content {
+        align-items: flex-start;
+    }
 }
 
-/* Animation */
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .form-row {
     animation: fadeInUp 0.5s ease;
 }

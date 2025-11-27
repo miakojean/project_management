@@ -87,9 +87,8 @@ export const useDossierStore = defineStore('dossier', () => {
     async function createDossier(dossierData) {
         loading.value = true;
         error.value = null;
-        
         try {
-            const response = await api.post('/dossiers/', dossierData);
+            const response = await api.post('manager/dossiers/create/', dossierData);
             dossiers.value.unshift(response.data);
             return response.data;
         } catch (err) {
