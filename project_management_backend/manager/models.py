@@ -194,6 +194,7 @@ class Dossier(models.Model):
     collaborateurs = models.ManyToManyField(
         Utilisateur,
         blank=True,
+        null=True,
         related_name='dossiers_collabores',
         verbose_name=_("Collaborateurs")
     )
@@ -275,6 +276,7 @@ class Dossier(models.Model):
             ("archive_dossier", "Peut archiver un dossier"),
             ("manage_financial", "Peut gérer les aspects financiers"),
         ]
+        unique_together = ('titre', 'client')
     
     def __str__(self):
         return f"{self.reference_dossier} - {self.titre}"

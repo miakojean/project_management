@@ -95,10 +95,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import emptyCards from '../cards/emptyCards.vue'
 import { useDossierStore } from '@/stores/dossierStore'
+import { useRouter } from 'vue-router';
+import { useCustomerStore } from '@/stores/custumerStore';
 
+const router = useRouter();
 const dossierStore = useDossierStore();
 
 // Props
@@ -129,7 +132,6 @@ const hasDossiers = computed(() => customerDossiers.value.length > 0)
 const closeModal = () => {
     emit('update:isOpen', false)
     emit('close')
-    // Reset states quand la modale se ferme
     resetStates()
 }
 
@@ -139,10 +141,16 @@ const handleOverlayClick = (event) => {
     }
 }
 
-const createNewDossier = () => {
+const createNewDossier = async () => {
     if (props.customer) {
         emit('create-dossier', props.customer)
         closeModal()
+        
+        // Attendre le cycle de mise à jour suivant
+        await nextTick()
+        
+        // Naviguer vers la page de création
+        router.push('/create-affairs')
     }
 }
 
@@ -188,7 +196,6 @@ watch(() => props.isOpen, (newValue) => {
         document.body.style.overflow = 'hidden'
         checkScreenSize()
         
-        // Charger les dossiers quand la modale s'ouvre
         if (props.customer?.id) {
             loadCustomerDossiers()
         }
@@ -197,7 +204,6 @@ watch(() => props.isOpen, (newValue) => {
     }
 })
 
-// Surveiller les changements de client (au cas où le même composant est réutilisé)
 watch(() => props.customer, (newCustomer) => {
     if (newCustomer?.id && props.isOpen) {
         loadCustomerDossiers()

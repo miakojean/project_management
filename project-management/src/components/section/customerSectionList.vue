@@ -209,6 +209,7 @@ export default {
         const openModal = (customer) => {
             selectedCustomer.value = customer;
             isOpen.value = true;
+            console.log('Client selectionné',customer)
         };
 
         const closeModal = () => {

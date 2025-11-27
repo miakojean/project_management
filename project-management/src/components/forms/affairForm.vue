@@ -6,11 +6,10 @@
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
                 <span class="error-text">{{ errorMessage }}</span>
-                <button class="error-close" @click="clearError">x</button>
             </div>
         </div>
 
-        <h4>Constitution du dossier de </h4>
+        <h4>Constitution du dossier</h4>
         
         <div class="form-grid">
             
@@ -21,79 +20,49 @@
                     placeholder="Entrer le nom du dossier"
                     v-model="formData.titre"
                     :required="true"
+                    :error="fieldErrors.titre"
                 />
-                <selectfamily/>
                 <selectfamily 
+                    identifiant="type_dossier"
+                    label="Type de dossier"
+                    :options="dossierTypes"
+                    v-model="formData.type_dossier"
+                    :required="true"
+                    :error="fieldErrors.type_dossier"
+                />
+                <selectfamily 
+                    identifiant="priorite"
                     label="Priorité"
                     :options="priorities"
-                />
-            </div>
-            
-            <div class="form-row">
-                <inputfamily 
-                    identifiant="CompteContribuable" 
-                    label="Numéro Compte Contribuable" 
-                    placeholder="Numéro Compte Contribuable"
-                    v-model="formData.numero_cc"
-                />
-                <inputfamily 
-                    identifiant="Capitalsocial" 
-                    label="Capital social" 
-                    placeholder="Votre Capital social"
-                    v-model="formData.capital_social"
-                />
-                <inputfamily 
-                    identifiant="adresse" 
-                    label="Adresse" 
-                    placeholder="Entrer l'adresse"
-                    type="text"
-                    v-model="formData.adresse"
+                    v-model="formData.priorite"
                     :required="true"
+                    :error="fieldErrors.priorite"
                 />
             </div>
 
             <div class="form-row">
-                <inputfamily 
-                    identifiant="ville" 
-                    label="Ville" 
-                    placeholder="Entrer la ville"
-                    v-model="formData.ville"
+                <inputArea
+                    identifiant="observation" 
+                    label="Observation" 
+                    placeholder="Faire une observation"
+                    v-model="formData.observation"
+                    :error="fieldErrors.observation"
                 />
-                <inputfamily 
-                    identifiant="telephone" 
-                    label="Téléphone" 
-                    placeholder="Entrer le téléphone"
-                    type="tel"
-                    v-model="formData.telephone_1"
+                <inputArea  
+                    identifiant="description" 
+                    label="Description" 
+                    placeholder="Faire une description"
+                    type="text"
+                    v-model="formData.description"
+                    :error="fieldErrors.description"
                 />
-
-                <inputfamily 
-                    identifiant="telephone 2" 
-                    label="Téléphone 2" 
-                    placeholder="Entrer le deuxième numéro"
-                    v-model="formData.telephone_2"
-                />
-                
-            </div>
-
-            <div class="form-row">
-                <inputfamily 
-                    identifiant="email" 
-                    label="Email" 
-                    placeholder="Entrer votre email"
-                    v-model="formData.email"
-                />
-                <inputfamily 
-                    identifiant="representantLegal" 
-                    label="Nom du representant legal" 
-                    placeholder="Entrer le pays"
-                    v-model="formData.representant_legal_nom"
-                />
-                <inputfamily 
-                    identifiant="profession" 
-                    label="Profession du représentant légal" 
-                    placeholder="Entrer la profession"
-                    v-model="formData.representant_legal_fonction"
+                <inputfamily
+                    identifiant="date_echeance"
+                    label="Date d'échéance"
+                    placeholder="JJ/MM/AAAA"
+                    type="date"
+                    v-model="formData.date_echeance"
+                    :error="fieldErrors.date_echeance"
                 />
             </div>
         </div>
@@ -102,11 +71,9 @@
             <prevButton @click="handlePrevStep"/>
             <mainButton 
                 :isloading="isLoading"
-                label="Ajouter client"
+                label="Créer le dossier"
                 type="submit"
-            >
-                
-            </mainButton>
+            />
         </div>
     </form>
 </template>
@@ -117,50 +84,65 @@ import inputfamily from '../input/inputfamily.vue';
 import selectfamily from '../input/selectfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
+import inputArea from '../input/inputArea.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCustomerStore } from '@/stores/custumerStore';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import api from '@/_services/api';
 
 export default {
-    name: 'ClientMoralForm',
+    name: 'DossierCreationForm',
     components: {
         inputfamily,
         selectfamily,
+        inputArea,
         mainButton,
         prevButton,
+    },
+    props: {
+        selectedClient: {
+            type: Object,
+            default: null
+        }
     },
     emits: ['submit', 'prevstep', 'notification'],
     setup(props, { emit }) {
         const isLoading = ref(false);
         const errorMessage = ref('');
         const fieldErrors = reactive({});
-        const authStore = useAuthStore();
         const router = useRouter();
 
-        const { user, isInitialized } = storeToRefs(authStore);
+        // Stores
+        const authStore = useAuthStore();
+        const customerStore = useCustomerStore();
 
-        // About the payload
-
+        // Options pour les selects - CORRECTION DU MAPPING
         const priorities = ref([
-            {value:'Basse', matching:'Basse'},
-            {value: 'Normale', matching:'Normale'},
-            {value:'Haute', matching:'Haute'},
-            {value:'Urgente', name:'urgente'}
-        ])
+            { value: 'Basse', label: 'Basse' },
+            { value: 'Normale', label: 'Normale' },
+            { value: 'Haute', label: 'Haute' },
+            { value: 'Urgente', label: 'Urgente' }
+        ]);
 
+        const dossierTypes = ref([
+            { value: 'JUDICIAIRE', label: 'Judiciaire' },
+            { value: 'ADMINISTRATIF', label: 'Administratif' },
+            { value: 'CONSEIL', label: 'Conseil' },
+            { value: 'AUTRE', label: 'Autre' }
+        ]);
+
+        // Structure des données CORRIGÉE
         const formData = reactive({
-            titre:"",
-            type_dossier:"",
-            client:"",
-            description:"",
-            priorite:"",
-            date_echeance:"",
-            honoraires_prevues:"",
-            numero_tribunal:"",
-            juridiction:"",
-            observation:"",
-            collaborateurs:""
+            titre: "",
+            type_dossier: "",
+            client: "", // Sera rempli via props.selectedClient
+            description: "",
+            priorite: "Normale", // Valeur par défaut
+            date_echeance: "",
+            observation: "",
+            collaborateurs: [],
+            charge_de_clientele: "" // Sera rempli via user.id
         });
 
         const clearError = () => {
@@ -170,60 +152,61 @@ export default {
             });
         };
 
-        const isValidEmail = (email) => {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        };
-
-        const isValidPhone = (phone) => {
-            const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
-            return phoneRegex.test(phone.replace(/\s/g, ''));
-        };
-
+        // VALIDATION CORRECTE POUR UN DOSSIER
         const validateForm = () => {
             clearError();
             let isValid = true;
 
-            if (!formData.raison_sociale.trim()) {
-                fieldErrors.raison_sociale = 'La raison sociale est obligatoire';
+            // Validation des champs obligatoires pour un dossier
+            if (!formData.titre.trim()) {
+                fieldErrors.titre = 'Le nom du dossier est obligatoire';
                 isValid = false;
             }
 
-            if (!formData.adresse.trim()) {
-                fieldErrors.adresse = 'L\'adresse est obligatoire';
+            if (!formData.type_dossier) {
+                fieldErrors.type_dossier = 'Le type de dossier est obligatoire';
                 isValid = false;
             }
 
-            if (!formData.representant_legal_fonction.trim()) {
-                fieldErrors.representant_legal_fonction = 'La fonction du représentant légal ne peut être vide';
+            if (!formData.priorite) {
+                fieldErrors.priorite = 'La priorité est obligatoire';
                 isValid = false;
             }
 
-            if (!formData.representant_legal_nom.trim()) {
-                fieldErrors.representant_legal_nom = 'Le nom du représentant légal ne peut être vide';
+            // Vérifier qu'un client est sélectionné
+            if (!formData.client) {
+                errorMessage.value = 'Aucun client sélectionné pour ce dossier';
                 isValid = false;
             }
 
-            // Validation email si fourni
-            if (formData.email && !isValidEmail(formData.email)) {
-                fieldErrors.email = 'Format d\'email invalide';
-                isValid = false;
-            }
+            // Validation de la date d'échéance si fournie
+            if (formData.date_echeance) {
+                const selectedDate = new Date(formData.date_echeance);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-            // Validation téléphone si fourni
-            if (formData.telephone_1 && !isValidPhone(formData.telephone_1)) {
-                fieldErrors.telephone_1 = 'Format de téléphone invalide';
-                isValid = false;
+                if (selectedDate < today) {
+                    fieldErrors.date_echeance = 'La date d\'échéance ne peut pas être dans le passé';
+                    isValid = false;
+                }
             }
 
             return isValid;
         };
 
+        // WATCHERS POUR REMPLIR AUTOMATIQUEMENT LES IDs
+        watch(() => props.selectedClient, (newClient) => {
+            if (newClient && newClient.id) {
+                formData.client = newClient.id;
+                console.log("✅ Client ID assigné:", formData.client);
+            }
+        }, { immediate: true });
+
         watch(user, (newUser) => {
             console.log("👀 Watch user déclenché:", newUser);
             if (newUser && newUser.id) {
                 formData.charge_de_clientele = newUser.id;
-                console.log("✅ ID assigné:", formData.charge_de_clientele);
+                console.log("✅ Agent ID assigné:", formData.charge_de_clientele);
             }
         }, { immediate: true });
 
@@ -236,6 +219,9 @@ export default {
                 console.log("🔄 User vide, tentative d'initialisation...");
                 await authStore.initializeAuth();
             }
+            else{
+                console.log("Utilisateur selectionné", authStore.userProfile)
+            }
         });
 
         const handleSubmit = async () => {
@@ -245,42 +231,40 @@ export default {
 
             isLoading.value = true;
 
+            // S'assurer que les IDs sont bien définis
             if (!formData.charge_de_clientele && user.value) {
                 formData.charge_de_clientele = user.value.id;
             }
 
             try {
-                console.log("Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
+                console.log("📦 Données du dossier à envoyer:", JSON.stringify(formData, null, 2));
 
-                const response = await api.post('manager/clients/ajouter/', formData);
+                // UTILISER LE BON ENDPOINT POUR LES DOSSIERS
+                const response = await api.post('dossiers/creer/', formData);
 
                 emit('notification', {
                     type: 'success',
-                    message: 'Client de type firme ajouté avec succès',
+                    message: 'Dossier créé avec succès',
                     duration: 5000
                 });
 
-                emit('submit', {
-                    ...formData,
-                    type_client: 'PERSONNE_MORALE'
-                });
+                emit('submit', formData);
 
-                setTimeout(()=> {
-                    router.push('/dashboard')
-                }, 6000)
+                // Redirection après succès
+                setTimeout(() => {
+                    router.push('/dashboard');
+                }, 3000);
 
                 return response;
 
             } catch (error) {
-                console.error('Erreur lors de la soumission:', error);
+                console.error('❌ Erreur lors de la création du dossier:', error);
 
-                let errorMsg = 'Une erreur est survenue lors de l\'ajout du client';
+                let errorMsg = 'Une erreur est survenue lors de la création du dossier';
 
                 if (error.response) {
-                    // Gestion des erreurs de l'API
                     if (error.response.status === 400) {
                         errorMsg = 'Données invalides. Vérifiez les informations saisies.';
-                        // Traitement des erreurs de champ spécifiques
                         if (error.response.data) {
                             Object.keys(error.response.data).forEach(field => {
                                 const fieldName = field.replace(/_/g, ' ');
@@ -291,12 +275,15 @@ export default {
                         }
                     } else if (error.response.status === 500) {
                         errorMsg = 'Erreur serveur. Veuillez réessayer plus tard.';
+                    } else if (error.response.status === 403) {
+                        errorMsg = 'Vous n\'avez pas les permissions pour créer un dossier.';
                     }
+                } else if (error.request) {
+                    errorMsg = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
                 }
 
                 errorMessage.value = errorMsg;
 
-                // Émettre une notification d'erreur
                 emit('notification', {
                     type: 'error',
                     message: errorMsg,
@@ -311,12 +298,15 @@ export default {
         return {
             isLoading,
             priorities,
+            dossierTypes,
             formData,
             errorMessage,
             fieldErrors,
             clearError,
             handleSubmit,
-            handlePrevStep
+            handlePrevStep,
+            authStore,
+            customerStore
         };
     }
 };
@@ -352,7 +342,7 @@ export default {
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
     width: 100%;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 /* Responsive */
