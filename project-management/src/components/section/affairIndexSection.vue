@@ -56,7 +56,7 @@ export default {
         });
 
         const goToFolderDetail = (dossierId) => {
-            router.push(`/dashboard/customer/affairs/${dossierId}`);
+            router.push(`/dashboard/customer/affairs/`);
         }
 
         onMounted(async () => {

@@ -209,6 +209,8 @@ export default {
         const openModal = (customer) => {
             selectedCustomer.value = customer;
             isOpen.value = true;
+            store.attachCustomer(customer);
+            console.log('Client selectionné',customer)
         };
 
         const closeModal = () => {

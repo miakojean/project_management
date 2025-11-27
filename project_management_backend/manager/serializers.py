@@ -341,6 +341,20 @@ class DossierSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "date_echeance": "La date d'échéance ne peut pas être antérieure à la date d'ouverture."
                 })
+            
+        client = data.get('client') or getattr(self.instance, 'client', None)
+        titre = data.get('titre') or getattr(self.instance, 'titre', None)
+
+        if client and titre:
+            qs = Dossier.objects.filter(client=client, titre__iexact=titre)
+            # Exclure le dossier en cours de modification (update)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "titre": "Un dossier avec ce titre existe déjà pour ce client."
+                })    
+
         return data
 
 class DossierListSerializer(serializers.ModelSerializer):

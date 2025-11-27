@@ -53,6 +53,12 @@ const router = createRouter({
       path:'/customer-list',
       name:'getCustomer',
       component:() => import('@/views/dashboarCustomer.vue')
+    },
+
+    {
+      path:'/create-affairs',
+      name:'create-affairs',
+      component:() => import('@/components/section/affairCreationSection.vue')
     }
   ],
 })
