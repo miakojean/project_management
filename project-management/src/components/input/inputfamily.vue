@@ -117,7 +117,7 @@ input{
   padding: 0.8rem;
   width: 100%;
   max-width: 500px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
   border-radius: 0.2rem;
   border: 1px solid #cacaca;
