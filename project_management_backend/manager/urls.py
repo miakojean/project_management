@@ -26,7 +26,7 @@ urlpatterns = [
     path('clients/ajouter-multiple/', ClientBulkCreateAPIView.as_view(), name='client-bulk-create'),
     path('clients/ajouter-avec-dossier/', ClientWithDossierCreateAPIView.as_view(), name='client-with-dossier-create'),
 
-    # View to manage affairs
+    # View to manage affairs 
     path('dossier/create/', DossierCreateAPIView.as_view(), name="create-affairs"),
     path('affairs', DossierListCreateAPIView.as_view(), name="manage-affairs"),
     path('affairs/stats', DossierStatsAPIView.as_view(), name="affairs-stats")

@@ -7,7 +7,7 @@ from .models import Client
 from .serializers import ClientSerializer, ClientCreateSerializer, ClientListSerializer
 from account.models import Utilisateur
 import logging
-from django.db.models import Q, Count
+from django.db.models import Q, Count 
 
 # views.py - Version simplifiée
 

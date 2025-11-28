@@ -18,9 +18,10 @@ class DossierCreateAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, format=None):
+        
         # 1. Instanciation du serializer avec les données reçues
-        serializer = DossierSerializer(data=request.data)
-
+        serializer = DossierSerializer(data=request.data, context={'request': request})
+        
         # 2. Validation
         if serializer.is_valid():
             try:
@@ -30,7 +31,6 @@ class DossierCreateAPIView(APIView):
                     dossier = serializer.save(cree_par=request.user)
                 
                 # 4. Réponse de succès
-                # On peut renvoyer les données complètes ou juste un ID
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             
             except Exception as e:
@@ -42,7 +42,6 @@ class DossierCreateAPIView(APIView):
 
         # 5. Réponse d'erreur de validation
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DossierListCreateAPIView(APIView):
     """

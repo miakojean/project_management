@@ -14,6 +14,8 @@ from account.models import Utilisateur
 from django.utils import timezone
 from django.db import models
 
+
+
 class ClientSerializer(serializers.ModelSerializer):
     # Champs calculés en lecture seule
     nom_complet = serializers.ReadOnlyField()
@@ -302,6 +304,11 @@ class DossierSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    # CORRECTION COMPLÈTE: Définir explicitement tous les champs de date
+    date_ouverture = serializers.DateField(required=False, format='%Y-%m-%d')
+    date_echeance = serializers.DateField(required=False, allow_null=True, format='%Y-%m-%d')
+    date_cloture = serializers.DateField(read_only=True, format='%Y-%m-%d')
+
     class Meta:
         model = Dossier
         fields = [
@@ -314,30 +321,73 @@ class DossierSerializer(serializers.ModelSerializer):
             'observations', 'est_en_retard', 'taux_avancement',
             'cree_par', 'date_creation'
         ]
-        # Ces champs sont gérés par le système ou le modèle (save method)
-        read_only_fields = [
+        read_only_fields =[
             'reference_dossier', 'chemin_dossier', 
             'solde_honoraires', 'est_en_retard', 'taux_avancement',
-            'cree_par', 'date_creation', 'date_derniere_activite'
+            'cree_par', 'date_creation', 'date_derniere_activite',
+            'date_cloture'
         ]
 
     def to_internal_value(self, data):
         """
-        Même correction que pour Client : nettoyage des dates si format DateTime reçu
+        CORRECTION ROBUSTE: Nettoyer les données de date avant validation
         """
         data = data.copy() if hasattr(data, 'copy') else dict(data)
-        for field in ['date_ouverture', 'date_echeance', 'date_cloture']:
+        
+        # Gérer les champs de date de manière robuste
+        date_fields = ['date_ouverture', 'date_echeance']
+        
+        for field in date_fields:
             if field in data and data[field]:
-                date_str = str(data[field])
-                if 'T' in date_str:
-                    data[field] = date_str.split('T')[0]
+                field_value = data[field]
+                
+                # Si c'est un string avec 'T' (format datetime ISO)
+                if isinstance(field_value, str) and 'T' in field_value:
+                    data[field] = field_value.split('T')[0]
+                
+                # Si c'est un datetime Python, convertir en date
+                elif hasattr(field_value, 'strftime'):
+                    # Si c'est un datetime, extraire la date
+                    if hasattr(field_value, 'date'):
+                        data[field] = field_value.date()
+                    # Si c'est déjà une date, laisser tel quel
+                    elif hasattr(field_value, 'year'):
+                        data[field] = field_value
+                
+                # Si c'est None ou vide string, le supprimer pour utiliser les valeurs par défaut
+                elif not field_value:
+                    data.pop(field, None)
+
         return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        """
+        Surcharge de create pour gérer les valeurs par défaut
+        """
+        # Si date_ouverture n'est pas fournie, utiliser la valeur par défaut du modèle
+        if 'date_ouverture' not in validated_data:
+            validated_data['date_ouverture'] = timezone.now().date()
+        
+        # Gérer les collaborateurs si présents
+        collaborateurs = validated_data.pop('collaborateurs', [])
+        
+        # Créer le dossier
+        dossier = Dossier.objects.create(**validated_data)
+        
+        # Ajouter les collaborateurs
+        if collaborateurs:
+            dossier.collaborateurs.set(collaborateurs)
+        
+        return dossier
 
     def validate(self, data):
         """Validation personnalisée"""
         # Vérifier que la date d'échéance n'est pas antérieure à l'ouverture
-        if data.get('date_echeance') and data.get('date_ouverture'):
-            if data['date_echeance'] < data['date_ouverture']:
+        date_ouverture = data.get('date_ouverture')
+        date_echeance = data.get('date_echeance')
+        
+        if date_echeance and date_ouverture:
+            if date_echeance < date_ouverture:
                 raise serializers.ValidationError({
                     "date_echeance": "La date d'échéance ne peut pas être antérieure à la date d'ouverture."
                 })

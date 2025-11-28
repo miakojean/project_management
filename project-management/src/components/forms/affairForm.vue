@@ -98,8 +98,9 @@ export default {
         mainButton,
         prevButton
     },
+    emits:['notification'],
 
-    setup() {
+    setup(props, {emit}) {
         const router = useRouter();
         const isLoading = ref(false);
         const errorMessage = ref('');
@@ -147,6 +148,7 @@ export default {
             date_echeance: "",
             observations: "",
             description: "",
+            date_ouverture: new Date().toISOString().split('T')[0],
         });
 
         // Watch pour mettre à jour automatiquement l'ID client
@@ -203,8 +205,7 @@ export default {
 
             // Affiche le rapport d'erreur
             if (!isValid) {
-                console.table(errorsFound); // Regarde ici dans ta console !
-                console.log("État actuel du formData:", JSON.parse(JSON.stringify(formData)));
+                console.log(errorMessage);
             }
 
             return isValid;
@@ -230,8 +231,17 @@ export default {
                 
                 console.log("✅ Dossier créé avec succès:", nouveauDossier);
 
-                // Redirection ou autre action après succès
-                router.push('/dossiers');
+                emit('notification', {
+                    type: 'success',
+                    message: 'Dossier ajouté avec succès',
+                    duration: 4000
+                });
+
+                setTimeout(()=> {
+                    router.push('/dashboard')
+                }, 5000);
+
+                return nouveauDossier;
 
             } catch (error) {
                 console.error('❌ Erreur création dossier:', error);
@@ -251,6 +261,12 @@ export default {
                 } else {
                     errorMessage.value = error.response?.data?.message || error.message || 'Erreur lors de la création du dossier';
                 }
+                // Émettre une notification d'erreur
+                emit('notification', {
+                    type: 'error',
+                    message: errorMsg,
+                    duration: 8000
+                });
             } finally {
                 isLoading.value = false;
             }
