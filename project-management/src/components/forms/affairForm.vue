@@ -59,7 +59,7 @@
                     placeholder="Entrer une description relative au dossier"
                     v-model="formData.description"
                     :show-validation="showValidation"
-                    error-message="La description est obligatoire"
+                    :error-message="fieldErrors.description || 'La description est obligatoire'"
                 />
             </div>
 
@@ -147,7 +147,6 @@ export default {
             date_echeance: "",
             observations: "",
             description: "",
-            charge_de_clientele: "" // Sera rempli automatiquement
         });
 
         // Watch pour mettre à jour automatiquement l'ID client
@@ -155,14 +154,6 @@ export default {
             if (newClient && newClient.id) {
                 formData.client = newClient.id;
                 console.log("✅ Client ID assigné:", formData.client);
-            }
-        }, { immediate: true });
-
-        // Watch pour l'utilisateur connecté
-        watch(() => authStore.user, (newUser) => {
-            if (newUser && newUser.id) {
-                formData.charge_de_clientele = newUser.id;
-                console.log("✅ Agent ID assigné:", formData.charge_de_clientele);
             }
         }, { immediate: true });
 
@@ -183,7 +174,7 @@ export default {
             showValidation.value = true;
             let isValid = true;
 
-            // Validation des champs obligatoires seulement
+            // Validation des champs obligatoires
             if (!formData.titre.trim()) {
                 fieldErrors.titre = 'Le nom du dossier est obligatoire';
                 isValid = false;
@@ -210,25 +201,22 @@ export default {
                 isValid = false;
             }
 
-            // Vérification de l'agent
-            if (!formData.charge_de_clientele) {
-                errorMessage.value = 'Agent non identifié';
-                isValid = false;
+            // Affiche le rapport d'erreur
+            if (!isValid) {
+                console.table(errorsFound); // Regarde ici dans ta console !
+                console.log("État actuel du formData:", JSON.parse(JSON.stringify(formData)));
             }
 
             return isValid;
         };
 
-        const getCredentials = () => {
-            return authStore.isAuthenticated;
-        };
 
         // Fonction pour créer un dossier
         const handleSubmit = async () => {
             console.log("🔄 Début de la création du dossier...");
             
-            if (!isValid() || !getCredentials()) {
-                isLoading.value = false;
+            if (!isValid()) {
+                console.log("soumission echouée!!!")
                 return;
             }
 

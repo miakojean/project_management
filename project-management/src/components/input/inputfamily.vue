@@ -8,10 +8,10 @@
       :value="modelValue"
       @input="handleInput"
       @blur="validateField"
-      :class="{ 'error': hasError }"
+      :class="{ 'error': hasError || error }" 
     >
-    <span v-if="hasError" class="error-message">
-      {{ errorMessage }}
+    <span v-if="hasError || error" class="error-message">
+      {{ errorMessage || error }}
     </span>
   </div>
 </template>

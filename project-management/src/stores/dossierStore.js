@@ -88,11 +88,12 @@ export const useDossierStore = defineStore('dossier', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await api.post('manager/dossiers/create/', dossierData);
+            const response = await api.post('/manager/dossiers/create/', dossierData);
             dossiers.value.unshift(response.data);
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors de la création du dossier';
+            console.error(err)
             throw err;
         } finally {
             loading.value = false;
