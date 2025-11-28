@@ -4,7 +4,7 @@
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
                 <span class="error-text">{{ errorMessage }}</span>
-                <button class="error-close" @click="clearError">×</button>
+                <button class="error-close" @click="clearError">x</button>
             </div>
         </div>
 
