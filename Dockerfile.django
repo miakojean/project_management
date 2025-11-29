@@ -1,0 +1,21 @@
+# Dockerfile.django
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /project_management_backend
+
+# Install dependencies
+COPY project_management_backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project
+COPY project_management_backend/ .
+
+# Collect static files (pour Vue qui sera servi par Django en dev/prod)
+RUN python manage.py collectstatic --noinput || true
+
+EXPOSE 8000
+
+CMD ["gunicorn", "myproject.wsgi:application", "--bind", "0.0.0.0:8000"]
