@@ -28,11 +28,18 @@ const router = createRouter({
       name:'registration',
       component: () => import('../views/RegistrationView.vue')
     },
+
+    // About the dashboard
     {
       path:'/dashboard',
       name:'dashboard',
       component: () => import('@/views/dashboarIndexView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path:'/dashboard/recents',
+      name:'dashboard-recents',
+      component: () => import('@/views/recentsDashboard.vue')
     },
     {
       path:'/dashboard/customer/affairs',

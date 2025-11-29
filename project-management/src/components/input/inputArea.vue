@@ -9,15 +9,16 @@
         }"
         :value="modelValue"
         @input="updateValue"
+        @blur="handleBlur"
         :placeholder="placeholder"
         rows="4"
     ></textarea>
-    <span v-if="showError" class="error__message">{{ errorMessage }}</span>
+    <span v-if="showError" class="error__message">{{ error || errorMessage }}</span>
 </div>
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 export default {
     name: 'InputArea',
@@ -49,24 +50,36 @@ export default {
         modelValue: {
             type: String,
             default: ""
+        },
+        error: {
+            type: String,
+            default: ''
         }
     },
 
-    emits: ['update:modelValue', 'blur'], // ✅ Correction de la faute de frappe
+    emits: ['update:modelValue', 'blur'],
 
     setup(props, { emit }) {
+        const isTouched = ref(false);
         
         const showError = computed(() => {
-            return props.showValidation && props.modelValue.trim() === '';
+            return (props.showValidation || isTouched.value) && props.modelValue.trim() === '';
         });
 
         const updateValue = (event) => {
             emit('update:modelValue', event.target.value);
         };
 
+        const handleBlur = () => {
+            isTouched.value = true;
+            emit('blur');
+        };
+
         return {
             showError,
-            updateValue
+            updateValue,
+            handleBlur,
+            isTouched
         };
     }
 };
@@ -83,7 +96,7 @@ export default {
 label {
     font-weight: 500;
     color: #374151;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }
 
 textarea {
@@ -91,7 +104,7 @@ textarea {
     padding: 0.75rem;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     resize: vertical;
     min-height: 80px;
     transition: all 0.2s ease;
@@ -108,7 +121,7 @@ textarea:focus {
 }
 
 .input-error {
-    border-color: #ef4444;
+    border-color: #ef4444 !important;
     background-color: #fef2f2;
 }
 

@@ -4,6 +4,7 @@ import api from "@/_services/api";
 
 export const useDossierStore = defineStore('dossier', () => {
     // State
+    const customerDossier = ref([]);
     const dossiers = ref([]);
     const currentDossier = ref(null);
     const loading = ref(false);
@@ -75,6 +76,8 @@ export const useDossierStore = defineStore('dossier', () => {
         
         try {
             const response = await api.get(`manager/affairs?client_id=${clientId}`);
+            customerDossier.value = response.data.data.dossiers
+            console.log('Données du dossier du client', customerDossier.value)
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers du client';
@@ -84,19 +87,27 @@ export const useDossierStore = defineStore('dossier', () => {
         }
     }
 
+    // Dans votre store
     async function createDossier(dossierData) {
+        console.log("🔄 STORE: Début de createDossier");
+        console.trace("Stack trace du store"); // ← TRÈS IMPORTANT
+        
         loading.value = true;
         error.value = null;
         try {
-            const response = await api.post('/manager/dossiers/create/', dossierData);
+            console.log("📡 STORE: Envoi requête API vers /manager/dossier/create/");
+            const response = await api.post('/manager/dossier/create/', dossierData);
+            
+            console.log("✅ STORE: Réponse reçue", response.data);
             dossiers.value.unshift(response.data);
             return response.data;
         } catch (err) {
+            console.error("❌ STORE: Erreur", err);
             error.value = err.response?.data?.error || 'Erreur lors de la création du dossier';
-            console.error(err)
             throw err;
         } finally {
             loading.value = false;
+            console.log("🏁 STORE: Fin de createDossier");
         }
     }
 
@@ -232,6 +243,7 @@ export const useDossierStore = defineStore('dossier', () => {
         loading,
         error,
         stats,
+        customerDossier,
         
         // Getters
         totalDossiers,

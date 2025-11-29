@@ -314,6 +314,10 @@ class Dossier(models.Model):
             
             self.reference_dossier = f"{prefix}-{year}-{new_num:05d}"
         
+        # CORRECTION: S'assurer que date_ouverture a une valeur
+        if not self.date_ouverture:
+            self.date_ouverture = timezone.now().date()
+        
         # Gestion de la date de clôture
         if self.statut in ['CLOTURE', 'ANNULE'] and not self.date_cloture:
             self.date_cloture = timezone.now().date()
@@ -330,7 +334,7 @@ class Dossier(models.Model):
         # CORRECTION: Création physique APRÈS sauvegarde
         if self.chemin_dossier and not os.path.exists(self.chemin_dossier):
             self.creer_dossier_client()
-
+    
     def creer_dossier_client(self):
         """Crée le dossier physique unique pour le client"""
         try:

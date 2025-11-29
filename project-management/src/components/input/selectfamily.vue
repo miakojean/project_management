@@ -5,15 +5,18 @@
         :id="label"
         v-model="inputValue"
         @change="updateValue"
+        :class="{ 'error': error }"
       >
+        <option value="" disabled>-- Sélectionner --</option>
         <option 
           v-for="(item, index) in options" 
           :key="index" 
-          :value="item.matching"
+          :value="item.value"
         >
-          {{ item.value }}
+          {{ item.label }}
         </option>
       </select>
+      <span v-if="error" class="error-message">{{ error }}</span>
     </div>
   </template>
     
@@ -28,20 +31,13 @@
         },
         options: {
           type: Array,
-          default: () => [
-            {value:'Constitution', matching:'FD'}, 
-            {value:'Modification', matching:'DR'}, 
-            {value: 'Dissolution', matching:"CT"},
-            {value: 'Contentieux', matching: 'AUT'},
-            {value: 'Conseil', matching: 'AUT'},
-            {value:'Contrat', matching:'FD'}, 
-            {value:'Audit', matching:'DR'}, 
-            {value: 'Propriété intellectuelle', matching:"CT"},
-            {value: 'Fusion acquisition', matching: 'AUT'},
-            {value: 'Recouvrement', matching: 'AUT'}
-          ]
+          default: () => []
         },
         modelValue: {
+          type: String,
+          default: ''
+        },
+        error: {
           type: String,
           default: ''
         }
@@ -66,7 +62,7 @@
         };
       }
     }
-  </script>
+</script>
     
   <style scoped>
   .input__family {
@@ -78,7 +74,13 @@
     max-width: 400px;
   }
 
-select{
+  label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #535353;
+  }
+
+  select {
     padding: 0.9rem;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -87,9 +89,25 @@ select{
     box-sizing: border-box;
     transition: ease-in-out 0.3s;
     outline: none;
-}
+  }
 
-option{
+  select:focus {
+    border-color: #2563eb;
+  }
+
+  select.error {
+    border-color: #dc2626;
+    background-color: #fef2f2;
+  }
+
+  option {
     font-size: 0.9rem;
-}
+  }
+
+  .error-message {
+    color: #dc2626;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+  }
 </style>

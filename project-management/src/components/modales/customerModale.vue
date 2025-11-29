@@ -161,7 +161,8 @@ const loadCustomerDossiers = async () => {
     error.value = null
     
     try {
-        customerDossiers.value = await dossierStore.fetchDossiersByClient(props.customer.id)
+        await dossierStore.fetchDossiersByClient(props.customer.id)
+        customerDossiers.value = dossierStore.customerDossier
     } catch (err) {
         error.value = err.message || 'Erreur lors du chargement des dossiers'
         console.error('Erreur chargement dossiers:', err)
