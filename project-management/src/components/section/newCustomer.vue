@@ -1,15 +1,19 @@
 <template>
     <div class="layout">
-        <!-- Header avec le brand -->
         <header class="layout__header">
             <brand class="layout__brand"/>
         </header>
 
-        <!-- Contenu principal -->
         <main class="layout__main">
-            <!-- Étape 1: Sélection du type de personne -->
+
+            <div class="stepper-section">
+                <stepperComponent 
+                    :steps="stepsList" 
+                    :current-step="currentStep" 
+                />
+            </div>
+
             <div v-if="currentStep === 1" class="step-container">
-                
                 <choicesFamily
                     v-model="entityType"
                     label="Type de client"
@@ -21,14 +25,13 @@
                 />
             </div>
 
-            <!-- Étape 2: Formulaire selon le type sélectionné -->
             <div v-else-if="currentStep === 2" class="step-container">
+
                 <div class="form__title">
                     <h4>Nouveau client</h4>
                     <p>{{ entityType === 'PERSONNE_PHYSIQUE' ? 'Personne physique' : 'Personne morale' }}</p>
                 </div>
                 
-                <!-- Formulaire Personne Physique -->
                 <customerForm 
                     v-if="entityType === 'PERSONNE_PHYSIQUE'"
                     :entity-type="entityType"
@@ -37,7 +40,6 @@
                     @notification="handleNotification"
                 />
                 
-                <!-- Formulaire Personne Morale -->
                 <firmForm 
                     v-else-if="entityType === 'PERSONNE_MORALE'"
                     @prevstep="goToPreviousStep"
@@ -46,22 +48,6 @@
                 />
             </div>
 
-            <!-- Indicateur de progression -->
-            <div class="progress-indicator">
-                <div class="progress-steps">
-                    <div 
-                        v-for="step in totalSteps" 
-                        :key="step"
-                        class="step-dot"
-                        :class="{
-                            'step-dot--active': step === currentStep,
-                            'step-dot--completed': step < currentStep
-                        }"
-                    ></div>
-                </div>
-            </div>
-
-            <!-- Notification Popup -->
             <notificationPopup 
                 :message="notificationMessage"
                 :type="notificationType"
@@ -80,6 +66,7 @@ import firmForm from '../forms/firmForm.vue';
 import brand from '../navigation/brand.vue';
 import choicesFamily from '../input/choicesFamily.vue';
 import notificationPopup from '../tools/notificationPopup.vue';
+import stepperComponent from '../tools/stepperComponent.vue'; // Assurez-vous que ce fichier existe
 import { ref } from 'vue';
 
 export default {
@@ -90,12 +77,22 @@ export default {
         brand,
         choicesFamily,
         notificationPopup,
-        firmForm
+        firmForm,
+        stepperComponent
     },
     setup() {
         const entityType = ref(null);
         const currentStep = ref(1);
-        const totalSteps = ref(2);
+
+        // 2. DÉFINITION DES ÉTAPES POUR LE STEPPER
+        const stepsList = ref([
+            { label: 'Type de profil' },
+            { label: 'Informations' },
+            {label: 'Constitution de dossier'}
+        ]);
+        
+        // Le totalSteps devient dynamique basé sur la liste
+        const totalSteps = ref(stepsList.value.length);
         
         // Gestion des notifications
         const showNotification = ref(false);
@@ -115,20 +112,15 @@ export default {
 
         const handleFormSubmit = (formData) => {
             console.log('Données du formulaire soumises avec succès:', formData);
-            console.log('Type d\'entité:', entityType.value);
-            
-            // Optionnel: Vous pouvez ajouter une logique supplémentaire ici
-            // comme rediriger vers une autre page ou réinitialiser le formulaire
+            // Logique de soumission...
         };
 
         const handleNotification = (notification) => {
-            console.log('📢 Notification reçue:', notification);
             showNotification.value = true;
             notificationMessage.value = notification.message;
             notificationType.value = notification.type;
             notificationDuration.value = notification.duration || 5000;
 
-            // Auto-hide après la durée spécifiée
             setTimeout(() => {
                 showNotification.value = false;
             }, notificationDuration.value);
@@ -143,6 +135,7 @@ export default {
             entityType,
             currentStep,
             totalSteps,
+            stepsList, // <--- IMPORTANT : Retourner la liste pour le template
             showNotification,
             notificationMessage,
             notificationType,
@@ -185,12 +178,20 @@ export default {
 .layout__main {
     flex: 1;
     display: flex;
+    /* 3. MODIFICATION : Column pour empiler Stepper + Formulaire */
+    flex-direction: column; 
     align-items: center;
-    justify-content: center;
+    /* justify-content: center;  <-- On peut enlever ça si on veut que ça commence en haut */
     padding: 2rem;
     overflow-y: auto;
     background: #f8fafc;
-    /* height: 100vh; */
+}
+
+.stepper-section {
+    width: 100%;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
 }
 
 .step-container {
@@ -198,7 +199,7 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding-top:2rem;
+    /* padding-top supprimé car géré par le flex gap ou margin du stepper */
     width: 100%;
     max-width: 900px;
     animation: fadeIn 0.3s ease;
@@ -210,6 +211,7 @@ export default {
     align-items: center;
     justify-content: start;
     gap: 1rem;
+    margin-bottom: 1.5rem; /* Ajout d'espace sous le titre */
 }
 
 .form__title h4{
@@ -254,7 +256,6 @@ export default {
     }
 }
 
-/* Animation d'entrée */
 .layout-enter-active {
     transition: all 0.3s ease;
 }

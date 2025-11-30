@@ -66,6 +66,12 @@ const router = createRouter({
       path:'/create-affairs',
       name:'create-affairs',
       component:() => import('@/components/section/affairCreationSection.vue')
+    },
+
+    {
+      path:'/upload-file',
+      name:'upload-file',
+      component:() => import('@/components/section/uploadFileSection.vue')
     }
   ],
 })

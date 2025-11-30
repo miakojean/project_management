@@ -1,10 +1,5 @@
 <template>
     <div class="document-list-container">
-        <!-- Header avec actions globales -->
-        <div class="header-section">
-            <h4 class="section-title">Documents du dossier</h4>
-        </div>
-
         <!-- Liste des documents -->
         <ul class="document-list">
             <li class="document-item" v-for="doc in documents" :key="doc.id">
@@ -101,6 +96,42 @@ export default {
                 },
                 {
                     id: 2,
+                    title: 'Statuts de la société ACME SARL',
+                    uploadDate: '18 Nov 2024, 14:30',
+                    uploadedBy: 'Marie Yao',
+                    size: '1.8 Mo',
+                    extension: 'PDF',
+                    status: 'Signé',
+                    statusClass: 'status-signed',
+                    color: '#3498db',
+                    colorBg: 'rgba(52, 152, 219, 0.1)'
+                },
+                {
+                    id: 3,
+                    title: 'Statuts de la société ACME SARL',
+                    uploadDate: '18 Nov 2024, 14:30',
+                    uploadedBy: 'Marie Yao',
+                    size: '1.8 Mo',
+                    extension: 'PDF',
+                    status: 'Signé',
+                    statusClass: 'status-signed',
+                    color: '#3498db',
+                    colorBg: 'rgba(52, 152, 219, 0.1)'
+                },
+                {
+                    id: 4,
+                    title: 'Statuts de la société ACME SARL',
+                    uploadDate: '18 Nov 2024, 14:30',
+                    uploadedBy: 'Marie Yao',
+                    size: '1.8 Mo',
+                    extension: 'PDF',
+                    status: 'Signé',
+                    statusClass: 'status-signed',
+                    color: '#3498db',
+                    colorBg: 'rgba(52, 152, 219, 0.1)'
+                },
+                {
+                    id: 5,
                     title: 'Statuts de la société ACME SARL',
                     uploadDate: '18 Nov 2024, 14:30',
                     uploadedBy: 'Marie Yao',

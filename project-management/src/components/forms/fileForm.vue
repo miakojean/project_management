@@ -9,6 +9,10 @@
             </div>
         </div>
 
+        <div class="upload__container">
+            <fileInput :show-categories="false"/>
+        </div>
+
         <div class="form-grid">
             
             <div class="form-row">
@@ -120,6 +124,7 @@ import { storeToRefs } from 'pinia';
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
+import fileInput from '../input/fileInput.vue';
 import api from '@/_services/api';
 import { useRouter } from 'vue-router';
 
@@ -128,7 +133,8 @@ export default {
     components: {
         inputfamily,
         mainButton,
-        prevButton
+        prevButton,
+        fileInput
     },
     emits: ['prevstep', 'submit', 'notification'],
     setup(props, { emit }) {
