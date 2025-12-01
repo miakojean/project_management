@@ -655,53 +655,61 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
         historique = obj.historique.order_by('-date_action')[:5]
         return HistoriqueDocumentSerializer(historique, many=True).data
 
+# serializers.py (remplace DocumentCreateSerializer)
+
+# serializers.py
 class DocumentCreateSerializer(serializers.ModelSerializer):
-    files = serializers.ListField(               # ← NOUVEAU champ
-        child=serializers.FileField(), 
-        write_only=True, 
-        required=True
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+        help_text="Utilisez ce champ pour uploader un ou plusieurs fichiers"
     )
+    fichier = serializers.FileField(read_only=True)
 
     class Meta:
         model = Document
         fields = [
             'titre', 'description', 'type_document', 'categorie',
-            'dossier', 'client', 'files', 'numero_document',   # ← 'files' au lieu de 'fichier'
-            'date_document', 'date_validite', 'emetteur', 'destinataire',
-            'niveau_confidentialite', 'est_original', 
-            'est_certifie_conforme', 'necessite_signature',
+            'dossier', 'client', 'files', 'fichier',
+            'numero_document', 'date_document', 'date_validite',
+            'emetteur', 'destinataire', 'niveau_confidentialite',
+            'est_original', 'est_certifie_conforme', 'necessite_signature',
             'tags', 'mots_cles', 'notes_internes'
         ]
-        extra_kwargs = {
-            'fichier': {'required': False, 'read_only': True}  # ← on l'ignore en écriture
-        }
 
     def create(self, validated_data):
-        files = validated_data.pop('files')  # On extrait la liste des fichiers
-        documents = []
+        # On récupère les fichiers (nouveau format)
+        files = validated_data.pop('files', None)
         
+        # Si pas de 'files', on regarde si l'ancien champ 'fichier' existe (rétrocompatibilité)
+        if not files and 'fichier' in validated_data:
+            files = [validated_data.pop('fichier')]
+
+        # Si toujours rien → erreur claire
+        if not files:
+            raise serializers.ValidationError({"files": "Au moins un fichier est requis."})
+
+        user = self.context['request'].user
+        documents = []
+
         for file in files:
-            data = validated_data.copy()
-            data['fichier'] = file  # On remet un fichier à la fois
-            data['uploade_par'] = self.context['request'].user
-            
-            document = super().create(data)  # Crée un Document par fichier
-            
-            # Historique (une fois par doc)
+            doc_data = validated_data.copy()
+            doc_data['fichier'] = file
+            doc_data['uploade_par'] = user
+
+            document = Document.objects.create(**doc_data)
+
             HistoriqueDocument.objects.create(
                 document=document,
                 action='CREATION',
-                utilisateur=self.context['request'].user,
+                utilisateur=user,
                 details=f"Création du document {document.titre}"
             )
-            
-            # Déplacement physique si dossier
-            if document.dossier:
-                document.dossier.ajouter_document_au_dossier(document)
-            
+
             documents.append(document)
-        
-        return documents  # Retourne la liste (ou le premier si tu veux)
+
+        return documents
 
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     class Meta:

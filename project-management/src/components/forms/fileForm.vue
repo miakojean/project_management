@@ -131,7 +131,8 @@ const formData = reactive({
   titre: '',
   description: '',
   type_document: 'AUTRE',
-  charge_de_clientele: ''
+  charge_de_clientele: '',
+  files:''
 })
 
 const clearError = () => {
@@ -178,110 +179,55 @@ const handlePrevStep = () => {
 }
 
 const handleSubmit = async () => {
-  console.log('🔍 Début de la soumission...')
-  console.log('📁 Fichiers sélectionnés:', selectedFiles.value)
-  console.log('📝 Données du formulaire:', formData)
-
-  if (!validateForm()) {
-    console.log('❌ Validation échouée')
-    return
-  }
+  if (!validateForm()) return
 
   isLoading.value = true
+  const formDataToSend = new FormData()
+
+  // 1. Ajout de TOUS les fichiers avec la même clé → Django les reçoit en liste
+  selectedFiles.value.forEach(file => {
+    formDataToSend.append('files', file)
+  })
+
+  // 2. Métadonnées (une seule fois pour tous les documents)
+  formDataToSend.append('titre', formData.titre)
+  formDataToSend.append('description', formData.description)
+  formDataToSend.append('type_document', formData.type_document || 'AUTRE')
+
+  if (dossierStore.currentDossier?.id) {
+    formDataToSend.append('dossier', dossierStore.currentDossier.id)
+  }
+  if (dossierStore.currentDossier?.client?.id) {
+    formDataToSend.append('client', dossierStore.currentDossier.client.id)
+  }
 
   try {
-    // Créer un FormData pour chaque fichier
-    const uploadPromises = selectedFiles.value.map(async (file) => {
-      const formDataToSend = new FormData()
-      
-      // Ajouter le fichier
-      formDataToSend.append('fichier', file)
-      
-      // Ajouter les métadonnées
-      formDataToSend.append('titre', formData.titre)
-      formDataToSend.append('description', formData.description)
-      formDataToSend.append('type_document', formData.type_document || 'AUTRE')
-
-      // Dossier & client
-      if (dossierStore.currentDossier?.id) {
-        formDataToSend.append('dossier', dossierStore.currentDossier.id)
-      }
-      if (dossierStore.currentDossier?.client?.id) {
-        formDataToSend.append('client', dossierStore.currentDossier.client.id)
-      }
-
-      // Catégorie par défaut (à adapter selon votre logique)
-      formDataToSend.append('categorie', 1) // ID de la catégorie par défaut
-
-      // Debug
-      console.log('📤 Envoi du fichier:', file.name)
-      for (let [k, v] of formDataToSend.entries()) {
-        console.log(`  ${k}:`, v)
-      }
-
-      // Envoyer le fichier
-      const response = await api.post('manager/documents/', formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-
-      console.log('✅ Fichier uploadé:', response.data)
-      return response.data
-    })
-
-    // Attendre tous les uploads
-    const results = await Promise.all(uploadPromises)
-
-    console.log('✅ Tous les fichiers ont été uploadés:', results)
+    const response = await api.post('manager/documents/', formDataToSend)
+    
+    // Réponse : { message: "X document(s) créé(s)...", documents: [...] }
+    const count = response.data.documents?.length || selectedFiles.value.length
 
     emit('notification', {
       type: 'success',
-      message: `${results.length} document(s) ajouté(s) avec succès`,
+      message: `${count} document(s) ajouté(s) avec succès`,
       duration: 5000
     })
 
-    // Réinitialiser le formulaire
+    // Reset complet
     formData.titre = ''
     formData.description = ''
     formData.type_document = 'AUTRE'
     selectedFiles.value = []
-    
-    // Réinitialiser le composant fileInput
-    if (fileInputRef.value) {
-      fileInputRef.value.reset()
-    }
-
-    // Optionnel : rediriger ou recharger les documents
-    // await documentStore.fetchDocuments()
+    fileInputRef.value?.reset()
 
   } catch (error) {
-    console.error('❌ Erreur envoi document:', error)
-    console.error('Détails:', error.response?.data)
-    
-    let msg = 'Une erreur est survenue lors de l\'envoi'
-
-    if (error.response?.status === 400) {
-      msg = 'Données invalides. Vérifiez les champs.'
-      if (error.response.data) {
-        // Gérer les erreurs de validation
-        const errors = error.response.data
-        Object.keys(errors).forEach(field => {
-          fieldErrors[field] = Array.isArray(errors[field])
-            ? errors[field][0]
-            : errors[field]
-        })
-      }
-    } else if (error.response?.status === 413) {
-      msg = 'Les fichiers sont trop volumineux'
-    } else if (error.response?.status === 500) {
-      msg = 'Erreur serveur. Veuillez réessayer.'
-    }
+    console.error('Erreur upload:', error)
+    const msg = error.response?.data?.detail 
+      || error.response?.data?.files?.[0] 
+      || 'Erreur lors de l\'envoi des documents'
 
     errorMessage.value = msg
-    emit('notification', { 
-      type: 'error', 
-      message: msg, 
-      duration: 8000 
-    })
+    emit('notification', { type: 'error', message: msg, duration: 8000 })
   } finally {
     isLoading.value = false
   }
@@ -312,8 +258,8 @@ onMounted(async () => {
 }
 
 .form__body {
-    display: flex;
-    gap: 2rem;
+  display: flex;
+  gap: 2rem;
 }
 
 .upload__container {

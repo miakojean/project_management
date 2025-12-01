@@ -21,7 +21,7 @@ class DocumentsAPIView(APIView):
             context={'request': request}
         )
         if serializer.is_valid():
-            documents = serializer.save()                    # ← documents = liste maintenant
+            documents = serializer.save()  # Liste de 1 ou N documents
             return Response({
                 'message': f'{len(documents)} document(s) créé(s) avec succès',
                 'documents': DocumentListSerializer(documents, many=True).data
