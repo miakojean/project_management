@@ -1,337 +1,335 @@
 <template>
-    <form class="form-container" @submit.prevent="handleSubmit">
-        <!-- Notification d'erreur -->
-        <div v-if="errorMessage" class="error-banner">
-            <div class="error-content">
-                <span class="error-icon">⚠️</span>
-                <span class="error-text">{{ errorMessage }}</span>
-                <button class="error-close" @click="clearError">x</button>
-            </div>
+  <form class="form-container" @submit.prevent="handleSubmit">
+    <!-- Notification d'erreur -->
+    <div v-if="errorMessage" class="error-banner">
+      <div class="error-content">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ errorMessage }}</span>
+        <button class="error-close" @click="clearError">x</button>
+      </div>
+    </div>
+
+    <div class="form__body flex w-full gap-8">
+      <!-- === ZONE D'UPLOAD === -->
+      <div class="upload__container">
+        <fileInput 
+          ref="fileInputRef"
+          v-model="selectedFiles"
+          :show-categories="false"
+          @error="handleFileError"
+        />
+
+        <!-- Message de confirmation -->
+        <p v-if="selectedFiles.length > 0" class="files-ready-message">
+          ✓ {{ selectedFiles.length }} fichier{{ selectedFiles.length > 1 ? 's' : '' }} sélectionné{{ selectedFiles.length > 1 ? 's' : '' }}
+        </p>
+
+        <h3 class="mt-6 text-lg font-semibold">
+          Documents de {{ dossierStore.currentDossier?.client?.nom_complet || '...' }}
+        </h3>
+      </div>
+
+      <!-- === FORMULAIRE === -->
+      <div class="form-row flex-1">
+        <inputfamily 
+          identifiant="Title" 
+          label="Titre du document *" 
+          placeholder="Entrer le titre du document"
+          v-model="formData.titre"
+          :required="true"
+          :error="fieldErrors.titre"
+        />
+        <inputArea
+          identifiant="Description" 
+          label="Description *" 
+          placeholder="Entrer une description"
+          v-model="formData.description"
+          :required="true"
+          :error="fieldErrors.description"
+        />
+        <selectfamily 
+          identifiant="TypeDoc" 
+          label="Type de document" 
+          v-model="formData.type_document"
+          :options="docTypes"
+          :error="fieldErrors.type_document"
+        />
+
+        <div class="form-actions">
+          <prevButton @click="handlePrevStep" />
+          <mainButton 
+            :isloading="isLoading"
+            label="Ajouter document"
+            type="submit"
+          />
         </div>
-
-        <div class="form__body flex w-full gap-8">
-            <div class="upload__container">
-                <fileInput 
-                    ref="fileInputRef"
-                    :show-categories="false"
-                    @upload-complete="onFilesUploaded"
-                />
-
-                <h3> Documents de </h3>
-            </div>
-
-                
-            <div class="form-row">
-                <inputfamily 
-                    identifiant="Title" 
-                    label="Titre du document" 
-                    placeholder="Entrer le titre du document"
-                    v-model="formData.titre"
-                    :required="true"
-                    :error="fieldErrors.titre"
-                />
-                <inputArea
-                    identifiant="Description" 
-                    label="Description" 
-                    placeholder="Entrer une description"
-                    v-model="formData.description"
-                    :required="true"
-                    :error="fieldErrors.description"
-                />
-                <selectfamily 
-                    identifiant="TypeDoc" 
-                    label="Type de documents" 
-                    v-model="formData.type_document"
-                    :error="fieldErrors.date_naissance"
-                    :options="docTypes"
-                />
-                <div class="form-actions">
-                    <prevButton @click="handlePrevStep"/>
-                    <mainButton 
-                        :isloading="isLoading"
-                        label="Ajouter document"
-                        type="submit"
-                    />
-                </div>
-            </div>
-
-        </div>
-    </form>
+      </div>
+    </div>
+  </form>
 </template>
 
-<script>
-import { ref, reactive, watch, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { storeToRefs } from 'pinia';
-import inputfamily from '../input/inputfamily.vue';
-import inputArea from '../input/inputArea.vue';
-import selectfamily from '../input/selectfamily.vue';
-import mainButton from '../button/mainButton.vue';
-import prevButton from '../button/prevButton.vue';
-import fileInput from '../input/fileInput.vue';
-import api from '@/_services/api';
-import { useRouter } from 'vue-router';
-import { useDossierStore } from '@/stores/dossierStore';
-import { useDocumentStore} from '@/stores/documentsStore';
-import { useCustomerStore } from '@/stores/custumerStore';
+<script setup>
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
+import inputfamily from '../input/inputfamily.vue'
+import inputArea from '../input/inputArea.vue'
+import selectfamily from '../input/selectfamily.vue'
+import mainButton from '../button/mainButton.vue'
+import prevButton from '../button/prevButton.vue'
+import fileInput from '../input/fileInput.vue'
+import api from '@/_services/api'
+import { useRouter } from 'vue-router'
+import { useDossierStore } from '@/stores/dossierStore'
+import { useDocumentStore } from '@/stores/documentsStore'
+import { useCustomerStore } from '@/stores/custumerStore'
 
-export default {
-    name: 'FileForm',
-    components: {
-        inputfamily,
-        inputArea,
-        selectfamily,
-        mainButton,
-        prevButton,
-        fileInput
-    },
-    emits: ['prevstep', 'submit', 'notification'],
-    setup(props, { emit }) {
-        const isLoading = ref(false);
-        const errorMessage = ref('');
-        const fieldErrors = reactive({});
-        const authStore = useAuthStore();
-        const router = useRouter();
+const emit = defineEmits(['prevstep', 'notification'])
 
-        // Stores organisation
-        const customer = useCustomerStore();
-        const dossierStore = useDossierStore();
-        const documentStore = useDocumentStore();
+const isLoading = ref(false)
+const errorMessage = ref('')
+const fieldErrors = reactive({})
+const authStore = useAuthStore()
+const router = useRouter()
 
-        const { user, isInitialized } = storeToRefs(authStore);
+// Stores
+const customer = useCustomerStore()
+const dossierStore = useDossierStore()
+const documentStore = useDocumentStore()
+const { user, isInitialized } = storeToRefs(authStore)
 
-        // About form
-        const fileInputRef = ref(null);
-        const uploadedFiles = ref([]);  // ← on stocke les fichiers ici
+// Références
+const fileInputRef = ref(null)
+const selectedFiles = ref([])  // ✅ Lié au v-model de fileInput
 
-        const onFilesUploaded = (payload) => {
-            uploadedFiles.value = payload.files;   // on récupère tous les fichiers uploadés
-            console.log('Fichiers prêts :', uploadedFiles.value);
-        };
+// Types de documents
+const docTypes = ref([
+  { value: 'PIECE_IDENTITE', label: "Pièce d'identité" },
+  { value: 'STATUT', label: 'Statut' },
+  { value: 'PROCES_VERBAL', label: 'Procès verbal' },
+  { value: 'CONTRAT', label: 'Contrat' },
+  { value: 'COURRIER', label: 'Courrier' },
+  { value: 'ATTESTATION', label: 'Attestation' },
+  { value: 'CERTIFICAT', label: 'Certificat' },
+  { value: 'FACTURE', label: 'Facture' },
+  { value: 'RECU', label: 'Reçu' },
+  { value: 'ACTE', label: 'Acte juridique' },
+  { value: 'JUGEMENT', label: 'Jugement' },
+  { value: 'ORDONNANCE', label: 'Ordonnance' },
+  { value: 'ASSIGNATION', label: 'Assignation' },
+  { value: 'CONCLUSIONS', label: 'Conclusions' },
+  { value: 'MEMOIRE', label: 'Mémoire' },
+  { value: 'RAPPORT', label: 'Rapport' },
+  { value: 'NOTE', label: 'Note juridique' },
+  { value: 'CORRESPONDANCE', label: 'Correspondance' },
+  { value: 'FORMULAIRE', label: 'Formulaire administratif' },
+  { value: 'JUSTIFICATIF', label: 'Justificatif' },
+  { value: 'AUTRE', label: 'Autre' }
+])
 
-        const docTypes = ref([
-            {value:'PIECE_IDENTITE', label:'Pièce d\'identité'},
-            {value:'STATUT', label:'Statut'},
-            {value:'PROCES_VERBAL', label:'Procès verbal'},
-            {value:'CONTRAT', label:'Contrat'},
-            {value:'COURRIER', label:'Courrier'},
-            {value:'ATTESTATION', label:'Attestation'},
-            {value:'CERTIFICAT', label:'Certificat'},
-            {value:'FACTURE', label:'Facture'},
-            {value:'RECU', label:'Reçu'},
-            {value:'ACTE', label:'Acte juridique'},
-            {value:'JUGEMENT', label:'Jugement'},
-            {value:'ORDONNANCE', label:'Ordonnance'},
-            {value:'ASSIGNATION', label:'Assignation'},
-            {value:'CONCLUSIONS', label:'Conclusions'},
-            {value:'MEMOIRE', label:'Mémoire'},
-            {value:'RAPPORT', label:'Rapport'},
-            {value:'NOTE', label:'Note juridique'},
-            {value:'CORRESPONDANCE', label:'Correspondance'},
-            {value:'FORMULAIRE', label:'Formulaire administratif'},
-            {value:'JUSTIFICATIF', label:'Justificatif'},
-            {value:'AUTRE', label:'Autre'}
-        ])
+const formData = reactive({
+  titre: '',
+  description: '',
+  type_document: 'AUTRE',
+  charge_de_clientele: ''
+})
 
-        const formData = reactive({
-            titre:'',
-            description: '',
-            type_document: '',
-            dossier:'',
-            client:'',
-        });
+const clearError = () => {
+  errorMessage.value = ''
+  Object.keys(fieldErrors).forEach(k => delete fieldErrors[k])
+}
 
-        const clearError = () => {
-            errorMessage.value = '';
-            Object.keys(fieldErrors).forEach(key => {
-                fieldErrors[key] = '';
-            });
-        };
+const validateForm = () => {
+  clearError()
+  let valid = true
 
-        const validateForm = () => {
-            clearError();
-            let isValid = true;
+  if (!formData.titre.trim()) {
+    fieldErrors.titre = 'Le titre est obligatoire'
+    valid = false
+  }
+  if (!formData.description.trim()) {
+    fieldErrors.description = 'La description est obligatoire'
+    valid = false
+  }
+  if (!formData.type_document) {
+    fieldErrors.type_document = 'Le type de document est obligatoire'
+    valid = false
+  }
 
-            // Validation des champs requis
-            if (!formData.titre.trim()) {
-                fieldErrors.titre = 'Le nom est obligatoire';
-                isValid = false;
-            }
+  // Vérification des fichiers
+  if (selectedFiles.value.length === 0) {
+    errorMessage.value = 'Veuillez sélectionner au moins un fichier'
+    valid = false
+  }
 
-            if (!formData.description.trim()) {
-                fieldErrors.description = 'Le prénom est obligatoire';
-                isValid = false;
-            }
+  if (!valid) {
+    errorMessage.value = 'Veuillez corriger les erreurs dans le formulaire'
+  }
 
-            if (!isValid) {
-                errorMessage.value = 'Veuillez corriger les erreurs dans le formulaire';
-            }
+  return valid
+}
 
-            return isValid;
-        };
+const handleFileError = (error) => {
+  errorMessage.value = error
+}
 
-        const handlePrevStep = () => {
-            emit('prevstep');
-        };
+const handlePrevStep = () => {
+  emit('prevstep')
+}
 
-        const handleSubmit = async () => {
-            if (!validateForm()) {
-                return;
-            }
+const handleSubmit = async () => {
+  console.log('🔍 Début de la soumission...')
+  console.log('📁 Fichiers sélectionnés:', selectedFiles.value)
+  console.log('📝 Données du formulaire:', formData)
 
-            isLoading.value = true;
-            
-            if (!formData.charge_de_clientele && user.value) {
-                formData.charge_de_clientele = user.value.id;
-            }
+  if (!validateForm()) {
+    console.log('❌ Validation échouée')
+    return
+  }
 
-            try {
-                console.log("📤 Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
+  isLoading.value = true
 
-                const formDataToSend = new FormData();
-                formDataToSend.append('titre', formData.titre);
-                formDataToSend.append('description', formData.description);
-                formDataToSend.append('type_document', formData.type_document || 'other');
-                
-                // CORRECTION ICI : Utilisez .value pour les refs/computed
-                if (dossierStore.currentDossier) {
-                    formDataToSend.append('dossier', dossierStore.currentDossier.id || dossierStore.currentDossier);
-                } else {
-                    console.warn('⚠️ Aucun dossier sélectionné');
-                    // Gérer l'erreur ou laisser vide selon votre logique métier
-                }
-                
-                if (customer.currentCustomer) {
-                    formDataToSend.append('client', customer.currentCustomer.id || customer.currentCustomer);
-                } else {
-                    console.warn('⚠️ Aucun client sélectionné');
-                    // Gérer l'erreur ou laisser vide selon votre logique métier
-                }
+  try {
+    // Créer un FormData pour chaque fichier
+    const uploadPromises = selectedFiles.value.map(async (file) => {
+      const formDataToSend = new FormData()
+      
+      // Ajouter le fichier
+      formDataToSend.append('fichier', file)
+      
+      // Ajouter les métadonnées
+      formDataToSend.append('titre', formData.titre)
+      formDataToSend.append('description', formData.description)
+      formDataToSend.append('type_document', formData.type_document || 'AUTRE')
 
-                // Ajoute chaque fichier
-                uploadedFiles.value.forEach((fileObj, index) => {
-                    formDataToSend.append(`files`, fileObj.file);
-                });
+      // Dossier & client
+      if (dossierStore.currentDossier?.id) {
+        formDataToSend.append('dossier', dossierStore.currentDossier.id)
+      }
+      if (dossierStore.currentDossier?.client?.id) {
+        formDataToSend.append('client', dossierStore.currentDossier.client.id)
+      }
 
-                // Debug: Afficher le contenu de FormData
-                for (let [key, value] of formDataToSend.entries()) {
-                    console.log(`${key}:`, value);
-                }
+      // Catégorie par défaut (à adapter selon votre logique)
+      formDataToSend.append('categorie', 1) // ID de la catégorie par défaut
 
-                const response = await api.post('manager/documents/', formDataToSend, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+      // Debug
+      console.log('📤 Envoi du fichier:', file.name)
+      for (let [k, v] of formDataToSend.entries()) {
+        console.log(`  ${k}:`, v)
+      }
 
-                console.log('✅ Réponse du serveur:', response.data);
+      // Envoyer le fichier
+      const response = await api.post('manager/documents/', formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
 
-                // Émettre une notification de succès
-                emit('notification', {
-                    type: 'success',
-                    message: 'Document ajouté avec succès',
-                    duration: 5000
-                });
+      console.log('✅ Fichier uploadé:', response.data)
+      return response.data
+    })
 
-                return response;
+    // Attendre tous les uploads
+    const results = await Promise.all(uploadPromises)
 
-            } catch (error) {
-                console.error('Erreur lors de la soumission:', error);
-                
-                let errorMsg = 'Une erreur est survenue lors de l\'ajout du client';
-                
-                if (error.response) {
-                    // Gestion des erreurs de l'API
-                    if (error.response.status === 400) {
-                        errorMsg = 'Données invalides. Vérifiez les informations saisies.';
-                        // Traitement des erreurs de champ spécifiques
-                        if (error.response.data) {
-                            Object.keys(error.response.data).forEach(field => {
-                                const fieldName = field.replace(/_/g, ' ');
-                                fieldErrors[field] = Array.isArray(error.response.data[field]) 
-                                    ? error.response.data[field][0]
-                                    : error.response.data[field];
-                            });
-                        }
-                    } else if (error.response.status === 500) {
-                        errorMsg = 'Erreur serveur. Veuillez réessayer plus tard.';
-                    }
-                }
+    console.log('✅ Tous les fichiers ont été uploadés:', results)
 
-                errorMessage.value = errorMsg;
-                
-                // Émettre une notification d'erreur
-                emit('notification', {
-                    type: 'error',
-                    message: errorMsg,
-                    duration: 8000
-                });
+    emit('notification', {
+      type: 'success',
+      message: `${results.length} document(s) ajouté(s) avec succès`,
+      duration: 5000
+    })
 
-            } finally {
-                isLoading.value = false;
-            }
-        };
-
-        watch(user, (newUser) => {
-            console.log("👀 Watch user déclenché:", newUser);
-            if (newUser && newUser.id) {
-                formData.charge_de_clientele = newUser.id;
-                console.log("✅ ID assigné:", formData.charge_de_clientele);
-            }
-        }, { immediate: true });
-
-        onMounted(async () => {
-            if (!user.value && !isInitialized.value) {
-                console.log("🔄 User vide, tentative d'initialisation...");
-                await authStore.initializeAuth();
-            }
-            
-            // CORRECTION ICI : Vérifiez et récupérez les données séparément
-            if (!customer.currentCustomer) {
-                console.log('🔍 Tentative de récupération du client courant...');
-                // Si vous avez besoin d'appeler une méthode pour récupérer le client courant
-                // customer.attachCustomer(customerId) ou autre selon votre logique
-            }
-            
-            if (!dossierStore.currentDossier) {
-                console.log('🔍 Tentative de récupération du dossier courant...');
-                // Si vous avez besoin d'appeler une méthode pour récupérer le dossier courant
-                // dossierStore.attachAffair(dossierId) ou autre selon votre logique
-            }
-            
-            // Debug: Afficher les valeurs actuelles
-            console.log('👤 Client courant:', customer.currentCustomer);
-            console.log('📁 Dossier courant:', dossierStore.currentDossier);
-        });
-
-        return {
-            isLoading,
-            errorMessage,
-            docTypes,
-            fieldErrors,
-            fileInputRef,
-            uploadedFiles,
-            onFilesUploaded,
-            formData,
-            authStore,
-            router,
-            handlePrevStep,
-            handleSubmit,
-            clearError,
-
-            // Store
-            customer,
-            dossierStore,
-            documentStore
-        };
+    // Réinitialiser le formulaire
+    formData.titre = ''
+    formData.description = ''
+    formData.type_document = 'AUTRE'
+    selectedFiles.value = []
+    
+    // Réinitialiser le composant fileInput
+    if (fileInputRef.value) {
+      fileInputRef.value.reset()
     }
-};
+
+    // Optionnel : rediriger ou recharger les documents
+    // await documentStore.fetchDocuments()
+
+  } catch (error) {
+    console.error('❌ Erreur envoi document:', error)
+    console.error('Détails:', error.response?.data)
+    
+    let msg = 'Une erreur est survenue lors de l\'envoi'
+
+    if (error.response?.status === 400) {
+      msg = 'Données invalides. Vérifiez les champs.'
+      if (error.response.data) {
+        // Gérer les erreurs de validation
+        const errors = error.response.data
+        Object.keys(errors).forEach(field => {
+          fieldErrors[field] = Array.isArray(errors[field])
+            ? errors[field][0]
+            : errors[field]
+        })
+      }
+    } else if (error.response?.status === 413) {
+      msg = 'Les fichiers sont trop volumineux'
+    } else if (error.response?.status === 500) {
+      msg = 'Erreur serveur. Veuillez réessayer.'
+    }
+
+    errorMessage.value = msg
+    emit('notification', { 
+      type: 'error', 
+      message: msg, 
+      duration: 8000 
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Assignation automatique du chargé de clientèle
+watch(user, (u) => {
+  if (u?.id) formData.charge_de_clientele = u.id
+}, { immediate: true })
+
+onMounted(async () => {
+  console.log('📋 Composant fileForm monté')
+  console.log('👤 Utilisateur:', user.value)
+  console.log('📁 Dossier actuel:', dossierStore.currentDossier)
+
+  if (!user.value && !isInitialized.value) {
+    await authStore.initializeAuth()
+  }
+})
 </script>
 
 <style scoped>
 .form-container {
     width: 100%;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding-top: 2rem;
+    padding: 2rem;
+}
+
+.form__body {
+    display: flex;
+    gap: 2rem;
+}
+
+.upload__container {
+    flex: 1;
+    min-width: 0;
+}
+
+.files-ready-message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    color: #16a34a;
+    font-weight: 500;
+    text-align: center;
 }
 
 .form-row {
@@ -339,12 +337,14 @@ export default {
     flex-direction: column;
     justify-content: start;
     gap: 1rem;
-    width: 50%;
+    flex: 1;
+    min-width: 0;
 }
 
 .form-actions {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
+    justify-content: flex-end;
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid #e5e7eb;
@@ -353,18 +353,18 @@ export default {
 
 /* Bannière d'erreur */
 .error-banner {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    animation: slideDown 0.3s ease;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  animation: slideDown 0.3s ease;
 }
 
 .error-content {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .error-icon {
@@ -398,29 +398,38 @@ export default {
     background-color: #fecaca;
 }
 
+h3 {
+    color: #374151;
+    font-weight: 600;
+    margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 992px) {
+    .form__body {
+      flex-direction: column;
+    }
+    
     .form-row {
-        grid-template-columns: 1fr 1fr;
+        width: 100%;
     }
 }
 
 @media (max-width: 600px) {
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .form-actions {
-        justify-content: center;
-    }
-    
     .form-container {
-        padding: 0 1rem;
+      padding: 1rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+    
+    .form-actions button {
+      width: 100%;
     }
 
     .error-content {
-        align-items: flex-start;
+      align-items: flex-start;
     }
 }
 
@@ -436,7 +445,7 @@ export default {
     }
 }
 
-.form-row {
+.form__body {
     animation: fadeInUp 0.5s ease;
 }
 
@@ -450,10 +459,4 @@ export default {
         transform: translateY(0);
     }
 }
-
-/* Stagger animation pour les lignes */
-.form-row:nth-child(1) { animation-delay: 0.1s; }
-.form-row:nth-child(2) { animation-delay: 0.2s; }
-.form-row:nth-child(3) { animation-delay: 0.3s; }
-.form-row:nth-child(4) { animation-delay: 0.4s; }
 </style>
