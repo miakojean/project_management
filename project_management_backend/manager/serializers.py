@@ -413,19 +413,22 @@ class DossierListSerializer(serializers.ModelSerializer):
     date_creation_formatee = serializers.SerializerMethodField()
     date_echeance_formatee = serializers.SerializerMethodField()
     
+    # AJOUTER CE CHAMP pour inclure l'objet client complet
+    client = ClientListSerializer(read_only=True)  # Utilise ton serializer ClientListSerializer
+    
     class Meta:
         model = Dossier
         fields = [
             'id', 'reference_dossier', 'titre', 'type_dossier', 
             'statut', 'priorite', 'client_nom', 'date_echeance', 
             'est_en_retard', 'taux_avancement', 'date_creation',
-            'date_creation_formatee', 'date_echeance_formatee'  # Ajout des champs formatés
+            'date_creation_formatee', 'date_echeance_formatee',
+            'client'  # Ajouter client ici
         ]
 
     def get_date_creation_formatee(self, obj):
         """Formate la date de création"""
         if obj.date_creation:
-            # Format: "15 déc. 2023" ou selon votre préférence
             return obj.date_creation.strftime('%d %b %Y')
         return None
 

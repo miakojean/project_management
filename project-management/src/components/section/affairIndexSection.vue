@@ -34,7 +34,7 @@
                     :dateOuverture="dossier.date_creation_formatee"
                     :dossier="dossier"
                     :typeDossier="dossier.type_dossier"
-                    @click="goToFolderDetail(dossier.id)"
+                    @click="goToFolderDetail(dossier)"
                     class="dossier-card"
                 />
             </div>
@@ -96,9 +96,10 @@ export default {
         const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
 
         // Méthodes
-        const goToFolderDetail = (dossierId) => {
+        const goToFolderDetail = (dossier) => {
             router.push(`/dashboard/customer/affairs/`);
-            dossierStore.attachAffair(dossierId)
+            dossierStore.attachAffair(dossier)
+            console.log('Le dossier selectionné',dossier)
         };
 
         const handlePageChange = (page) => {

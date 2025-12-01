@@ -17,7 +17,7 @@ export const useCustomerStore = defineStore('customer', () => {
     const filters = ref({
         type_client: '',
         statut: '',
-        search: ''
+        search: '' 
     });
 
     // --- GETTERS ---

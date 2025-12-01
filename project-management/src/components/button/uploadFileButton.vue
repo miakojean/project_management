@@ -58,7 +58,7 @@ export default {
         const router = useRouter();
 
         function handleNavigateTo(){
-            router.push('/upload-file')
+          router.push('/upload-file')
         }
 
         return{

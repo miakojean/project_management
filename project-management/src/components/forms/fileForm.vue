@@ -16,6 +16,8 @@
                     :show-categories="false"
                     @upload-complete="onFilesUploaded"
                 />
+
+                <h3> Documents de </h3>
             </div>
 
                 
@@ -39,8 +41,9 @@
                 <selectfamily 
                     identifiant="TypeDoc" 
                     label="Type de documents" 
-                    v-model="formData.date_naissance"
+                    v-model="formData.type_document"
                     :error="fieldErrors.date_naissance"
+                    :options="docTypes"
                 />
                 <div class="form-actions">
                     <prevButton @click="handlePrevStep"/>
@@ -106,6 +109,30 @@ export default {
             console.log('Fichiers prêts :', uploadedFiles.value);
         };
 
+        const docTypes = ref([
+            {value:'PIECE_IDENTITE', label:'Pièce d\'identité'},
+            {value:'STATUT', label:'Statut'},
+            {value:'PROCES_VERBAL', label:'Procès verbal'},
+            {value:'CONTRAT', label:'Contrat'},
+            {value:'COURRIER', label:'Courrier'},
+            {value:'ATTESTATION', label:'Attestation'},
+            {value:'CERTIFICAT', label:'Certificat'},
+            {value:'FACTURE', label:'Facture'},
+            {value:'RECU', label:'Reçu'},
+            {value:'ACTE', label:'Acte juridique'},
+            {value:'JUGEMENT', label:'Jugement'},
+            {value:'ORDONNANCE', label:'Ordonnance'},
+            {value:'ASSIGNATION', label:'Assignation'},
+            {value:'CONCLUSIONS', label:'Conclusions'},
+            {value:'MEMOIRE', label:'Mémoire'},
+            {value:'RAPPORT', label:'Rapport'},
+            {value:'NOTE', label:'Note juridique'},
+            {value:'CORRESPONDANCE', label:'Correspondance'},
+            {value:'FORMULAIRE', label:'Formulaire administratif'},
+            {value:'JUSTIFICATIF', label:'Justificatif'},
+            {value:'AUTRE', label:'Autre'}
+        ])
+
         const formData = reactive({
             titre:'',
             description: '',
@@ -162,20 +189,40 @@ export default {
                 console.log("📤 Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
 
                 const formDataToSend = new FormData();
-                    formDataToSend.append('titre', formData.titre);
-                    formDataToSend.append('description', formData.description);
-                    formDataToSend.append('type_document', formData.type_document || 'other');
-                    formDataToSend.append('dossier', ()=> dossierStore.currentDossier)
-                    formDataToSend.append('client', ()=> customer.currentCustomer)
+                formDataToSend.append('titre', formData.titre);
+                formDataToSend.append('description', formData.description);
+                formDataToSend.append('type_document', formData.type_document || 'other');
+                
+                // CORRECTION ICI : Utilisez .value pour les refs/computed
+                if (dossierStore.currentDossier) {
+                    formDataToSend.append('dossier', dossierStore.currentDossier.id || dossierStore.currentDossier);
+                } else {
+                    console.warn('⚠️ Aucun dossier sélectionné');
+                    // Gérer l'erreur ou laisser vide selon votre logique métier
+                }
+                
+                if (customer.currentCustomer) {
+                    formDataToSend.append('client', customer.currentCustomer.id || customer.currentCustomer);
+                } else {
+                    console.warn('⚠️ Aucun client sélectionné');
+                    // Gérer l'erreur ou laisser vide selon votre logique métier
+                }
 
-                    // Ajoute chaque fichier
-                    uploadedFiles.value.forEach((fileObj, index) => {
-                    formDataToSend.append(`files`, fileObj.file);  // ou `fileObj.file` si tu veux le File brut
+                // Ajoute chaque fichier
+                uploadedFiles.value.forEach((fileObj, index) => {
+                    formDataToSend.append(`files`, fileObj.file);
                 });
+
+                // Debug: Afficher le contenu de FormData
+                for (let [key, value] of formDataToSend.entries()) {
+                    console.log(`${key}:`, value);
+                }
 
                 const response = await api.post('manager/documents/', formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+
+                console.log('✅ Réponse du serveur:', response.data);
 
                 // Émettre une notification de succès
                 emit('notification', {
@@ -183,11 +230,6 @@ export default {
                     message: 'Document ajouté avec succès',
                     duration: 5000
                 });
-
-                // Reset intelligent
-                const currentAgent = formData.charge_de_clientele;
-                formData.charge_de_clientele = currentAgent;
-                formData.type_client = 'PERSONNE_PHYSIQUE';
 
                 return response;
 
@@ -241,11 +283,29 @@ export default {
                 console.log("🔄 User vide, tentative d'initialisation...");
                 await authStore.initializeAuth();
             }
+            
+            // CORRECTION ICI : Vérifiez et récupérez les données séparément
+            if (!customer.currentCustomer) {
+                console.log('🔍 Tentative de récupération du client courant...');
+                // Si vous avez besoin d'appeler une méthode pour récupérer le client courant
+                // customer.attachCustomer(customerId) ou autre selon votre logique
+            }
+            
+            if (!dossierStore.currentDossier) {
+                console.log('🔍 Tentative de récupération du dossier courant...');
+                // Si vous avez besoin d'appeler une méthode pour récupérer le dossier courant
+                // dossierStore.attachAffair(dossierId) ou autre selon votre logique
+            }
+            
+            // Debug: Afficher les valeurs actuelles
+            console.log('👤 Client courant:', customer.currentCustomer);
+            console.log('📁 Dossier courant:', dossierStore.currentDossier);
         });
 
         return {
             isLoading,
             errorMessage,
+            docTypes,
             fieldErrors,
             fileInputRef,
             uploadedFiles,

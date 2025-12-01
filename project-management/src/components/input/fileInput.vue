@@ -18,7 +18,7 @@
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
         </div>
-        <h3>Déposez fichiers ici</h3>
+        <h3 class="">Déposez fichiers ici</h3>
         <p>ou</p>
         <button class="browse-btn" @click="triggerFileInput">
           Parcourir les fichiers
@@ -354,6 +354,7 @@ export default {
   color: #374151;
   font-weight: 600;
   font-size: 1.2rem;
+  text-align: center;
 }
 
 .upload-prompt p {

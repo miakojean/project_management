@@ -13,6 +13,7 @@ export const useDossierStore = defineStore('dossier', () => {
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
+    const getCurrentDossier = computed(()=>currentDossier.value)
 
     // Attach Affair
     function attachAffair(affair){
@@ -51,7 +52,8 @@ export const useDossierStore = defineStore('dossier', () => {
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
-            console.log("Les statistiques", stats.value)
+            console.log("Les statistiques", stats.value);
+            console.log("Les dossiers chargés", dossiers.value);
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers';  
@@ -257,6 +259,7 @@ export const useDossierStore = defineStore('dossier', () => {
         dossiersActifs,
         dossiersEnRetard,
         dossiersParStatut,
+        getCurrentDossier,
 
         // Attach Affair
         attachAffair,
