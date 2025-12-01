@@ -13,6 +13,13 @@ export const useDossierStore = defineStore('dossier', () => {
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
+
+    // Attach Affair
+    function attachAffair(affair){
+        currentDossier.value = affair;
+        console.log('Dossier selectionné', affair);
+        return currentDossier;
+    }
     
     const dossiersActifs = computed(() => 
         dossiers.value.filter(d => 
@@ -250,6 +257,9 @@ export const useDossierStore = defineStore('dossier', () => {
         dossiersActifs,
         dossiersEnRetard,
         dossiersParStatut,
+
+        // Attach Affair
+        attachAffair,
         
         // Actions
         fetchDossiers,

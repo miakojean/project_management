@@ -87,20 +87,6 @@
             </div>
           </div>
         </div>
-        
-        <div class="upload-actions">
-          <button class="add-more-btn" @click="triggerFileInput">
-            Ajouter d'autres fichiers
-          </button>
-          <button 
-            class="upload-btn" 
-            @click="uploadFiles"
-            :disabled="!canUpload || isUploading"
-          >
-            <span v-if="isUploading">Upload en cours...</span>
-            <span v-else>Uploader les fichiers ({{ files.length }})</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -135,7 +121,7 @@
 
 <script>
 export default {
-  name: 'AdministrativeFileUploader',
+  name: 'FileInput',
   props: {
     maxFileSizeMB: {
       type: Number,

@@ -5,114 +5,53 @@
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
                 <span class="error-text">{{ errorMessage }}</span>
-                <button class="error-close" @click="clearError">×</button>
+                <button class="error-close" @click="clearError">x</button>
             </div>
         </div>
 
-        <div class="upload__container">
-            <fileInput :show-categories="false"/>
-        </div>
+        <div class="form__body flex w-full gap-8">
+            <div class="upload__container">
+                <fileInput 
+                    ref="fileInputRef"
+                    :show-categories="false"
+                    @upload-complete="onFilesUploaded"
+                />
+            </div>
 
-        <div class="form-grid">
-            
+                
             <div class="form-row">
                 <inputfamily 
-                    identifiant="nom" 
-                    label="Nom" 
-                    placeholder="Entrer le nom du client"
-                    v-model="formData.nom"
+                    identifiant="Title" 
+                    label="Titre du document" 
+                    placeholder="Entrer le titre du document"
+                    v-model="formData.titre"
                     :required="true"
-                    :error="fieldErrors.nom"
+                    :error="fieldErrors.titre"
                 />
-                <inputfamily 
-                    identifiant="prenoms" 
-                    label="Prénom(s)" 
-                    placeholder="Entrer prénom(s)"
-                    v-model="formData.prenoms"
+                <inputArea
+                    identifiant="Description" 
+                    label="Description" 
+                    placeholder="Entrer une description"
+                    v-model="formData.description"
                     :required="true"
-                    :error="fieldErrors.prenoms"
+                    :error="fieldErrors.description"
                 />
-                 <inputfamily 
-                    identifiant="date-naissance" 
-                    label="Date de naissance" 
-                    placeholder="JJ/MM/AAAA"
-                    type="date"
+                <selectfamily 
+                    identifiant="TypeDoc" 
+                    label="Type de documents" 
                     v-model="formData.date_naissance"
                     :error="fieldErrors.date_naissance"
                 />
-            </div>
-            
-            <div class="form-row">
-                <inputfamily 
-                    identifiant="lieu-naissance" 
-                    label="Lieu de naissance" 
-                    placeholder="Entrer le lieu de naissance"
-                    v-model="formData.lieu_naissance"
-                    :error="fieldErrors.lieu_naissance"
-                />
-                <inputfamily 
-                    identifiant="adresse" 
-                    label="Adresse" 
-                    placeholder="Entrer l'adresse"
-                    type="text"
-                    v-model="formData.adresse"
-                    :required="true"
-                    :error="fieldErrors.adresse"
-                />
-                <inputfamily 
-                    identifiant="ville" 
-                    label="Ville" 
-                    placeholder="Entrer la ville"
-                    v-model="formData.ville"
-                    :error="fieldErrors.ville"
-                />
+                <div class="form-actions">
+                    <prevButton @click="handlePrevStep"/>
+                    <mainButton 
+                        :isloading="isLoading"
+                        label="Ajouter document"
+                        type="submit"
+                    />
+                </div>
             </div>
 
-            <div class="form-row">
-                <inputfamily 
-                    identifiant="telephone" 
-                    label="Téléphone" 
-                    placeholder="Entrer le téléphone"
-                    type="tel"
-                    v-model="formData.telephone_1"
-                    :error="fieldErrors.telephone_1"
-                />
-                
-                <inputfamily 
-                    identifiant="email" 
-                    label="Email" 
-                    placeholder="Entrer votre email"
-                    v-model="formData.email"
-                    :error="fieldErrors.email"
-                />
-                <inputfamily 
-                    identifiant="representantLegal" 
-                    label="Nom du representant legal" 
-                    placeholder="Entrer le nom du representant legal"
-                    v-model="formData.representant_legal_nom"
-                    :error="fieldErrors.representant_legal_nom"
-                />
-            </div>
-
-            <div class="form-row">
-                
-                <inputfamily 
-                    identifiant="representantLegalRole" 
-                    label="Représentant légal fonction" 
-                    placeholder="Entrer la fonction"
-                    v-model="formData.representant_legal_fonction"
-                    :error="fieldErrors.representant_legal_fonction"
-                />
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <prevButton @click="handlePrevStep"/>
-            <mainButton 
-                :isloading="isLoading"
-                label="Ajouter client"
-                type="submit"
-            />
         </div>
     </form>
 </template>
@@ -122,16 +61,23 @@ import { ref, reactive, watch, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
 import inputfamily from '../input/inputfamily.vue';
+import inputArea from '../input/inputArea.vue';
+import selectfamily from '../input/selectfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
 import fileInput from '../input/fileInput.vue';
 import api from '@/_services/api';
 import { useRouter } from 'vue-router';
+import { useDossierStore } from '@/stores/dossierStore';
+import { useDocumentStore} from '@/stores/documentsStore';
+import { useCustomerStore } from '@/stores/custumerStore';
 
 export default {
-    name: 'ClientPhysiqueForm',
+    name: 'FileForm',
     components: {
         inputfamily,
+        inputArea,
+        selectfamily,
         mainButton,
         prevButton,
         fileInput
@@ -144,23 +90,28 @@ export default {
         const authStore = useAuthStore();
         const router = useRouter();
 
+        // Stores organisation
+        const customer = useCustomerStore();
+        const dossierStore = useDossierStore();
+        const documentStore = useDocumentStore();
+
         const { user, isInitialized } = storeToRefs(authStore);
 
+        // About form
+        const fileInputRef = ref(null);
+        const uploadedFiles = ref([]);  // ← on stocke les fichiers ici
+
+        const onFilesUploaded = (payload) => {
+            uploadedFiles.value = payload.files;   // on récupère tous les fichiers uploadés
+            console.log('Fichiers prêts :', uploadedFiles.value);
+        };
+
         const formData = reactive({
-            type_client: 'PERSONNE_PHYSIQUE',
-            nom: '',
-            prenoms: '',
-            date_naissance: '',
-            lieu_naissance: '',
-            adresse: '',
-            ville: '',
-            commune: '',
-            telephone_1: '',
-            telephone_2: '',
-            email: '',
-            representant_legal_nom: '',
-            representant_legal_fonction: '',
-            charge_de_clientele: '',
+            titre:'',
+            description: '',
+            type_document: '',
+            dossier:'',
+            client:'',
         });
 
         const clearError = () => {
@@ -175,30 +126,13 @@ export default {
             let isValid = true;
 
             // Validation des champs requis
-            if (!formData.nom.trim()) {
-                fieldErrors.nom = 'Le nom est obligatoire';
+            if (!formData.titre.trim()) {
+                fieldErrors.titre = 'Le nom est obligatoire';
                 isValid = false;
             }
 
-            if (!formData.prenoms.trim()) {
-                fieldErrors.prenoms = 'Le prénom est obligatoire';
-                isValid = false;
-            }
-
-            if (!formData.adresse.trim()) {
-                fieldErrors.adresse = 'L\'adresse est obligatoire';
-                isValid = false;
-            }
-
-            // Validation email si fourni
-            if (formData.email && !isValidEmail(formData.email)) {
-                fieldErrors.email = 'Format d\'email invalide';
-                isValid = false;
-            }
-
-            // Validation téléphone si fourni
-            if (formData.telephone_1 && !isValidPhone(formData.telephone_1)) {
-                fieldErrors.telephone_1 = 'Format de téléphone invalide';
+            if (!formData.description.trim()) {
+                fieldErrors.description = 'Le prénom est obligatoire';
                 isValid = false;
             }
 
@@ -208,31 +142,6 @@ export default {
 
             return isValid;
         };
-
-        const isValidEmail = (email) => {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        };
-
-        const isValidPhone = (phone) => {
-            const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/;
-            return phoneRegex.test(phone.replace(/\s/g, ''));
-        };
-
-        watch(user, (newUser) => {
-            console.log("👀 Watch user déclenché:", newUser);
-            if (newUser && newUser.id) {
-                formData.charge_de_clientele = newUser.id;
-                console.log("✅ ID assigné:", formData.charge_de_clientele);
-            }
-        }, { immediate: true });
-
-        onMounted(async () => {
-            if (!user.value && !isInitialized.value) {
-                console.log("🔄 User vide, tentative d'initialisation...");
-                await authStore.initializeAuth();
-            }
-        });
 
         const handlePrevStep = () => {
             emit('prevstep');
@@ -252,18 +161,27 @@ export default {
             try {
                 console.log("📤 Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
 
-                const response = await api.post('manager/clients/ajouter/', formData);
+                const formDataToSend = new FormData();
+                    formDataToSend.append('titre', formData.titre);
+                    formDataToSend.append('description', formData.description);
+                    formDataToSend.append('type_document', formData.type_document || 'other');
+                    formDataToSend.append('dossier', ()=> dossierStore.currentDossier)
+                    formDataToSend.append('client', ()=> customer.currentCustomer)
+
+                    // Ajoute chaque fichier
+                    uploadedFiles.value.forEach((fileObj, index) => {
+                    formDataToSend.append(`files`, fileObj.file);  // ou `fileObj.file` si tu veux le File brut
+                });
+
+                const response = await api.post('manager/documents/', formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
 
                 // Émettre une notification de succès
                 emit('notification', {
                     type: 'success',
-                    message: 'Client ajouté avec succès',
+                    message: 'Document ajouté avec succès',
                     duration: 5000
-                });
-
-                emit('submit', {
-                    ...formData,
-                    type_client: 'PERSONNE_PHYSIQUE'
                 });
 
                 // Reset intelligent
@@ -310,16 +228,39 @@ export default {
             }
         };
 
+        watch(user, (newUser) => {
+            console.log("👀 Watch user déclenché:", newUser);
+            if (newUser && newUser.id) {
+                formData.charge_de_clientele = newUser.id;
+                console.log("✅ ID assigné:", formData.charge_de_clientele);
+            }
+        }, { immediate: true });
+
+        onMounted(async () => {
+            if (!user.value && !isInitialized.value) {
+                console.log("🔄 User vide, tentative d'initialisation...");
+                await authStore.initializeAuth();
+            }
+        });
+
         return {
             isLoading,
             errorMessage,
             fieldErrors,
+            fileInputRef,
+            uploadedFiles,
+            onFilesUploaded,
             formData,
             authStore,
             router,
             handlePrevStep,
             handleSubmit,
-            clearError
+            clearError,
+
+            // Store
+            customer,
+            dossierStore,
+            documentStore
         };
     }
 };
@@ -333,18 +274,12 @@ export default {
     padding-top: 2rem;
 }
 
-.form-grid {
+.form-row {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    width: 100%;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
+    justify-content: start;
     gap: 1rem;
-    align-items: start;
+    width: 50%;
 }
 
 .form-actions {

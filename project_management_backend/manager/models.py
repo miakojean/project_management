@@ -810,7 +810,7 @@ class Document(models.Model):
         for unit in ['o', 'Ko', 'Mo', 'Go']:
             if taille < 1024.0:
                 return f"{taille:.1f} {unit}"
-            taille /= 1024.0
+            taille /= 1024.0 
         return f"{taille:.1f} To"
     
     @property

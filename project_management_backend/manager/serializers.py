@@ -653,49 +653,52 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
         return HistoriqueDocumentSerializer(historique, many=True).data
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
+    files = serializers.ListField(               # ← NOUVEAU champ
+        child=serializers.FileField(), 
+        write_only=True, 
+        required=True
+    )
+
     class Meta:
         model = Document
         fields = [
             'titre', 'description', 'type_document', 'categorie',
-            'dossier', 'client', 'fichier', 'numero_document',
+            'dossier', 'client', 'files', 'numero_document',   # ← 'files' au lieu de 'fichier'
             'date_document', 'date_validite', 'emetteur', 'destinataire',
             'niveau_confidentialite', 'est_original', 
             'est_certifie_conforme', 'necessite_signature',
             'tags', 'mots_cles', 'notes_internes'
         ]
-    
-    def validate(self, data):
-        # S'assurer que le client est cohérent avec le dossier
-        dossier = data.get('dossier')
-        client = data.get('client')
-        
-        if dossier and client and dossier.client != client:
-            raise serializers.ValidationError({
-                'client': 'Le client doit correspondre au client du dossier.'
-            })
-        
-        # Si dossier fourni mais pas client, utiliser le client du dossier
-        if dossier and not client:
-            data['client'] = dossier.client
-        
-        return data
-    
+        extra_kwargs = {
+            'fichier': {'required': False, 'read_only': True}  # ← on l'ignore en écriture
+        }
+
     def create(self, validated_data):
-        # Ajouter l'utilisateur qui upload
-        validated_data['uploade_par'] = self.context['request'].user
+        files = validated_data.pop('files')  # On extrait la liste des fichiers
+        documents = []
         
-        # Créer le document
-        document = super().create(validated_data)
+        for file in files:
+            data = validated_data.copy()
+            data['fichier'] = file  # On remet un fichier à la fois
+            data['uploade_par'] = self.context['request'].user
+            
+            document = super().create(data)  # Crée un Document par fichier
+            
+            # Historique (une fois par doc)
+            HistoriqueDocument.objects.create(
+                document=document,
+                action='CREATION',
+                utilisateur=self.context['request'].user,
+                details=f"Création du document {document.titre}"
+            )
+            
+            # Déplacement physique si dossier
+            if document.dossier:
+                document.dossier.ajouter_document_au_dossier(document)
+            
+            documents.append(document)
         
-        # Créer une entrée d'historique
-        HistoriqueDocument.objects.create(
-            document=document,
-            action='CREATION',
-            utilisateur=self.context['request'].user,
-            details=f"Création du document {document.titre}"
-        )
-        
-        return document
+        return documents  # Retourne la liste (ou le premier si tu veux)
 
 class DocumentUpdateSerializer(serializers.ModelSerializer):
     class Meta:

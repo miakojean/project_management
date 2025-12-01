@@ -71,7 +71,7 @@
     justify-content: start;
     gap: 0.5rem;
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
   }
 
   label {

@@ -98,6 +98,7 @@ export default {
         // Méthodes
         const goToFolderDetail = (dossierId) => {
             router.push(`/dashboard/customer/affairs/`);
+            dossierStore.attachAffair(dossierId)
         };
 
         const handlePageChange = (page) => {

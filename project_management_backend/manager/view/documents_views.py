@@ -7,7 +7,7 @@ from django.db.models import Q
 from ..models import Document
 from ..serializers import DocumentListSerializer, DocumentCreateSerializer
 
-class DocumentListCreateAPIView(APIView):
+class DocumentsAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -16,8 +16,15 @@ class DocumentListCreateAPIView(APIView):
         return Response(serializer.data)
     
     def post(self, request):
-        serializer = DocumentCreateSerializer(data=request.data, context={'request': request})
+        serializer = DocumentCreateSerializer(
+            data=request.data,
+            context={'request': request}
+        )
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            documents = serializer.save()                    # ← documents = liste maintenant
+            return Response({
+                'message': f'{len(documents)} document(s) créé(s) avec succès',
+                'documents': DocumentListSerializer(documents, many=True).data
+            }, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
