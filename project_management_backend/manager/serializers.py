@@ -284,138 +284,163 @@ class ClientStatsSerializer(serializers.ModelSerializer):
             }
         return None
 
+# Serializers pour Document
+class DocumentListSerializer(serializers.ModelSerializer):
+    categorie_nom = serializers.CharField(source='categorie.nom', read_only=True)
+    client_nom = serializers.CharField(source='client.nom_complet', read_only=True)
+    dossier_reference = serializers.CharField(source='dossier.reference_dossier', read_only=True)
+    dossier_titre = serializers.CharField(source='dossier.titre', read_only=True)
+    uploade_par_nom = serializers.CharField(source='uploade_par.get_full_name', read_only=True)
+    taille_lisible = serializers.ReadOnlyField()
+    est_valide = serializers.ReadOnlyField()
+    est_signe_completement = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Document
+        fields = [
+            'id', 'reference', 'titre', 'type_document',
+            'categorie', 'categorie_nom', 'client', 'client_nom',
+            'dossier', 'dossier_reference', 'dossier_titre',
+            'statut', 'niveau_confidentialite', 'taille_lisible',
+            'date_document', 'date_validite', 'est_valide',
+            'est_original', 'est_certifie_conforme',
+            'necessite_signature', 'est_signe_completement',
+            'version', 'uploade_par', 'uploade_par_nom',
+            'date_upload', 'est_archive'
+        ]
 
 class DossierSerializer(serializers.ModelSerializer):
-    # On utilise le serializer client existant pour l'affichage (lecture seule)
+    # Lecture : client complet
     client_details = ClientListSerializer(source='client', read_only=True)
     
-    # Pour l'assignation (écriture), on garde l'ID standard
+    # Écriture : juste l'ID du client
     client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
-    
-    # Champs calculés du modèle
+
+    # Champs calculés
     solde_honoraires = serializers.ReadOnlyField()
     est_en_retard = serializers.ReadOnlyField()
     taux_avancement = serializers.ReadOnlyField()
-    
-    # Gestion des collaborateurs (Many-to-Many)
+
+    # Collaborateurs (ManyToMany)
     collaborateurs = serializers.PrimaryKeyRelatedField(
-        many=True, 
+        many=True,
         queryset=Utilisateur.objects.all(),
-        required=False
+        required=False,
+        allow_empty=True
     )
 
-    # CORRECTION COMPLÈTE: Définir explicitement tous les champs de date
-    date_ouverture = serializers.DateField(required=False, format='%Y-%m-%d')
-    date_echeance = serializers.DateField(required=False, allow_null=True, format='%Y-%m-%d')
+    # TOUS LES DOCUMENTS DU DOSSIER (c’est ce que tu voulais !)
+    documents = DocumentListSerializer(many=True, read_only=True)
+    documents_count = serializers.IntegerField(source='documents.count', read_only=True)
+
+    # Dates formatées proprement
+    date_ouverture = serializers.DateField(
+        required=False,
+        format='%Y-%m-%d',
+        input_formats=['%Y-%m-%d', 'iso-8601']
+    )
+    date_echeance = serializers.DateField(
+        required=False,
+        allow_null=True,
+        format='%Y-%m-%d',
+        input_formats=['%Y-%m-%d', 'iso-8601']
+    )
     date_cloture = serializers.DateField(read_only=True, format='%Y-%m-%d')
 
     class Meta:
         model = Dossier
         fields = [
-            'id', 'reference_dossier', 'titre', 'type_dossier', 
+            'id', 'reference_dossier', 'titre', 'type_dossier',
             'description', 'client', 'client_details',
             'statut', 'priorite', 'collaborateurs',
             'date_ouverture', 'date_echeance', 'date_cloture',
             'honoraires_prevus', 'honoraires_factures', 'solde_honoraires',
             'numero_tribunal', 'juridiction', 'numero_rg',
             'observations', 'est_en_retard', 'taux_avancement',
-            'cree_par', 'date_creation'
-        ]
-        read_only_fields =[
-            'reference_dossier', 'chemin_dossier', 
-            'solde_honoraires', 'est_en_retard', 'taux_avancement',
             'cree_par', 'date_creation', 'date_derniere_activite',
-            'date_cloture'
+            'documents',           # ← ici : tous les documents
+            'documents_count',     # ← bonus : le nombre total
+        ]
+        read_only_fields = [
+            'reference_dossier',
+            'chemin_dossier',
+            'solde_honoraires',
+            'est_en_retard',
+            'taux_avancement',
+            'cree_par',
+            'date_creation',
+            'date_derniere_activite',
+            'date_cloture',
+            'documents',           # ← read-only (normal, on ne crée pas les docs ici)
+            'documents_count',
         ]
 
+    # Nettoyage des dates (robustesse max)
     def to_internal_value(self, data):
-        """
-        CORRECTION ROBUSTE: Nettoyer les données de date avant validation
-        """
         data = data.copy() if hasattr(data, 'copy') else dict(data)
-        
-        # Gérer les champs de date de manière robuste
-        date_fields = ['date_ouverture', 'date_echeance']
-        
-        for field in date_fields:
+
+        for field in ['date_ouverture', 'date_echeance']:
             if field in data and data[field]:
-                field_value = data[field]
-                
-                # Si c'est un string avec 'T' (format datetime ISO)
-                if isinstance(field_value, str) and 'T' in field_value:
-                    data[field] = field_value.split('T')[0]
-                
-                # Si c'est un datetime Python, convertir en date
-                elif hasattr(field_value, 'strftime'):
-                    # Si c'est un datetime, extraire la date
-                    if hasattr(field_value, 'date'):
-                        data[field] = field_value.date()
-                    # Si c'est déjà une date, laisser tel quel
-                    elif hasattr(field_value, 'year'):
-                        data[field] = field_value
-                
-                # Si c'est None ou vide string, le supprimer pour utiliser les valeurs par défaut
-                elif not field_value:
-                    data.pop(field, None)
+                value = data[field]
+                if isinstance(value, str) and 'T' in value:
+                    data[field] = value.split('T')[0]
+                elif hasattr(value, 'date'):
+                    data[field] = value.date()
+            elif field in data and not data[field]:
+                data.pop(field, None)
 
         return super().to_internal_value(data)
 
+    # Création propre
     def create(self, validated_data):
-        """
-        Surcharge de create pour gérer les valeurs par défaut
-        """
-        # Si date_ouverture n'est pas fournie, utiliser la valeur par défaut du modèle
-        if 'date_ouverture' not in validated_data:
-            validated_data['date_ouverture'] = timezone.now().date()
-        
-        # Gérer les collaborateurs si présents
         collaborateurs = validated_data.pop('collaborateurs', [])
         
-        # Créer le dossier
+        if 'date_ouverture' not in validated_data:
+            validated_data['date_ouverture'] = timezone.now().date()
+
         dossier = Dossier.objects.create(**validated_data)
         
-        # Ajouter les collaborateurs
         if collaborateurs:
             dossier.collaborateurs.set(collaborateurs)
-        
+
         return dossier
 
+    # Validation métier
     def validate(self, data):
-        """Validation personnalisée"""
-        # Vérifier que la date d'échéance n'est pas antérieure à l'ouverture
         date_ouverture = data.get('date_ouverture')
         date_echeance = data.get('date_echeance')
-        
-        if date_echeance and date_ouverture:
-            if date_echeance < date_ouverture:
-                raise serializers.ValidationError({
-                    "date_echeance": "La date d'échéance ne peut pas être antérieure à la date d'ouverture."
-                })
-            
-        client = data.get('client') or getattr(self.instance, 'client', None)
-        titre = data.get('titre') or getattr(self.instance, 'titre', None)
+
+        if date_echeance and date_ouverture and date_echeance < date_ouverture:
+            raise serializers.ValidationError({
+                "date_echeance": "La date d'échéance ne peut pas être antérieure à la date d'ouverture."
+            })
+
+        client = data.get('client') or (self.instance.client if self.instance else None)
+        titre = data.get('titre') or (self.instance.titre if self.instance else None)
 
         if client and titre:
             qs = Dossier.objects.filter(client=client, titre__iexact=titre)
-            # Exclure le dossier en cours de modification (update)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise serializers.ValidationError({
                     "titre": "Un dossier avec ce titre existe déjà pour ce client."
-                })    
+                })
 
         return data
 
 class DossierListSerializer(serializers.ModelSerializer):
-    """Serializer allégé pour les listes (Tableaux de bord)"""
+    """Serializer allégé pour les listes / tableaux de bord"""
     client_nom = serializers.ReadOnlyField(source='client.nom_complet')
     date_creation_formatee = serializers.SerializerMethodField()
     date_echeance_formatee = serializers.SerializerMethodField()
     
-    # AJOUTER CE CHAMP pour inclure l'objet client complet
-    client = ClientListSerializer(read_only=True)  # Utilise ton serializer ClientListSerializer
+    # Client complet (léger)
+    client = ClientListSerializer(read_only=True)
     
+    # Nombre de documents → parfait pour badge "12 docs"
+    documents_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Dossier
         fields = [
@@ -423,20 +448,22 @@ class DossierListSerializer(serializers.ModelSerializer):
             'statut', 'priorite', 'client_nom', 'date_echeance', 
             'est_en_retard', 'taux_avancement', 'date_creation',
             'date_creation_formatee', 'date_echeance_formatee',
-            'client'  # Ajouter client ici
+            'client', 
+            'documents_count'  # ← ajouté ici
         ]
 
     def get_date_creation_formatee(self, obj):
-        """Formate la date de création"""
-        if obj.date_creation:
-            return obj.date_creation.strftime('%d %b %Y')
-        return None
+        return obj.date_creation.strftime('%d %b %Y') if obj.date_creation else None
 
     def get_date_echeance_formatee(self, obj):
-        """Formate la date d'échéance"""
-        if obj.date_echeance:
-            return obj.date_echeance.strftime('%d %b %Y')
-        return None
+        return obj.date_echeance.strftime('%d %b %Y') if obj.date_echeance else None
+
+    # Méthode optimisée : pas de sérialisation des documents, juste le count
+    def get_documents_count(self, obj):
+        # Si prefetch_related('documents') fait dans la vue → obj.documents.count() est déjà en cache
+        return obj.documents.count()
+
+# serializers.py
 
 # Serializer pour CategorieDocument
 class CategorieDocumentSerializer(serializers.ModelSerializer):
@@ -541,30 +568,6 @@ class EtapeDossierCreateSerializer(serializers.ModelSerializer):
         model = EtapeDossier
         fields = ['dossier', 'nom', 'description', 'ordre', 'date_debut', 'date_fin', 'est_terminee']
 
-# Serializers pour Document
-class DocumentListSerializer(serializers.ModelSerializer):
-    categorie_nom = serializers.CharField(source='categorie.nom', read_only=True)
-    client_nom = serializers.CharField(source='client.nom_complet', read_only=True)
-    dossier_reference = serializers.CharField(source='dossier.reference_dossier', read_only=True)
-    dossier_titre = serializers.CharField(source='dossier.titre', read_only=True)
-    uploade_par_nom = serializers.CharField(source='uploade_par.get_full_name', read_only=True)
-    taille_lisible = serializers.ReadOnlyField()
-    est_valide = serializers.ReadOnlyField()
-    est_signe_completement = serializers.ReadOnlyField()
-    
-    class Meta:
-        model = Document
-        fields = [
-            'id', 'reference', 'titre', 'type_document',
-            'categorie', 'categorie_nom', 'client', 'client_nom',
-            'dossier', 'dossier_reference', 'dossier_titre',
-            'statut', 'niveau_confidentialite', 'taille_lisible',
-            'date_document', 'date_validite', 'est_valide',
-            'est_original', 'est_certifie_conforme',
-            'necessite_signature', 'est_signe_completement',
-            'version', 'uploade_par', 'uploade_par_nom',
-            'date_upload', 'est_archive'
-        ]
 
 class DocumentDetailSerializer(serializers.ModelSerializer):
     # Relations

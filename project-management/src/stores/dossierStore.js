@@ -68,7 +68,7 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
-            const response = await api.get(`/dossiers/${id}/`);
+            const response = await api.get(`/manager/affairs/details/${id}/`);
             currentDossier.value = response.data;
             return response.data;
         } catch (err) {

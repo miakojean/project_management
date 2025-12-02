@@ -216,7 +216,7 @@ class DossierDetailAPIView(APIView):
         """
         Récupère les détails d'un dossier spécifique
         """
-        try:
+        try: 
             dossier = get_object_or_404(Dossier, pk=pk)
             serializer = DossierSerializer(dossier)
             return Response(serializer.data)
