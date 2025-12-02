@@ -98,7 +98,7 @@ export default {
         // Méthodes
         const goToFolderDetail = (dossier) => {
             router.push(`/dashboard/customer/affairs/`);
-            dossierStore.attachAffair(dossier)
+            dossierStore.attachAffair(dossier);
             console.log('Le dossier selectionné',dossier)
         };
 

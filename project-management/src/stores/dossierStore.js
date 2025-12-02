@@ -7,6 +7,7 @@ export const useDossierStore = defineStore('dossier', () => {
     const customerDossier = ref([]);
     const dossiers = ref([]);
     const currentDossier = ref(null);
+    const currentDossierDocuments = ref([]);
     const loading = ref(false);
     const error = ref(null);
     const stats = ref({});
@@ -70,9 +71,11 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`/manager/affairs/details/${id}/`);
             currentDossier.value = response.data;
+            console.log('Les données réçues sont', response.data);
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
+            console.error('Une erreur est intervenue lors de la récupération du dossier');
             throw err;
         } finally {
             loading.value = false;
@@ -249,6 +252,7 @@ export const useDossierStore = defineStore('dossier', () => {
         // State
         dossiers,
         currentDossier,
+        currentDossierDocuments,
         loading,
         error,
         stats,

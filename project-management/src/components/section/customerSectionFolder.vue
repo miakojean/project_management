@@ -100,10 +100,15 @@ export default {
             { immediate: true } // Exécute immédiatement au montage
         );
 
-        onMounted(() => {
+        onMounted(async() => {
             // Cette partie peut être optionnelle si watch s'exécute immédiatement
             console.log('🏁 Composant monté');
             console.log('📁 Dossier store:', dossierStore.currentDossier);
+
+            if(dossierStore.currentDossier){
+                await dossierStore.fetchDossierById(doc.value.id);
+                console.log('Données chargés!!!')
+            }
         });
 
         const handleView = () => {
