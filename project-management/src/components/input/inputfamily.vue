@@ -116,7 +116,7 @@ label{
 input{
   padding: 0.8rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   font-size: 0.9rem;
   font-weight: 500;
   border-radius: 0.2rem;

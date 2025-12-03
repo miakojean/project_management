@@ -368,7 +368,8 @@ class Dossier(models.Model):
                 docs_fondamentaux.exists() and 
                 docs_fondamentaux.filter(statut__in=['VALIDE', 'SIGNE']).count() == docs_fondamentaux.count()):
 
-                self.statut = 'EN_ATTENTE_VALIDATION'
+                # CORRECTION ICI : Utiliser le code défini dans STATUT_CHOICES
+                self.statut = 'DOCU_FONDA'  # Au lieu de 'EN_ATTENTE_VALIDATION'
                 self.sous_statut = 'DOCS_FONDAMENTAUX'
                 self.save(update_fields=['statut', 'sous_statut'])
                 return
@@ -456,15 +457,16 @@ class Dossier(models.Model):
         """Calcule le solde de l'acompte restant"""
         return self.acompte_recu - self.honoraires_factures
     
+    # Dans models.py > Dossier > taux_avancement
+
     @property
     def taux_avancement(self):
-        """Calcule un taux d'avancement basé sur le statut"""
         taux = {
             'NOUVEAU': 10,
             'EN_COURS': 30,
-            'AJOUT_PIECE':30,
-            'DOCUMENT_FONDAMENTAUX': 70,
-            'EN_ATTENTE': 50,
+            'AJOUT_PIECE': 30,
+            'DOCU_FONDA': 70,      # CORRECTION : Doit correspondre à STATUT_CHOICES et au save()
+            'EN_ATTENTE': 50,      # Attention : EN_ATTENTE est souvent après EN_COURS
             'BLOQUE': 50,
             'TERMINE': 90,
             'CLOTURE': 100,
@@ -563,29 +565,7 @@ class Document(models.Model):
     Modèle pour la gestion des documents juridiques
     """
     
-    TYPE_DOCUMENT_CHOICES = [
-        ('PIECE_IDENTITE', 'Pièce d\'identité'),
-        ('STATUT', 'Statuts'),
-        ('PROCES_VERBAL', 'Procès-verbal'),
-        ('CONTRAT', 'Contrat'),
-        ('COURRIER', 'Courrier'),
-        ('ATTESTATION', 'Attestation'),
-        ('CERTIFICAT', 'Certificat'),
-        ('FACTURE', 'Facture'),
-        ('RECU', 'Reçu'),
-        ('ACTE', 'Acte juridique'),
-        ('JUGEMENT', 'Jugement'),
-        ('ORDONNANCE', 'Ordonnance'),
-        ('ASSIGNATION', 'Assignation'),
-        ('CONCLUSIONS', 'Conclusions'),
-        ('MEMOIRE', 'Mémoire'),
-        ('RAPPORT', 'Rapport'),
-        ('NOTE', 'Note juridique'),
-        ('CORRESPONDANCE', 'Correspondance'),
-        ('FORMULAIRE', 'Formulaire administratif'),
-        ('JUSTIFICATIF', 'Justificatif'),
-        ('AUTRE', 'Autre'),
-    ]
+    # SUPPRIMER: TYPE_DOCUMENT_CHOICES et le champ type_document
     
     STATUT_DOCUMENT_CHOICES = [
         ('BROUILLON', 'Brouillon'),
@@ -616,16 +596,11 @@ class Document(models.Model):
     description = models.TextField(_("Description"), blank=True)
     
     # Classification
-    type_document = models.CharField(
-        _("Type de document"),
-        max_length=30,
-        choices=TYPE_DOCUMENT_CHOICES
-    )
+    # REMPLACER type_document par categorie uniquement
     categorie = models.ForeignKey(
         CategorieDocument,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,  # Changer SET_NULL à PROTECT pour garantir une catégorie
+        null=False,  # Rendre obligatoire
         related_name='documents',
         verbose_name=_("Catégorie")
     )
@@ -799,8 +774,8 @@ class Document(models.Model):
         indexes = [
             models.Index(fields=['reference']),
             models.Index(fields=['dossier', 'statut']),
-            models.Index(fields=['client', 'type_document']),
-            models.Index(fields=['type_document', 'statut']),
+            models.Index(fields=['client', 'categorie']),  # Remplacer type_document par categorie
+            models.Index(fields=['categorie', 'statut']),   # Remplacer type_document par categorie
             models.Index(fields=['date_document']),
             models.Index(fields=['date_validite']),
             models.Index(fields=['-date_upload']),
@@ -816,14 +791,15 @@ class Document(models.Model):
         return f"{self.reference} - {self.titre}"
     
     def save(self, *args, **kwargs):
-        is_new = self.pk is None  # On garde ça avant le premier save
+        is_new = self.pk is None
 
-        # 1. Génération de la référence (seulement à la création)
+        # 1. Génération de la référence (basée sur catégorie maintenant)
         if not self.reference:
             year = timezone.now().year
-            type_prefix = self.type_document[:4].upper()
+            # Utiliser le code de catégorie comme préfixe
+            categorie_prefix = self.categorie.code[:4].upper() if self.categorie else "DOC"
             last_doc = Document.objects.filter(
-                reference__startswith=f"DOC-{type_prefix}-{year}"
+                reference__startswith=f"{categorie_prefix}-{year}"
             ).order_by('-reference').first()
 
             new_num = 1
@@ -833,13 +809,13 @@ class Document(models.Model):
                     new_num = last_num + 1
                 except (ValueError, IndexError):
                     pass
-            self.reference = f"DOC-{type_prefix}-{year}-{new_num:06d}"
+            self.reference = f"{categorie_prefix}-{year}-{new_num:06d}"
 
         # 2. Cohérence client/dossier
         if self.dossier and not self.client:
             self.client = self.dossier.client
 
-        # 3. Métadonnées fichier (avant sauvegarde finale)
+        # 3. Métadonnées fichier
         if self.fichier:
             self.extension = os.path.splitext(self.fichier.name)[1].lower().lstrip('.')
             if hasattr(self.fichier, 'size'):
@@ -848,7 +824,7 @@ class Document(models.Model):
         # 4. Sauvegarde principale
         super().save(*args, **kwargs)
 
-        # 5. Changement automatique de statut (après création uniquement)
+        # 5. Changement automatique de statut du dossier
         if is_new and self.dossier and self.dossier.statut == 'NOUVEAU':
             self.dossier.statut = 'EN_COURS'
             self.dossier.save(update_fields=['statut'])

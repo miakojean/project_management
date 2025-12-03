@@ -247,7 +247,6 @@ export default {
     font-size: 0.9rem;
     line-height: 1.5;
     margin: 0 0 1rem 0;
-    display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

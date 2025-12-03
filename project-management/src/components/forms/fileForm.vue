@@ -24,24 +24,28 @@
           ✓ {{ selectedFiles.length }} fichier{{ selectedFiles.length > 1 ? 's' : '' }} sélectionné{{ selectedFiles.length > 1 ? 's' : '' }}
         </p>
 
-        <h3 class="mt-6 text-lg font-semibold">
-          Documents de {{ dossierStore.currentDossier.client_details.nom_complet }}
-        </h3>
+        <!--
+          <h3 class="mt-6 text-lg font-semibold">
+            Documents de {{ dossierStore.currentDossier.client_details.nom_complet }}
+          </h3>
+        -->
+
+        <isImportantCard v-if="showImportantDocument === true"/>
       </div>
 
       <!-- === FORMULAIRE === -->
-      <div class="form-row flex-1 w-full">
+      <div class="form-row flex flex-col w-full">
         <inputfamily 
-          identifiant="Title" 
-          label="Titre du document *" 
-          placeholder="Entrer le titre du document"
+          identifiant="Titre" 
+          label="Nom du document *" 
+          placeholder="Nom le titre du document"
           v-model="formData.titre"
           :required="true"
           :error="fieldErrors.titre"
         />
         <selectfamily 
           identifiant="TypeDoc" 
-          label="Type de document" 
+          label="Catégorie de document" 
           v-model="formData.type_document"
           :options="docTypes"
           :error="fieldErrors.type_document"
@@ -88,6 +92,7 @@ import selectfamily from '../input/selectfamily.vue'
 import mainButton from '../button/mainButton.vue'
 import prevButton from '../button/prevButton.vue'
 import fileInput from '../input/fileInput.vue'
+import isImportantCard from '../cards/isImportantCard.vue'
 import api from '@/_services/api'
 import { useRouter } from 'vue-router'
 import { useDossierStore } from '@/stores/dossierStore'
@@ -141,6 +146,8 @@ const docTypes = ref([
   { value: 'JUSTIFICATIF', label: 'Justificatif' },
   { value: 'AUTRE', label: 'Autre' }
 ])
+
+const showImportantDocument = ref(false);
 
 const formData = reactive({
   titre: '',
@@ -307,38 +314,41 @@ onMounted(async () => {
 }
 
 .upload__container {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .files-ready-message {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-    border-radius: 8px;
-    color: #16a34a;
-    font-weight: 500;
-    text-align: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  color: #16a34a;
+  font-weight: 500;
+  text-align: center;
 }
 
 .form-row {
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    gap: 1rem;
-    flex: 1;
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
-    width: 100%;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
 }
 
 /* Bannière d'erreur */
@@ -358,30 +368,30 @@ onMounted(async () => {
 }
 
 .error-icon {
-    font-size: 1.25rem;
-    flex-shrink: 0;
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .error-text {
-    color: #dc2626;
-    font-weight: 500;
-    flex: 1;
+  color: #dc2626;
+  font-weight: 500;
+  flex: 1;
 }
 
 .error-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #dc2626;
-    cursor: pointer;
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
 .error-close:hover {
