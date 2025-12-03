@@ -9,7 +9,7 @@
                     :description="doc.description || 'Aucune description'"
                     :status="getStatus(doc.statut)"
                     :date="formatDate(doc.date_creation || doc.created_at)"
-                    :clientName="doc.client_nom || 'Client non spécifié'"
+                    :clientName="doc.client_details?.nom_complet || 'Client non spécifié'"
                     :progress="calculateProgress(doc.statut)"
                     @view="handleView"
                     @edit="handleEdit"
@@ -28,7 +28,9 @@
         </div>
 
         <div class="">
-            <documentList/>
+            <documentList 
+                :documents="doc.documents" 
+            />
         </div>
     </section>
 </template>
@@ -49,6 +51,8 @@ export default {
     setup(){
         const doc = ref({})
         const dossierStore = useDossierStore();
+        
+        const documents = ref({});
 
         // Méthodes utilitaires
         const getStatus = (status) => {
@@ -101,13 +105,20 @@ export default {
         );
 
         onMounted(async() => {
-            // Cette partie peut être optionnelle si watch s'exécute immédiatement
             console.log('🏁 Composant monté');
             console.log('📁 Dossier store:', dossierStore.currentDossier);
 
-            if(dossierStore.currentDossier){
-                await dossierStore.fetchDossierById(doc.value.id);
-                console.log('Données chargés!!!')
+            // Si un dossier est déjà sélectionné, chargez ses documents
+            if(dossierStore.currentDossier && dossierStore.currentDossier.id){
+                doc.value = dossierStore.currentDossier;
+                try {
+                    const dossierData = await dossierStore.fetchDossierById(doc.value.id);
+                    documents.value = dossierData.documents || dossierData.files || [];
+                    console.log('📁 Documents chargés au montage:', documents.value);
+                } catch (error) {
+                    console.error('Erreur lors du chargement des documents:', error);
+                    documents.value = [];
+                }
             }
         });
 
@@ -125,6 +136,7 @@ export default {
 
         return {
             doc,
+            documents,
             dossierStore,
             getStatus,
             formatDate,

@@ -34,6 +34,8 @@
                     :dateOuverture="dossier.date_creation_formatee"
                     :dossier="dossier"
                     :typeDossier="dossier.type_dossier"
+                    :avancement="dossier.taux_avancement"
+                    :documentsCount="dossier.documents_count"
                     @click="goToFolderDetail(dossier)"
                     class="dossier-card"
                 />
@@ -269,7 +271,7 @@ export default {
 /* Grille des dossiers */
 .dossiers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 1.5rem;
 }
 

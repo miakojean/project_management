@@ -260,6 +260,10 @@ export default {
                     type_client: 'PERSONNE_PHYSIQUE'
                 });
 
+                setTimeout(()=> {
+                    router.push('/dashboard')
+                }, 4000);
+
                 // Reset intelligent
                 const currentAgent = formData.charge_de_clientele;
                 formData.charge_de_clientele = currentAgent;

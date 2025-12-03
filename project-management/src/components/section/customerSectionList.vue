@@ -29,6 +29,7 @@
                     :customer="customer"
                     :customerName="customer.nom_complet"
                     :typeClient="customer.type_client"
+                    :location="customer.ville"
                     @handle-customer="openModal(customer)"
                 />
             </div>

@@ -135,7 +135,7 @@ export default {
             { value: 'AUDIT', label: 'Audit juridique' },
             { value: 'PROPRIETE_INTELLECTUELLE', label: 'Propriété intellectuelle' },
             { value: 'RECOUVREMENT', label: 'Recouvrement de créances' },
-            { value: 'CONTENTIEUX', label: 'Contentieux commercial' },
+            { value: 'CONTENTIEUX', label: 'Contentieux' },
             { value: 'AUTRE', label: 'Autre' }
         ]);
 

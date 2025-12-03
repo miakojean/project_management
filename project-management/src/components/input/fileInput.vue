@@ -277,6 +277,8 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   gap: 0.75rem;
 }
 
@@ -291,6 +293,7 @@ export default {
   color: #374151;
   font-weight: 600;
   font-size: 1.2rem;
+  text-align: center;
 }
 
 .upload-prompt p {

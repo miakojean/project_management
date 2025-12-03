@@ -157,6 +157,8 @@ class Dossier(models.Model):
     
     STATUT_CHOICES = [
         ('NOUVEAU', 'Nouveau'),
+        ('AJOUT_PIECE', 'ajouts piece'),
+        ('DOCU_FONDA', 'Documents fondamentaux'),
         ('EN_COURS', 'En cours'),
         ('EN_ATTENTE', 'En attente (client)'),
         ('BLOQUE', 'Bloqué'),
@@ -282,10 +284,11 @@ class Dossier(models.Model):
         return f"{self.reference_dossier} - {self.titre}"
     
     def save(self, *args, **kwargs):
-        # Génération de la référence dossier
+        # ===================================================================
+        # 1. Génération de la référence dossier (uniquement à la création)
+        # ===================================================================
         if not self.reference_dossier:
             year = timezone.now().year
-            
             type_prefixes = {
                 'CONSTITUTION': 'CONST',
                 'MODIFICATION': 'MODIF',
@@ -299,41 +302,88 @@ class Dossier(models.Model):
                 'RECOUVREMENT': 'REC',
                 'AUTRE': 'AUT',
             }
-            
             prefix = type_prefixes.get(self.type_dossier, 'DOS')
-            
+
             last_dossier = Dossier.objects.filter(
                 reference_dossier__startswith=f"{prefix}-{year}"
             ).order_by('-reference_dossier').first()
-            
+
+            new_num = 1
             if last_dossier:
-                last_num = int(last_dossier.reference_dossier.split('-')[-1])
-                new_num = last_num + 1
-            else:
-                new_num = 1
-            
+                try:
+                    last_num = int(last_dossier.reference_dossier.split('-')[-1])
+                    new_num = last_num + 1
+                except (ValueError, IndexError):
+                    pass
+
             self.reference_dossier = f"{prefix}-{year}-{new_num:05d}"
-        
-        # CORRECTION: S'assurer que date_ouverture a une valeur
+
+        # ===================================================================
+        # 2. Valeurs par défaut importantes
+        # ===================================================================
         if not self.date_ouverture:
             self.date_ouverture = timezone.now().date()
-        
-        # Gestion de la date de clôture
+
         if self.statut in ['CLOTURE', 'ANNULE'] and not self.date_cloture:
             self.date_cloture = timezone.now().date()
 
-        # CORRECTION: Génération cohérente du chemin AVANT sauvegarde
+        # ===================================================================
+        # 3. Chemin physique du dossier client (création unique)
+        # ===================================================================
         if not self.chemin_dossier and self.client:
             base_path = os.path.join(settings.MEDIA_ROOT, 'dossiers_clients')
             nom_dossier_client = self.client.creer_nom_dossier_securise()
             self.chemin_dossier = os.path.join(base_path, nom_dossier_client)
 
-        # Sauvegarde d'abord
+        # ===================================================================
+        # 4. Sauvegarde principale (une seule fois !)
+        # ===================================================================
         super().save(*args, **kwargs)
-        
-        # CORRECTION: Création physique APRÈS sauvegarde
+
+        # ===================================================================
+        # 5. Création physique du dossier sur disque (après sauvegarde)
+        # ===================================================================
         if self.chemin_dossier and not os.path.exists(self.chemin_dossier):
             self.creer_dossier_client()
+
+        # ===================================================================
+        # 6. AUTOMATISATION DES 5 STATUTS FONDAMENTAUX + SOUS-STATUT
+        # ===================================================================
+        # On ne fait ces vérifications que si un document vient d’être lié
+        # (déclenché depuis Document.save() via signal ou manuellement)
+        if kwargs.get('force_status_update') or self.documents.exists():
+            docs = self.documents
+            etapes = self.etapes
+
+            # --- 1. Premier document → EN_COURS ---
+            if self.statut == 'NOUVEAU' and docs.exists():
+                self.statut = 'EN_COURS'
+                self.sous_statut = 'AJOUT_PIECE'
+                self.save(update_fields=['statut', 'sous_statut'])
+                return  # on arrête ici pour ce cycle
+
+            # --- 2. Tous les documents fondamentaux reçus ? ---
+            docs_fondamentaux = docs.filter(categorie__est_fondamentale=True)
+            if (self.statut == 'EN_COURS' and 
+                docs_fondamentaux.exists() and 
+                docs_fondamentaux.filter(statut__in=['VALIDE', 'SIGNE']).count() == docs_fondamentaux.count()):
+
+                self.statut = 'EN_ATTENTE_VALIDATION'
+                self.sous_statut = 'DOCS_FONDAMENTAUX'
+                self.save(update_fields=['statut', 'sous_statut'])
+                return
+
+            # --- 3. Tout est terminé (docs + étapes) → TERMINE ---
+            if (self.statut in ['EN_COURS', 'EN_ATTENTE_VALIDATION'] and
+                docs.exists() and 
+                docs.filter(statut__in=['VALIDE', 'SIGNE']).count() == docs.count() and
+                etapes.exists() and 
+                etapes.filter(est_terminee=True).count() == etapes.count()):
+
+                self.statut = 'TERMINE'
+                self.sous_statut = ''
+                self.date_cloture = timezone.now().date()
+                self.save(update_fields=['statut', 'sous_statut', 'date_cloture'])
     
     def creer_dossier_client(self):
         """Crée le dossier physique unique pour le client"""
@@ -410,8 +460,10 @@ class Dossier(models.Model):
     def taux_avancement(self):
         """Calcule un taux d'avancement basé sur le statut"""
         taux = {
-            'NOUVEAU': 0,
-            'EN_COURS': 50,
+            'NOUVEAU': 10,
+            'EN_COURS': 30,
+            'AJOUT_PIECE':30,
+            'DOCUMENT_FONDAMENTAUX': 70,
             'EN_ATTENTE': 50,
             'BLOQUE': 50,
             'TERMINE': 90,
@@ -434,7 +486,7 @@ class CategorieDocument(models.Model):
     nom = models.CharField(_("Nom"), max_length=100, unique=True)
     description = models.TextField(_("Description"), blank=True)
     code = models.CharField(_("Code"), max_length=20, unique=True, help_text=_("Code court pour référencement"))
-    
+    est_fondamentale = models.BooleanField(default=False, verbose_name="Document fondamental")
     # Paramètres
     couleur = models.CharField(
         _("Couleur"),
@@ -764,34 +816,44 @@ class Document(models.Model):
         return f"{self.reference} - {self.titre}"
     
     def save(self, *args, **kwargs):
-        # Génération de la référence
+        is_new = self.pk is None  # On garde ça avant le premier save
+
+        # 1. Génération de la référence (seulement à la création)
         if not self.reference:
             year = timezone.now().year
             type_prefix = self.type_document[:4].upper()
-            
             last_doc = Document.objects.filter(
                 reference__startswith=f"DOC-{type_prefix}-{year}"
             ).order_by('-reference').first()
-            
+
+            new_num = 1
             if last_doc:
-                last_num = int(last_doc.reference.split('-')[-1])
-                new_num = last_num + 1
-            else:
-                new_num = 1
-            
+                try:
+                    last_num = int(last_doc.reference.split('-')[-1])
+                    new_num = last_num + 1
+                except (ValueError, IndexError):
+                    pass
             self.reference = f"DOC-{type_prefix}-{year}-{new_num:06d}"
-        
-        # CORRECTION: S'assurer que le client est cohérent avec le dossier
+
+        # 2. Cohérence client/dossier
         if self.dossier and not self.client:
             self.client = self.dossier.client
-        
-        # Métadonnées du fichier
+
+        # 3. Métadonnées fichier (avant sauvegarde finale)
         if self.fichier:
-            self.extension = os.path.splitext(self.fichier.name)[1].lower().replace('.', '')
+            self.extension = os.path.splitext(self.fichier.name)[1].lower().lstrip('.')
             if hasattr(self.fichier, 'size'):
                 self.taille_fichier = self.fichier.size
-        
+
+        # 4. Sauvegarde principale
         super().save(*args, **kwargs)
+
+        # 5. Changement automatique de statut (après création uniquement)
+        if is_new and self.dossier and self.dossier.statut == 'NOUVEAU':
+            self.dossier.statut = 'EN_COURS'
+            self.dossier.save(update_fields=['statut'])
+
+    # → Plus de double save() → Parfait
     
     @property
     def est_valide(self):

@@ -25,12 +25,12 @@
         </p>
 
         <h3 class="mt-6 text-lg font-semibold">
-          Documents de {{ dossierStore.currentDossier?.client?.nom_complet || '...' }}
+          Documents de {{ dossierStore.currentDossier.client_details.nom_complet }}
         </h3>
       </div>
 
       <!-- === FORMULAIRE === -->
-      <div class="form-row flex-1">
+      <div class="form-row flex-1 w-full">
         <inputfamily 
           identifiant="Title" 
           label="Titre du document *" 
@@ -39,6 +39,13 @@
           :required="true"
           :error="fieldErrors.titre"
         />
+        <selectfamily 
+          identifiant="TypeDoc" 
+          label="Type de document" 
+          v-model="formData.type_document"
+          :options="docTypes"
+          :error="fieldErrors.type_document"
+        />
         <inputArea
           identifiant="Description" 
           label="Description *" 
@@ -46,13 +53,6 @@
           v-model="formData.description"
           :required="true"
           :error="fieldErrors.description"
-        />
-        <selectfamily 
-          identifiant="TypeDoc" 
-          label="Type de document" 
-          v-model="formData.type_document"
-          :options="docTypes"
-          :error="fieldErrors.type_document"
         />
 
         <div class="form-actions">
@@ -65,11 +65,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification Popup -->
+    <notificationPopup
+      v-if="showNotification"
+      :message="notificationMessage"
+      :type="notificationType"
+      :duration="notificationDuration"
+      :visible="showNotification"
+      @close="handleNotificationClose"
+    />
   </form>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, defineComponent } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import inputfamily from '../input/inputfamily.vue'
@@ -81,8 +91,8 @@ import fileInput from '../input/fileInput.vue'
 import api from '@/_services/api'
 import { useRouter } from 'vue-router'
 import { useDossierStore } from '@/stores/dossierStore'
-import { useDocumentStore } from '@/stores/documentsStore'
 import { useCustomerStore } from '@/stores/custumerStore'
+import notificationPopup from '../tools/notificationPopup.vue' // Assurez-vous que le chemin est correct
 
 const emit = defineEmits(['prevstep', 'notification'])
 
@@ -95,12 +105,17 @@ const router = useRouter()
 // Stores
 const customer = useCustomerStore()
 const dossierStore = useDossierStore()
-const documentStore = useDocumentStore()
 const { user, isInitialized } = storeToRefs(authStore)
 
 // Références
 const fileInputRef = ref(null)
 const selectedFiles = ref([])  // ✅ Lié au v-model de fileInput
+
+// Variables pour la notification
+const showNotification = ref(false)
+const notificationMessage = ref('')
+const notificationType = ref('success')
+const notificationDuration = ref(5000)
 
 // Types de documents
 const docTypes = ref([
@@ -140,6 +155,22 @@ const clearError = () => {
   Object.keys(fieldErrors).forEach(k => delete fieldErrors[k])
 }
 
+// Fonction pour afficher une notification
+const showNotificationPopup = (type, message, duration = 5000) => {
+  notificationType.value = type
+  notificationMessage.value = message
+  notificationDuration.value = duration
+  showNotification.value = true
+}
+
+// Fonction pour fermer la notification
+const handleNotificationClose = () => {
+  showNotification.value = false
+  // Optionnel: réinitialiser les valeurs
+  notificationMessage.value = ''
+  notificationType.value = 'success'
+}
+
 const validateForm = () => {
   clearError()
   let valid = true
@@ -172,6 +203,8 @@ const validateForm = () => {
 
 const handleFileError = (error) => {
   errorMessage.value = error
+  // Afficher également une notification d'erreur si besoin
+  // showNotificationPopup('error', error, 8000)
 }
 
 const handlePrevStep = () => {
@@ -197,8 +230,8 @@ const handleSubmit = async () => {
   if (dossierStore.currentDossier?.id) {
     formDataToSend.append('dossier', dossierStore.currentDossier.id)
   }
-  if (dossierStore.currentDossier?.client?.id) {
-    formDataToSend.append('client', dossierStore.currentDossier.client.id)
+  if (dossierStore.currentDossier?.client?.id || dossierStore.currentDossier.id) {
+    formDataToSend.append('client', dossierStore.currentDossier.client)
   }
 
   try {
@@ -206,19 +239,21 @@ const handleSubmit = async () => {
     
     // Réponse : { message: "X document(s) créé(s)...", documents: [...] }
     const count = response.data.documents?.length || selectedFiles.value.length
+    
+    // Afficher la notification de succès
+    showNotificationPopup('success', `${count} document(s) ajouté(s) avec succès`, 4000)
 
+    // Émettre également l'événement au parent (si nécessaire)
     emit('notification', {
       type: 'success',
       message: `${count} document(s) ajouté(s) avec succès`,
-      duration: 5000
+      duration: 4000,
     })
 
-    // Reset complet
-    formData.titre = ''
-    formData.description = ''
-    formData.type_document = 'AUTRE'
-    selectedFiles.value = []
-    fileInputRef.value?.reset()
+    // Rediriger après la notification
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 3500) // Un peu avant la fin de la notification
 
   } catch (error) {
     console.error('Erreur upload:', error)
@@ -227,7 +262,16 @@ const handleSubmit = async () => {
       || 'Erreur lors de l\'envoi des documents'
 
     errorMessage.value = msg
-    emit('notification', { type: 'error', message: msg, duration: 8000 })
+    
+    // Afficher la notification d'erreur
+    showNotificationPopup('error', msg, 8000)
+    
+    // Émettre également l'événement au parent (si nécessaire)
+    emit('notification', { 
+      type: 'error', 
+      message: msg, 
+      duration: 8000 
+    })
   } finally {
     isLoading.value = false
   }
