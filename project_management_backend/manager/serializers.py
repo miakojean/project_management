@@ -494,7 +494,17 @@ class CategorieDocumentSerializer(serializers.ModelSerializer):
 class CategorieDocumentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategorieDocument
-        fields = ['nom', 'description', 'code', 'couleur', 'icone', 'parent', 'ordre', 'est_actif']
+        fields = [
+            'id',
+            'nom', 
+            'description', 
+            'code', 
+            'couleur', 
+            'icone', 
+            'parent', 
+            'ordre', 
+            'est_actif',
+        ]
 
 # Serializer pour SignatureDocument
 class SignatureDocumentSerializer(serializers.ModelSerializer):

@@ -49,13 +49,20 @@
                         
                         <!-- Si des dossiers existent -->
                         <div v-if="customerDossiers.length > 0" class="dossiers-list">
-                            <div v-for="dossier in customerDossiers" :key="dossier.id" class="dossier-item">
-                                <span class="dossier-reference">{{ dossier.reference_dossier }}</span>
-                                <span class="dossier-titre">{{ dossier.titre }}</span>
-                                <span class="dossier-statut" :class="dossier.statut.toLowerCase()">
-                                    {{ dossier.statut }}
-                                </span>
+
+                            <div class="folder__card grid grid-cols-2 gap-4">
+                                <cardAffairsFolder 
+                                    v-for="dossier in customerDossiers" :key="dossier.id"
+                                    :client-nom="dossier.client_nom"
+                                    :avancement="dossier.taux_avancement"
+                                    :date-ouverture="dossier.date_creation_formatee"
+                                    :documents-count="dossier.documents_count"
+                                    :reference="dossier.reference_dossier"
+                                    :statut="dossier.statut"
+                                    :titre="dossier.titre"
+                                />
                             </div>
+
                         </div>
                         
                         <!-- Si aucun dossier -->
@@ -100,6 +107,7 @@ import emptyCards from '../cards/emptyCards.vue'
 import { useDossierStore } from '@/stores/dossierStore'
 import { useRouter } from 'vue-router';
 import { useCustomerStore } from '@/stores/custumerStore';
+import cardAffairsFolder from '../cards/cardAffairsFolder.vue';
 
 const router = useRouter();
 const dossierStore = useDossierStore();

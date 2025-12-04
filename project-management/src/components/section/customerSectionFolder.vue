@@ -10,7 +10,7 @@
                     :status="getStatus(doc.statut)"
                     :date="formatDate(doc.date_creation || doc.created_at)"
                     :clientName="doc.client_details?.nom_complet || 'Client non spécifié'"
-                    :progress="calculateProgress(doc.statut)"
+                    :progress="doc.taux_avancement"
                     @view="handleView"
                     @edit="handleEdit"
                     @action="handleAction"

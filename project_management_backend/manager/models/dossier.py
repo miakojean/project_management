@@ -1,18 +1,21 @@
+# models/dossier.py
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator, MinValueValidator, FileExtensionValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.utils import timezone
-from account.models import Utilisateur
 from decimal import Decimal
 import os
 from django.conf import settings
-import re
-from unidecode import unidecode 
+from django.contrib.auth import get_user_model
 from .client import Client
+from .category import CategorieDocument
+
+Utilisateur = get_user_model()
+
 
 class Dossier(models.Model):
     """
-    Modèle représentant un dossier juridique
+    Modèle représentant un dossier juridique avec système de scoring
     """
     
     TYPE_DOSSIER_CHOICES = [
@@ -219,103 +222,103 @@ class Dossier(models.Model):
         if self.chemin_dossier and not os.path.exists(self.chemin_dossier):
             self.creer_dossier_client()
 
-        # ===================================================================
-        # 6. AUTOMATISATION DES 5 STATUTS FONDAMENTAUX + SOUS-STATUT
-        # ===================================================================
-        # On ne fait ces vérifications que si un document vient d’être lié
-        # (déclenché depuis Document.save() via signal ou manuellement)
-        if kwargs.get('force_status_update') or self.documents.exists():
-            docs = self.documents
-            etapes = self.etapes
-
-            # --- 1. Premier document → EN_COURS ---
-            if self.statut == 'NOUVEAU' and docs.exists():
-                self.statut = 'EN_COURS'
-                self.sous_statut = 'AJOUT_PIECE'
-                self.save(update_fields=['statut', 'sous_statut'])
-                return  # on arrête ici pour ce cycle
-
-            # --- 2. Tous les documents fondamentaux reçus ? ---
-            docs_fondamentaux = docs.filter(categorie__est_fondamentale=True)
-            if (self.statut == 'EN_COURS' and 
-                docs_fondamentaux.exists() and 
-                docs_fondamentaux.filter(statut__in=['VALIDE', 'SIGNE']).count() == docs_fondamentaux.count()):
-
-                # CORRECTION ICI : Utiliser le code défini dans STATUT_CHOICES
-                self.statut = 'DOCU_FONDA'  # Au lieu de 'EN_ATTENTE_VALIDATION'
-                self.sous_statut = 'DOCS_FONDAMENTAUX'
-                self.save(update_fields=['statut', 'sous_statut'])
-                return
-
-            # --- 3. Tout est terminé (docs + étapes) → TERMINE ---
-            if (self.statut in ['EN_COURS', 'EN_ATTENTE_VALIDATION'] and
-                docs.exists() and 
-                docs.filter(statut__in=['VALIDE', 'SIGNE']).count() == docs.count() and
-                etapes.exists() and 
-                etapes.filter(est_terminee=True).count() == etapes.count()):
-
-                self.statut = 'TERMINE'
-                self.sous_statut = ''
-                self.date_cloture = timezone.now().date()
-                self.save(update_fields=['statut', 'sous_statut', 'date_cloture'])
-    
     def creer_dossier_client(self):
         """Crée le dossier physique unique pour le client"""
         try:
-            # CORRECTION: Un seul dossier plat, pas de sous-dossiers
             os.makedirs(self.chemin_dossier, exist_ok=True)
-            print(f"✅ Dossier client créé: {self.chemin_dossier}")
-            
         except Exception as e:
             print(f"❌ Erreur création dossier client: {e}")
 
-    def ajouter_document_au_dossier(self, document_instance):
-        """Déplace un document existant vers le dossier du client"""
-        try:
-            if not self.chemin_dossier or not os.path.exists(self.chemin_dossier):
-                self.creer_dossier_client()
-            
-            # Chemin source et destination
-            ancien_chemin = document_instance.fichier.path
-            nom_fichier = os.path.basename(ancien_chemin)
-            nouveau_chemin = os.path.join(self.chemin_dossier, nom_fichier)
-            
-            # Déplace le fichier
-            os.rename(ancien_chemin, nouveau_chemin)
-            
-            # Met à jour le champ fichier
-            document_instance.fichier.name = os.path.relpath(
-                nouveau_chemin, settings.MEDIA_ROOT
-            )
-            document_instance.save()
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Erreur déplacement document: {e}")
-            return False
-
-    def lister_documents_du_dossier(self):
-        """Liste tous les documents du dossier client"""
-        if not self.chemin_dossier or not os.path.exists(self.chemin_dossier):
-            return []
+    # ===================================================================
+    # PROPRIÉTÉS DE SCORING (NOUVEAU)
+    # ===================================================================
+    
+    @property
+    def score_total(self):
+        """Score maximum possible pour ce dossier (90 points max)"""
+        from django.db.models import Sum
+        total = CategorieDocument.objects.filter(
+            est_actif=True
+        ).aggregate(Sum('poids'))['poids__sum'] or 0
+        return min(total, 90)  # Maximum 90 points
+    
+    @property
+    def score_actuel(self):
+        """Score actuel basé sur les documents présents"""
+        score = 10  # Score de base à la création
         
-        return [
-            f for f in os.listdir(self.chemin_dossier)
-            if os.path.isfile(os.path.join(self.chemin_dossier, f))
-        ]
-
-    def get_chemin_absolu(self):
-        """Retourne le chemin absolu du dossier"""
-        if self.chemin_dossier:
-            return os.path.join(settings.MEDIA_ROOT, self.chemin_dossier)
-        return None
+        for categorie in CategorieDocument.objects.filter(est_actif=True):
+            # Vérifie s'il y a AU MOINS UN document dans cette catégorie
+            if self.documents.filter(categorie=categorie).exists():
+                score += categorie.poids
+        
+        return min(score, 100)
+    
+    @property
+    def taux_avancement(self):
+        """Retourne le taux d'avancement en pourcentage"""
+        return self.score_actuel  # score_actuel est déjà en pourcentage
+    
+    @property
+    def avancement_detaille(self):
+        """Retourne un dict détaillé de l'avancement par catégorie"""
+        details = {
+            'score_total': self.score_total,
+            'score_actuel': self.score_actuel,
+            'pourcentage': self.score_actuel,
+            'categories': []
+        }
+        
+        for categorie in CategorieDocument.objects.filter(est_actif=True):
+            has_document = self.documents.filter(categorie=categorie).exists()
+            has_valid_document = self.documents.filter(
+                categorie=categorie, statut__in=['VALIDE', 'SIGNE']
+            ).exists()
+            
+            details['categories'].append({
+                'categorie_id': categorie.id,
+                'categorie_nom': categorie.nom,
+                'poids': categorie.poids,
+                'est_obligatoire': categorie.est_obligatoire,
+                'est_fondamentale': categorie.est_fondamentale,
+                'a_document': has_document,
+                'a_document_valide': has_valid_document,
+                'contribution': categorie.poids if has_document else 0
+            })
+        
+        return details
+    
+    @property
+    def prochaine_etape(self):
+        """Suggère la prochaine étape basée sur le scoring"""
+        details = self.avancement_detaille
+        
+        for cat in details['categories']:
+            if cat['est_obligatoire'] and not cat['a_document']:
+                return {
+                    'action': f"Obtenir un document : {cat['categorie_nom']}",
+                    'priorite': 'HAUTE' if cat['poids'] >= 20 else 'MOYENNE',
+                    'categorie_id': cat['categorie_id']
+                }
+        
+        return {
+            'action': "Finaliser les documents optionnels",
+            'priorite': 'BASSE',
+            'categorie_id': None
+        }
     
     @property
     def est_en_retard(self):
         """Vérifie si le dossier est en retard par rapport à l'échéance"""
         if self.date_echeance and self.statut not in ['TERMINE', 'CLOTURE', 'ANNULE']:
             return timezone.now().date() > self.date_echeance
+        return False
+    
+    @property
+    def est_en_retard_score(self):
+        """Vérifie si le dossier est en retard basé sur le scoring"""
+        if self.get_duree_traitement() > 30 and self.score_actuel < 50:
+            return True
         return False
     
     @property
@@ -330,28 +333,80 @@ class Dossier(models.Model):
         """Calcule le solde de l'acompte restant"""
         return self.acompte_recu - self.honoraires_factures
     
-    # Dans models.py > Dossier > taux_avancement
-
-    @property
-    def taux_avancement(self):
-        taux = {
-            'NOUVEAU': 10,
-            'EN_COURS': 30,
-            'AJOUT_PIECE': 30,
-            'DOCU_FONDA': 70,      # CORRECTION : Doit correspondre à STATUT_CHOICES et au save()
-            'EN_ATTENTE': 50,      # Attention : EN_ATTENTE est souvent après EN_COURS
-            'BLOQUE': 50,
-            'TERMINE': 90,
-            'CLOTURE': 100,
-            'ANNULE': 0,
-        }
-        return taux.get(self.statut, 0)
+    # ===================================================================
+    # MÉTHODES UTILITAIRES
+    # ===================================================================
     
     def get_duree_traitement(self):
-        """Retourne la durée de traitement du dossier"""
+        """Retourne la durée de traitement du dossier en jours"""
         if self.date_cloture:
             return (self.date_cloture - self.date_ouverture).days
         return (timezone.now().date() - self.date_ouverture).days
+    
+    def mettre_a_jour_statut_par_score(self):
+        """Met à jour le statut du dossier basé sur le score"""
+        if self.statut in ['ANNULE', 'CLOTURE', 'TERMINE']:
+            return
+        
+        score = self.score_actuel
+        nouveau_statut = self.statut
+        
+        if score <= 10:
+            nouveau_statut = 'NOUVEAU'
+        elif score <= 40:
+            nouveau_statut = 'EN_COURS'
+        elif score <= 70:
+            nouveau_statut = 'AJOUT_PIECE'
+        elif score <= 90:
+            nouveau_statut = 'DOCU_FONDA'
+        elif score < 100:
+            nouveau_statut = 'EN_ATTENTE'
+        elif score == 100:
+            nouveau_statut = 'TERMINE'
+        
+        if nouveau_statut != self.statut:
+            self.statut = nouveau_statut
+            self.save(update_fields=['statut'])
+    
+    def ajouter_document_au_dossier(self, document_instance):
+        """Déplace un document existant vers le dossier du client"""
+        try:
+            if not self.chemin_dossier or not os.path.exists(self.chemin_dossier):
+                self.creer_dossier_client()
+            
+            ancien_chemin = document_instance.fichier.path
+            nom_fichier = os.path.basename(ancien_chemin)
+            nouveau_chemin = os.path.join(self.chemin_dossier, nom_fichier)
+            
+            os.rename(ancien_chemin, nouveau_chemin)
+            
+            document_instance.fichier.name = os.path.relpath(
+                nouveau_chemin, settings.MEDIA_ROOT
+            )
+            document_instance.save()
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erreur déplacement document: {e}")
+            return False
+    
+    def lister_documents_du_dossier(self):
+        """Liste tous les documents du dossier client"""
+        if not self.chemin_dossier or not os.path.exists(self.chemin_dossier):
+            return []
+        
+        return [
+            f for f in os.listdir(self.chemin_dossier)
+            if os.path.isfile(os.path.join(self.chemin_dossier, f))
+        ]
+    
+    def get_chemin_absolu(self):
+        """Retourne le chemin absolu du dossier"""
+        if self.chemin_dossier:
+            return os.path.join(settings.MEDIA_ROOT, self.chemin_dossier)
+        return None
+
 
 class EtapeDossier(models.Model):
     """

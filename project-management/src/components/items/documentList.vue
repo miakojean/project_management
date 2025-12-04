@@ -16,7 +16,7 @@
                 <div class="flex flex-col justify-start gap-4">
                     <div class="document-info">
                         <div class="document-header">
-                            <h4 class="document-title">{{ doc.title || doc.nom || doc.filename || 'Document sans nom' }}</h4>
+                            <h4 class="document-title">{{ doc.titre || doc.title || doc.nom || doc.filename || 'Document sans nom' }}</h4>
                             <span class="document-badge" :class="getStatusClass(doc)">{{ getStatusText(doc) }}</span>
                         </div>
                     

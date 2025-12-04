@@ -44,11 +44,11 @@
           :error="fieldErrors.titre"
         />
         <selectfamily 
-          identifiant="Categorie" 
           label="Catégorie de document *" 
           v-model="formData.categorie"
           :options="categoryOptions"
           :error="fieldErrors.categorie"
+          @update:modelValue="(val) => console.log('Catégorie sélectionnée:', val)"
         />
         <inputArea
           identifiant="Description" 
@@ -134,7 +134,7 @@ const showImportantDocument = ref(false);
 const formData = reactive({
   titre: '',
   description: '',
-  categorie: '', // Changé de type_document à categorie
+  categorie: '',
   charge_de_clientele: '',
   files: ''
 })
@@ -203,20 +203,23 @@ const loadCategories = async () => {
   try {
     const response = await dossierStore.fetchCategories();
     
+    console.log('Réponse catégories:', response); // DEBUG
+    
     if (response && Array.isArray(response)) {
-      // Formater les catégories pour le select
       categoryOptions.value = response.map(category => ({
-        value: category.id, // ID de la catégorie
-        label: category.nom // Nom de la catégorie
+        value: category.id.toString(), // ← CONVERTISSEZ EN STRING si besoin
+        label: category.nom
       }));
       
-      console.log('Catégories formatées pour le select:', categoryOptions.value);
-    } else {
-      console.error('Les catégories retournées ne sont pas un tableau:', response);
+      console.log('Options formatées:', categoryOptions.value);
+      
+      // Optionnel: sélectionnez la première catégorie par défaut
+      if (categoryOptions.value.length > 0 && !formData.categorie) {
+        formData.categorie = categoryOptions.value[0].value;
+      }
     }
   } catch (error) {
-    console.error("Erreur lors du chargement des catégories:", error);
-    showNotificationPopup('error', 'Erreur lors du chargement des catégories', 3000);
+    console.error("Erreur:", error);
   }
 }
 

@@ -1,67 +1,64 @@
 <template>
-    <div class="input__family">
-      <label :for="label">{{ label }}</label>
-      <select 
-        :id="label"
-        v-model="inputValue"
-        @change="updateValue"
-        :class="{ 'error': error }"
+  <div class="input__family">
+    <label :for="label">{{ label }}</label>
+    <select 
+      :id="label"
+      :value="modelValue"
+      @change="onChange"
+      :class="{ 'error': error }"
+    >
+      <option value="" disabled>-- Sélectionner --</option>
+      <option 
+        v-for="(item, index) in options" 
+        :key="index" 
+        :value="item.value"
       >
-        <option value="" disabled>-- Sélectionner --</option>
-        <option 
-          v-for="(item, index) in options" 
-          :key="index" 
-          :value="item.value"
-        >
-          {{ item.label }}
-        </option>
-      </select>
-      <span v-if="error" class="error-message">{{ error }}</span>
-    </div>
-  </template>
-    
-  <script>
-    import { ref, watch } from 'vue';
-    
-    export default {
-      props: {
-        label: {
-          type: String,
-          default: "Type de dossier"
-        },
-        options: {
-          type: Array,
-          default: () => []
-        },
-        modelValue: {
-          type: String,
-          default: ''
-        },
-        error: {
-          type: String,
-          default: ''
-        }
-      },
-      emits: ['update:modelValue'],
-      setup(props, { emit }) {
-        const inputValue = ref(props.modelValue);
-    
-        // Met à jour la valeur parente quand inputValue change
-        const updateValue = () => {
-          emit('update:modelValue', inputValue.value);
-        };
-    
-        // Synchronise inputValue si modelValue change depuis le parent
-        watch(() => props.modelValue, (newVal) => {
-          inputValue.value = newVal;
-        });
-    
-        return {
-          inputValue,
-          updateValue
-        };
-      }
+        {{ item.label }}
+      </option>
+    </select>
+    <span v-if="error" class="error-message">{{ error }}</span>
+  </div>
+</template>
+
+<script>
+import { watch } from 'vue';
+
+export default {
+  props: {
+    label: {
+      type: String,
+      default: "Type de dossier"
+    },
+    options: {
+      type: Array,
+      default: () => []
+    },
+    modelValue: {
+      type: String,
+      default: ''
+    },
+    error: {
+      type: String,
+      default: ''
     }
+  },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const onChange = (event) => {
+      const value = event.target.value;
+      emit('update:modelValue', value);
+    };
+
+    // Optionnel: sync depuis le parent
+    watch(() => props.modelValue, (newVal) => {
+      // La valeur est déjà gérée par :value
+    });
+
+    return {
+      onChange
+    };
+  }
+}
 </script>
     
   <style scoped>

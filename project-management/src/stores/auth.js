@@ -1,9 +1,14 @@
 // src/stores/auth.js
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { authService } from '@/_services/api';
+import { authService} from '@/_services/api'; // Importez aussi api si besoin
+import { useRouter } from 'vue-router';
+import api from '@/_services/api';
 
 export const useAuthStore = defineStore('auth', () => {
+    // --- ROUTER ---
+    const router = useRouter();
+    
     // --- STATE ---
     const user = ref(null);
     const isLoading = ref(false);
@@ -55,6 +60,22 @@ export const useAuthStore = defineStore('auth', () => {
         console.log('🗑️ Cache utilisateur nettoyé');
     }
 
+    function clearAuthTokens() {
+        // Supprimer TOUS les tokens possibles
+        const tokensToRemove = [
+            'authToken', 'access', 'access_token',
+            'refresh', 'refresh_token',
+            'token', 'jwt_token'
+        ];
+        
+        tokensToRemove.forEach(tokenKey => {
+            localStorage.removeItem(tokenKey);
+            sessionStorage.removeItem(tokenKey);
+        });
+        
+        console.log('🗑️ Tokens d\'authentification nettoyés');
+    }
+
     // --- ACTIONS PUBLIQUES ---
 
     async function initializeAuth() {
@@ -69,7 +90,9 @@ export const useAuthStore = defineStore('auth', () => {
         const hasCachedUser = loadUserFromCache();
         
         // 2. Vérifier si on a un token
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const token = localStorage.getItem('authToken') || 
+                      localStorage.getItem('access') || 
+                      sessionStorage.getItem('authToken');
         
         if (token) {
             console.log('🔑 Token trouvé, vérification en cours...');
@@ -81,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
             } catch (e) {
                 console.error('❌ Token invalide, déconnexion:', e);
                 // Si le token est invalide, on déconnecte
-                await logout();
+                await logout({ silent: true }); // Déconnexion silencieuse
             }
         } else {
             console.log('⚠️ Pas de token trouvé');
@@ -124,13 +147,20 @@ export const useAuthStore = defineStore('auth', () => {
             
             // ✅ 1. Effectuer le login
             const response = await authService.login(credentials);
-            console.log('✅ Login réussi');
+            console.log('✅ Login réussi', response.data);
             
-            // ✅ 2. Attendre un peu pour s'assurer que les tokens sont stockés
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // ✅ 2. Stocker les tokens dans localStorage
+            if (response.data.access) {
+                localStorage.setItem('access', response.data.access);
+                console.log('🔑 Access token stocké');
+            }
+            if (response.data.refresh) {
+                localStorage.setItem('refresh', response.data.refresh);
+                console.log('🔄 Refresh token stocké');
+            }
             
-            // ✅ 3. Récupérer les infos utilisateur
-            if (response.data && response.data.user) {
+            // ✅ 3. Récupérer et stocker les infos utilisateur
+            if (response.data.user) {
                 console.log('✅ Utilisateur reçu dans la réponse login');
                 cacheUser(response.data.user);
             } else {
@@ -146,9 +176,7 @@ export const useAuthStore = defineStore('auth', () => {
             error.value = err.response?.data?.message || err.message || 'Erreur de connexion';
             
             // ✅ Nettoyer en cas d'erreur
-            clearUserCache();
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('refresh');
+            await logout({ silent: true });
             
             throw err;
         } finally {
@@ -156,25 +184,53 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function logout() {
-        console.log('🚪 Déconnexion...');
+    async function logout(options = {}) {
+        const { silent = false, redirect = true } = options;
+        
+        if (!silent) {
+            console.log('🚪 Déconnexion...');
+        }
         
         try {
-            await authService.logout();
+            // ✅ 1. Récupérer le refresh token pour le blacklist côté serveur
+            const refreshToken = localStorage.getItem('refresh') || 
+                                sessionStorage.getItem('refresh');
+            
+            // ✅ 2. Appeler l'API de déconnexion si on a un token
+            if (refreshToken) {
+                try {
+                    await api.post('manager/logout/', { 
+                        refresh: refreshToken 
+                    });
+                    console.log('✅ Token blacklisté côté serveur');
+                } catch (err) {
+                    console.warn('⚠️ Impossible de blacklister le token:', err.message);
+                    // On continue même si l'appel échoue
+                }
+            }
         } catch (err) {
-            console.error('❌ Erreur lors de la déconnexion:', err);
+            if (!silent) {
+                console.error('❌ Erreur lors de la déconnexion API:', err);
+            }
         } finally {
-            // ✅ Nettoyage complet
+            // ✅ 3. Nettoyage complet LOCAL (toujours exécuté)
             clearUserCache();
+            clearAuthTokens();
+            
+            // ✅ 4. Réinitialiser l'état
             isInitialized.value = false;
+            error.value = null;
             
-            // Nettoyer aussi les tokens
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('refresh');
-            sessionStorage.removeItem('authToken');
-            sessionStorage.removeItem('refresh');
-            
-            console.log('✅ Déconnexion terminée');
+            if (!silent) {
+                console.log('✅ Déconnexion terminée');
+                
+                // ✅ 5. Redirection vers la page de login
+                if (redirect) {
+                    setTimeout(() => {
+                        router.push('/login');
+                    }, 100);
+                }
+            }
         }
     }
 
@@ -183,6 +239,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         isLoading,
         error,
+        isInitialized, // Exportez aussi isInitialized si besoin
         
         // Getters
         isAuthenticated,

@@ -3,11 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator, MinValueValidator, FileExtensionValidator, MaxValueValidator
 from django.utils import timezone
 from account.models import Utilisateur
-from decimal import Decimal
 import os
-from django.conf import settings
-import re
-from unidecode import unidecode 
 from .document import Document
 
 class SignatureDocument(models.Model):
