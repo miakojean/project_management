@@ -11,6 +11,7 @@ export const useDossierStore = defineStore('dossier', () => {
     const loading = ref(false);
     const error = ref(null);
     const stats = ref({});
+    const categories = ref([]);
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
@@ -45,6 +46,31 @@ export const useDossierStore = defineStore('dossier', () => {
     });
 
     // Actions
+
+    // Dans dossierStore.js - ajoutez ceci à la fonction fetchCategories
+    async function fetchCategories () {
+        try {
+            const response = await api.get(`/manager/category`);
+            console.log("Listes des catégories", response.data);
+            
+            // Formater les catégories pour les rendre utilisables dans les selects
+            const formattedCategories = response.data.map(category => ({
+                id: category.id,
+                nom: category.nom,
+                code: category.code,
+                couleur: category.couleur,
+                icone: category.icone,
+                est_fondamentale: category.est_fondamentale || false
+            }));
+            
+            categories.value = formattedCategories;
+            return formattedCategories; // Retourner les catégories formatées
+        } catch(err) {
+            error.value = err.response?.data?.error || "Erreur lors de la récupération";
+            throw err; // Propager l'erreur
+        }
+    }
+
     async function fetchDossiers(params = {}) {
         loading.value = true;
         error.value = null;
@@ -257,6 +283,7 @@ export const useDossierStore = defineStore('dossier', () => {
         error,
         stats,
         customerDossier,
+        categories,
         
         // Getters
         totalDossiers,
@@ -269,6 +296,7 @@ export const useDossierStore = defineStore('dossier', () => {
         attachAffair,
         
         // Actions
+        fetchCategories,
         fetchDossiers,
         fetchDossierById,
         fetchDossiersByClient,

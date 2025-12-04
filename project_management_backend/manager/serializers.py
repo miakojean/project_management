@@ -298,7 +298,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = [
-            'id', 'reference', 'titre', 'type_document',
+            'id', 'reference', 'titre', 
             'categorie', 'categorie_nom', 'client', 'client_nom',
             'dossier', 'dossier_reference', 'dossier_titre',
             'statut', 'niveau_confidentialite', 'taille_lisible',
@@ -308,6 +308,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
             'version', 'uploade_par', 'uploade_par_nom',
             'date_upload', 'est_archive'
         ]
+        # type_document supprimé
 
 class DossierSerializer(serializers.ModelSerializer):
     # Lecture : client complet
@@ -592,7 +593,7 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = [
-            'id', 'reference', 'titre', 'description', 'type_document',
+            'id', 'reference', 'titre', 'description',
             'categorie', 'categorie_detail', 'client', 'client_detail',
             'dossier', 'dossier_detail', 'fichier', 'taille_fichier', 
             'taille_lisible', 'extension', 'numero_document',
@@ -608,10 +609,11 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             'date_archivage', 'est_signe_completement',
             'signatures', 'signataires_list', 'historique_recent'
         ]
+        # type_document supprimé
         read_only_fields = [
             'reference', 'taille_fichier', 'extension', 'date_upload',
             'date_modification', 'nombre_consultations'
-        ]
+        ]    
     
     def get_client_detail(self, obj):
         if obj.client:
@@ -673,7 +675,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = [
-            'titre', 'description', 'type_document', 'categorie',
+            'titre', 'description', 'categorie',  # type_document supprimé
             'dossier', 'client', 'files', 'fichier',
             'numero_document', 'date_document', 'date_validite',
             'emetteur', 'destinataire', 'niveau_confidentialite',
@@ -724,6 +726,7 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
             'est_certifie_conforme', 'necessite_signature',
             'tags', 'mots_cles', 'notes_internes', 'est_archive'
         ]
+        # type_document supprimé
     
     def update(self, instance, validated_data):
         # Créer une entrée d'historique avant modification
@@ -746,6 +749,7 @@ class DocumentVersionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ['titre', 'description', 'fichier', 'document_parent', 'notes_internes']
+        # type_document supprimé
     
     def create(self, validated_data):
         document_parent = validated_data.pop('document_parent')

@@ -44,11 +44,11 @@
           :error="fieldErrors.titre"
         />
         <selectfamily 
-          identifiant="TypeDoc" 
-          label="Catégorie de document" 
-          v-model="formData.type_document"
-          :options="docTypes"
-          :error="fieldErrors.type_document"
+          identifiant="Categorie" 
+          label="Catégorie de document *" 
+          v-model="formData.categorie"
+          :options="categoryOptions"
+          :error="fieldErrors.categorie"
         />
         <inputArea
           identifiant="Description" 
@@ -84,8 +84,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch, defineComponent } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { storeToRefs } from 'pinia'
+
+// About component
 import inputfamily from '../input/inputfamily.vue'
 import inputArea from '../input/inputArea.vue'
 import selectfamily from '../input/selectfamily.vue'
@@ -93,11 +93,15 @@ import mainButton from '../button/mainButton.vue'
 import prevButton from '../button/prevButton.vue'
 import fileInput from '../input/fileInput.vue'
 import isImportantCard from '../cards/isImportantCard.vue'
+import notificationPopup from '../tools/notificationPopup.vue'
+
+// About store services
 import api from '@/_services/api'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useDossierStore } from '@/stores/dossierStore'
 import { useCustomerStore } from '@/stores/custumerStore'
-import notificationPopup from '../tools/notificationPopup.vue' // Assurez-vous que le chemin est correct
 
 const emit = defineEmits(['prevstep', 'notification'])
 
@@ -114,7 +118,7 @@ const { user, isInitialized } = storeToRefs(authStore)
 
 // Références
 const fileInputRef = ref(null)
-const selectedFiles = ref([])  // ✅ Lié au v-model de fileInput
+const selectedFiles = ref([])
 
 // Variables pour la notification
 const showNotification = ref(false)
@@ -122,39 +126,17 @@ const notificationMessage = ref('')
 const notificationType = ref('success')
 const notificationDuration = ref(5000)
 
-// Types de documents
-const docTypes = ref([
-  { value: 'PIECE_IDENTITE', label: "Pièce d'identité" },
-  { value: 'STATUT', label: 'Statut' },
-  { value: 'PROCES_VERBAL', label: 'Procès verbal' },
-  { value: 'CONTRAT', label: 'Contrat' },
-  { value: 'COURRIER', label: 'Courrier' },
-  { value: 'ATTESTATION', label: 'Attestation' },
-  { value: 'CERTIFICAT', label: 'Certificat' },
-  { value: 'FACTURE', label: 'Facture' },
-  { value: 'RECU', label: 'Reçu' },
-  { value: 'ACTE', label: 'Acte juridique' },
-  { value: 'JUGEMENT', label: 'Jugement' },
-  { value: 'ORDONNANCE', label: 'Ordonnance' },
-  { value: 'ASSIGNATION', label: 'Assignation' },
-  { value: 'CONCLUSIONS', label: 'Conclusions' },
-  { value: 'MEMOIRE', label: 'Mémoire' },
-  { value: 'RAPPORT', label: 'Rapport' },
-  { value: 'NOTE', label: 'Note juridique' },
-  { value: 'CORRESPONDANCE', label: 'Correspondance' },
-  { value: 'FORMULAIRE', label: 'Formulaire administratif' },
-  { value: 'JUSTIFICATIF', label: 'Justificatif' },
-  { value: 'AUTRE', label: 'Autre' }
-])
+// Options pour le select des catégories
+const categoryOptions = ref([])
 
 const showImportantDocument = ref(false);
 
 const formData = reactive({
   titre: '',
   description: '',
-  type_document: 'AUTRE',
+  categorie: '', // Changé de type_document à categorie
   charge_de_clientele: '',
-  files:''
+  files: ''
 })
 
 const clearError = () => {
@@ -173,7 +155,6 @@ const showNotificationPopup = (type, message, duration = 5000) => {
 // Fonction pour fermer la notification
 const handleNotificationClose = () => {
   showNotification.value = false
-  // Optionnel: réinitialiser les valeurs
   notificationMessage.value = ''
   notificationType.value = 'success'
 }
@@ -190,8 +171,8 @@ const validateForm = () => {
     fieldErrors.description = 'La description est obligatoire'
     valid = false
   }
-  if (!formData.type_document) {
-    fieldErrors.type_document = 'Le type de document est obligatoire'
+  if (!formData.categorie) {
+    fieldErrors.categorie = 'La catégorie de document est obligatoire'
     valid = false
   }
 
@@ -210,12 +191,33 @@ const validateForm = () => {
 
 const handleFileError = (error) => {
   errorMessage.value = error
-  // Afficher également une notification d'erreur si besoin
-  // showNotificationPopup('error', error, 8000)
 }
 
-const handlePrevStep = () => {
-  emit('prevstep')
+const handlePrevStep = async() => {
+  // Charger les catégories au retour
+  await loadCategories();
+}
+
+// Charger les catégories et formater les options
+const loadCategories = async () => {
+  try {
+    const response = await dossierStore.fetchCategories();
+    
+    if (response && Array.isArray(response)) {
+      // Formater les catégories pour le select
+      categoryOptions.value = response.map(category => ({
+        value: category.id, // ID de la catégorie
+        label: category.nom // Nom de la catégorie
+      }));
+      
+      console.log('Catégories formatées pour le select:', categoryOptions.value);
+    } else {
+      console.error('Les catégories retournées ne sont pas un tableau:', response);
+    }
+  } catch (error) {
+    console.error("Erreur lors du chargement des catégories:", error);
+    showNotificationPopup('error', 'Erreur lors du chargement des catégories', 3000);
+  }
 }
 
 const handleSubmit = async () => {
@@ -224,7 +226,7 @@ const handleSubmit = async () => {
   isLoading.value = true
   const formDataToSend = new FormData()
 
-  // 1. Ajout de TOUS les fichiers avec la même clé → Django les reçoit en liste
+  // 1. Ajout de TOUS les fichiers avec la même clé
   selectedFiles.value.forEach(file => {
     formDataToSend.append('files', file)
   })
@@ -232,7 +234,7 @@ const handleSubmit = async () => {
   // 2. Métadonnées (une seule fois pour tous les documents)
   formDataToSend.append('titre', formData.titre)
   formDataToSend.append('description', formData.description)
-  formDataToSend.append('type_document', formData.type_document || 'AUTRE')
+  formDataToSend.append('categorie', formData.categorie) // Changé de type_document à categorie
 
   if (dossierStore.currentDossier?.id) {
     formDataToSend.append('dossier', dossierStore.currentDossier.id)
@@ -260,7 +262,7 @@ const handleSubmit = async () => {
     // Rediriger après la notification
     setTimeout(() => {
       router.push('/dashboard')
-    }, 3500) // Un peu avant la fin de la notification
+    }, 3500)
 
   } catch (error) {
     console.error('Erreur upload:', error)
@@ -297,15 +299,19 @@ onMounted(async () => {
   if (!user.value && !isInitialized.value) {
     await authStore.initializeAuth()
   }
+
+  // Charger les catégories au montage du composant
+  await loadCategories();
 })
 </script>
 
 <style scoped>
+/* Styles inchangés */
 .form-container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .form__body {
