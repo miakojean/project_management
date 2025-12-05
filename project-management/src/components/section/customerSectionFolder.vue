@@ -27,9 +27,12 @@
             </div>
         </div>
 
-        <div class="">
-            <documentList 
-                :documents="doc.documents" 
+        <div class=" grid grid-cols-4 w-full gap-2">
+            <fileCards v-for="doc in doc.documents"
+                :title="doc.titre"
+                :size="doc.taille_lisible"
+                :status="doc.statut"
+                
             />
         </div>
     </section>
@@ -41,12 +44,14 @@ import documentList from '../items/documentList.vue';
 import uploadFileButton from '../button/uploadFileButton.vue';
 import { useDossierStore } from '@/stores/dossierStore';
 import { onMounted, watch, ref, computed } from 'vue';
+import fileCards from '../cards/fileCards.vue';
 
 export default {
     components: {
         cardsaffairs,
         documentList,
-        uploadFileButton
+        uploadFileButton,
+        fileCards
     },
     setup(){
         const doc = ref({})
@@ -105,7 +110,6 @@ export default {
         );
 
         onMounted(async() => {
-            console.log('🏁 Composant monté');
             console.log('📁 Dossier store:', dossierStore.currentDossier);
 
             // Si un dossier est déjà sélectionné, chargez ses documents

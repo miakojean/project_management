@@ -51,7 +51,6 @@ export default defineComponent({
       default: () => [
         { id: 1, title: "Étape 1", subtitle: "Envoie d'email" },
         { id: 2, title: "Étape 2", subtitle: "Vérification" },
-        { id: 3, title: "Étape 3", subtitle: "Nouveau mot de passe" },
       ]
     }
   },

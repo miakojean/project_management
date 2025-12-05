@@ -58,33 +58,17 @@ Ici on prendra les informations relatives aux activités du cabinet. Je ne pense
 1. Enregistrement → 2. Instruction → 3. Procédure → 4. Décision → 5. Recouvrement
 ```
 
-#### 3.3.2. Sous-étapes configurables
-- Dates des audiences
-- Dépôt de pièces
-- Consultations
-- Assignations
-- Jugements
-- Appels
-
 ### 3.4. Module de Gestion des Documents
-- Upload et stockage sécurisé
-- Catégorisation automatique
+- Upload et stockage sécurisé (Done)
+- Catégorisation automatique (Done)
 - Versionning des documents
 - Recherche full-text
-- Templates de documents
 
 ### 3.5. Module de Gestion des Clients
 - Base clients centralisée
 - Historique des dossiers par client
 - Coordonnées et informations de contact
 - Statistiques par client
-
-### 3.6. Module Financier
-- Suivi des honoraires
-- État des paiements
-- Relances automatiques
-- Tableau de bord financier
-- Export pour comptabilité
 
 ### 3.7. Module de Reporting et Statistiques
 - Tableaux de bord personnalisables
@@ -99,21 +83,21 @@ Ici on prendra les informations relatives aux activités du cabinet. Je ne pense
 ```python
 # Exemple de modèles
 class Dossier(models.Model):
-    reference = models.CharField(max_length=50, unique=True)
-    client = models.ForeignKey(Client, on_delete=models.PROTECT)
-    avocat_responsable = models.ForeignKey(User, on_delete=models.PROTECT)
-    type_affaire = models.CharField(max_length=50, choices=TYPE_AFFAIRE_CHOICES)
-    statut = models.CharField(max_length=50, choices=STATUT_CHOICES)
-    date_creation = models.DateTimeField(auto_now_add=True)
-    date_modification = models.DateTimeField(auto_now=True)
+  reference = models.CharField(max_length=50, unique=True)
+  client = models.ForeignKey(Client, on_delete=models.PROTECT)
+  avocat_responsable = models.ForeignKey(User, on_delete=models.PROTECT)
+  type_affaire = models.CharField(max_length=50, choices=TYPE_AFFAIRE_CHOICES)
+  statut = models.CharField(max_length=50, choices=STATUT_CHOICES)
+  date_creation = models.DateTimeField(auto_now_add=True)
+  date_modification = models.DateTimeField(auto_now=True)
 
 class EtapeDossier(models.Model):
-    dossier = models.ForeignKey(Dossier, on_delete=models.CASCADE)
-    type_etape = models.CharField(max_length=100)
-    date_previsionnelle = models.DateField()
-    date_reelle = models.DateField(null=True, blank=True)
-    commentaire = models.TextField(blank=True)
-    utilisateur = models.ForeignKey(User, on_delete=models.PROTECT)
+  dossier = models.ForeignKey(Dossier, on_delete=models.CASCADE)
+  type_etape = models.CharField(max_length=100)
+  date_previsionnelle = models.DateField()
+  date_reelle = models.DateField(null=True, blank=True)
+  commentaire = models.TextField(blank=True)
+  utilisateur = models.ForeignKey(User, on_delete=models.PROTECT)
 ```
 
 ### 4.2. API Endpoints Principaux

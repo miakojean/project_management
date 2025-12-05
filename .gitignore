@@ -185,3 +185,7 @@ jwt_secret.txt
 
 # Api test files
 *.http
+
+# Files testing
+*.png 
+*.xlsx

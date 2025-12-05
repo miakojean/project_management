@@ -32,6 +32,7 @@
                     :clientNom="dossier.client_nom"
                     :statut="dossier.statut"
                     :dateOuverture="dossier.date_creation_formatee"
+                    :date-echeance="dossier.date_echeance"
                     :dossier="dossier"
                     :typeDossier="dossier.type_dossier"
                     :avancement="dossier.taux_avancement"

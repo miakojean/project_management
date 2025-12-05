@@ -34,8 +34,6 @@ class Dossier(models.Model):
     
     STATUT_CHOICES = [
         ('NOUVEAU', 'Nouveau'),
-        ('AJOUT_PIECE', 'ajouts piece'),
-        ('DOCU_FONDA', 'Documents fondamentaux'),
         ('EN_COURS', 'En cours'),
         ('EN_ATTENTE', 'En attente (client)'),
         ('BLOQUE', 'Bloqué'),
