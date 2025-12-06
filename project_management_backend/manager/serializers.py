@@ -298,7 +298,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = [
-            'id', 'reference', 'titre', 
+            'id', 'reference', 'titre', 'extension',
             'categorie', 'categorie_nom', 'client', 'client_nom',
             'dossier', 'dossier_reference', 'dossier_titre',
             'statut', 'niveau_confidentialite', 'taille_lisible',

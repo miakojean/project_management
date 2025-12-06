@@ -28,6 +28,7 @@
                     :key="customer.id" 
                     :customer="customer"
                     :customerName="customer.nom_complet"
+                    :description="customer.reference_client"
                     :typeClient="customer.type_client"
                     :location="customer.ville"
                     @handle-customer="openModal(customer)"

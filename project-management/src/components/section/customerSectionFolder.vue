@@ -32,6 +32,7 @@
                 :title="doc.titre"
                 :size="doc.taille_lisible"
                 :status="doc.statut"
+                :documentType="doc.extension"
                 
             />
         </div>

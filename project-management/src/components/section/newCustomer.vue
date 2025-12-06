@@ -88,7 +88,6 @@ export default {
         const stepsList = ref([
             { label: 'Type de profil' },
             { label: 'Informations' },
-            {label: 'Constitution de dossier'}
         ]);
         
         // Le totalSteps devient dynamique basé sur la liste

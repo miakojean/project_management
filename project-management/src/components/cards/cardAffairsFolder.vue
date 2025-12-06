@@ -12,9 +12,11 @@
                     <p class="dossier-reference">{{ reference }}</p>
                 </div>
             </div>
-            <div class="status-badge" :class="statusClass">
-                {{ statusText }}
-            </div>
+
+            <dropDown 
+                @action="handleDropdownAction"
+            />
+            
         </div>
 
         <div class="card-content">
@@ -56,13 +58,22 @@
             <div class="priority-tag" v-if="priorite !== 'NORMALE'">
                 {{ prioriteText }}
             </div>
+            <div class="status-badge" :class="statusClass">
+                {{ statusText }}
+            </div>
         </div>
     </div>
 </template>
 
 <script>
+import { computed } from 'vue';
+import dropDown from '../modales/dropDown.vue';
+
 export default {
     name: 'DossierCard',
+    components: {
+        dropDown
+    },
     props: {
         // Données principales
         titre: {
@@ -127,8 +138,11 @@ export default {
             validator: (value) => ['BASSE', 'NORMALE', 'HAUTE', 'URGENTE'].includes(value)
         }
     },
-    computed: {
-        statusText() {
+    emits: ['dossier-action'],
+    
+    setup(props, { emit }) {
+        // Computed properties
+        const statusText = computed(() => {
             const statusMap = {
                 'NOUVEAU': 'Nouveau',
                 'EN_COURS': 'En cours',
@@ -138,14 +152,14 @@ export default {
                 'CLOTURE': 'Clôturé',
                 'ANNULE': 'Annulé'
             };
-            return statusMap[this.statut] || this.statut;
-        },
+            return statusMap[props.statut] || props.statut;
+        });
         
-        statusClass() {
-            return `status-${this.statut.toLowerCase()}`;
-        },
+        const statusClass = computed(() => {
+            return `status-${props.statut.toLowerCase()}`;
+        });
         
-        typeText() {
+        const typeText = computed(() => {
             const typeMap = {
                 'CONSTITUTION': 'Constitution',
                 'MODIFICATION': 'Modification',
@@ -159,24 +173,98 @@ export default {
                 'RECOUVREMENT': 'Recouvrement',
                 'AUTRE': 'Autre'
             };
-            return typeMap[this.typeDossier] || this.typeDossier;
-        },
+            return typeMap[props.typeDossier] || props.typeDossier;
+        });
         
-        prioriteText() {
+        const prioriteText = computed(() => {
             const prioriteMap = {
                 'BASSE': 'Basse priorité',
                 'NORMALE': 'Normale',
                 'HAUTE': 'Haute priorité',
                 'URGENTE': 'Urgent'
             };
-            return prioriteMap[this.priorite] || this.priorite;
-        },
+            return prioriteMap[props.priorite] || props.priorite;
+        });
         
-        isUrgent() {
-            return this.priorite === 'URGENTE';
-        }
+        const isUrgent = computed(() => {
+            return props.priorite === 'URGENTE';
+        });
+        
+        // Methods
+        const handleDropdownAction = (action) => {
+            console.log('Action dropdown sélectionnée:', action, 'sur le dossier:', props.reference);
+            
+            // Émettre un événement personnalisé pour que le parent puisse gérer l'action
+            emit('dossier-action', {
+                action: action,
+                reference: props.reference,
+                titre: props.titre
+            });
+            
+            // Vous pouvez aussi gérer les actions directement ici si nécessaire
+            switch(action) {
+                case 'view':
+                    viewDossier();
+                    break;
+                case 'edit':
+                    editDossier();
+                    break;
+                case 'duplicate':
+                    duplicateDossier();
+                    break;
+                case 'archive':
+                    archiveDossier();
+                    break;
+                case 'delete':
+                    deleteDossier();
+                    break;
+            }
+        };
+        
+        const viewDossier = () => {
+            console.log('Ouverture du dossier:', props.reference);
+            // Logique pour voir le dossier
+        };
+        
+        const editDossier = () => {
+            console.log('Modification du dossier:', props.reference);
+            // Logique pour éditer le dossier
+        };
+        
+        const duplicateDossier = () => {
+            console.log('Duplication du dossier:', props.reference);
+            // Logique pour dupliquer le dossier
+        };
+        
+        const archiveDossier = () => {
+            console.log('Archivage du dossier:', props.reference);
+            // Logique pour archiver le dossier
+        };
+        
+        const deleteDossier = () => {
+            console.log('Suppression du dossier:', props.reference);
+            // Logique pour supprimer le dossier
+        };
+        
+        // Return everything that should be available in the template
+        return {
+            // Computed
+            statusText,
+            statusClass,
+            typeText,
+            prioriteText,
+            isUrgent,
+            
+            // Methods
+            handleDropdownAction,
+            viewDossier,
+            editDossier,
+            duplicateDossier,
+            archiveDossier,
+            deleteDossier
+        };
     }
-}
+};
 </script>
 
 <style scoped>

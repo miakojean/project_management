@@ -117,7 +117,7 @@ class Document(models.Model):
     taille_fichier = models.BigIntegerField(
         _("Taille du fichier (octets)"),
         editable=False,
-        null=True
+        null=True 
     )
     
     extension = models.CharField(_("Extension"), max_length=10, editable=False, blank=True)

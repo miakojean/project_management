@@ -16,7 +16,10 @@ from .view.affairs_views import (
 )
 
 from .view.documents_views import(
-    DocumentsAPIView
+    DocumentsAPIView,
+    DocumentDownloadAPIView,
+    MultipleDocumentDownloadAPIView,
+    DocumentPreviewAPIView
 )
 
 from .view.categories_views import(CategoryView)

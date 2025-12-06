@@ -45,7 +45,6 @@
 
                     <!-- Liste des dossiers -->
                     <div class="dossiers-section">
-                        <h3>Dossiers du client</h3>
                         
                         <!-- Si des dossiers existent -->
                         <div v-if="customerDossiers.length > 0" class="dossiers-list">
