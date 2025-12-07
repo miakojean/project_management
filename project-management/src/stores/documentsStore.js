@@ -36,7 +36,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
     }
 
     // Actions 
-    async function downloadDocuments(documentIds, options = {}) {
+    async function downloadDocuments(documentIds, options = {}, fileName) {
         try {
             const config = {
                 method: 'GET',
@@ -48,7 +48,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
             };
 
             let response;
-            let filename = 'document';
+            let filename = fileName;
 
             // Si c'est un seul document, utiliser GET
             if (typeof documentIds === 'number' || (Array.isArray(documentIds) && documentIds.length === 1)) {

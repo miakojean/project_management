@@ -37,7 +37,13 @@
                     :typeDossier="dossier.type_dossier"
                     :avancement="dossier.taux_avancement"
                     :documentsCount="dossier.documents_count"
-                    @click="goToFolderDetail(dossier)"
+                    @view="goToFolderDetail(dossier)"
+                    @edit="handleEditDossier"
+                    @duplicate="handleDuplicateDossier"
+                    @archive="handleArchiveDossier"
+                    @delete="handleDeleteDossier"
+                    @dossier-action="handleDossierAction"
+                    @card-click="handleCardClick"
                     class="dossier-card"
                 />
             </div>
@@ -99,11 +105,16 @@ export default {
         const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
 
         // Méthodes
-        const goToFolderDetail = (dossier) => {
+
+        const goToFolderDetail = (dossier) => { //View
             router.push(`/dashboard/customer/affairs/`);
             dossierStore.attachAffair(dossier);
             console.log('Le dossier selectionné',dossier)
         };
+
+        const updateFolder = async(dossierData) => { // Archive
+            await dossierStore.updateDossier()
+        }
 
         const handlePageChange = (page) => {
             currentPage.value = page;

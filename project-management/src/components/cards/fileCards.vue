@@ -298,7 +298,7 @@ export default {
   flex-direction: column;
   gap: 1rem;
   cursor: pointer;
-  max-width: 350px;
+  min-width: 300px;
   margin: 20px auto;
 }
 

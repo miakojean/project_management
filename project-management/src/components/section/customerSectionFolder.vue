@@ -27,13 +27,13 @@
             </div>
         </div>
 
-        <div class=" grid grid-cols-4 w-full gap-2">
+        <div class=" grid grid-cols-3 w-full gap-2">
             <fileCards v-for="doc in doc.documents"
                 :title="doc.titre"
                 :size="doc.taille_lisible"
                 :status="doc.statut"
                 :documentType="doc.extension"
-                @download="handleDownload(doc.id)"
+                @download="handleDownload(doc.id, doc.titre)"
                 
             />
         </div>
@@ -143,8 +143,8 @@ export default {
             console.log('Action:', action, 'sur:', doc.value);
         };
 
-        const handleDownload = async (doc) => {
-            await documentStore.downloadDocuments(doc)
+        const handleDownload = async (doc, fileName) => {
+            await documentStore.downloadDocuments(doc, fileName)
             console.log('Vous voulez télécharger', doc)
         }
 
