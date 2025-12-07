@@ -8,11 +8,10 @@ from django.conf import settings
 import re
 from unidecode import unidecode
 
-# CORRECTION DES IMPORTS
-from django.contrib.auth import get_user_model  # Pour obtenir le modèle User
-from .client import Client  # Import relatif
-from .dossier import Dossier  # Import relatif
-from .category import CategorieDocument  # Import relatif
+from django.contrib.auth import get_user_model 
+from .client import Client  
+from .dossier import Dossier
+from .category import CategorieDocument
 
 # Obtenez le modèle Utilisateur
 Utilisateur = get_user_model()

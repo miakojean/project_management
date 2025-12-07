@@ -33,6 +33,7 @@
                 :size="doc.taille_lisible"
                 :status="doc.statut"
                 :documentType="doc.extension"
+                @download="handleDownload(doc.id)"
                 
             />
         </div>
@@ -43,9 +44,12 @@
 import cardsaffairs from '../cards/cardsaffairs.vue';
 import documentList from '../items/documentList.vue';
 import uploadFileButton from '../button/uploadFileButton.vue';
-import { useDossierStore } from '@/stores/dossierStore';
 import { onMounted, watch, ref, computed } from 'vue';
 import fileCards from '../cards/fileCards.vue';
+
+// Store 
+import { useDossierStore } from '@/stores/dossierStore';
+import { useDocumentStore } from '@/stores/documentsStore';
 
 export default {
     components: {
@@ -57,7 +61,7 @@ export default {
     setup(){
         const doc = ref({})
         const dossierStore = useDossierStore();
-        
+        const documentStore = useDocumentStore();
         const documents = ref({});
 
         // Méthodes utilitaires
@@ -139,16 +143,23 @@ export default {
             console.log('Action:', action, 'sur:', doc.value);
         };
 
+        const handleDownload = async (doc) => {
+            await documentStore.downloadDocuments(doc)
+            console.log('Vous voulez télécharger', doc)
+        }
+
         return {
             doc,
             documents,
+            documentStore,
             dossierStore,
             getStatus,
             formatDate,
             calculateProgress,
             handleView,
             handleEdit,
-            handleAction
+            handleAction,
+            handleDownload
         };
     }
 }

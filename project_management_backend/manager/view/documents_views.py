@@ -44,6 +44,85 @@ class DocumentsAPIView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+# documents_views.py - AJOUTEZ CETTE CLASSE
+class DocumentDirectDownloadAPIView(APIView):
+    """Vue pour téléchargement DIRECT du fichier avec GET"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, document_id):
+        try:
+            document = Document.objects.get(id=document_id)
+            
+            # Vérifier les permissions
+            if not self._can_download(request.user, document):
+                return Response(
+                    {'error': 'Permission insuffisante'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Vérifier si le fichier existe
+            if not document.fichier:
+                return Response(
+                    {'error': 'Fichier non trouvé'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Enregistrer la consultation
+            document.enregistrer_consultation()
+            
+            # Télécharger le fichier
+            response = FileResponse(
+                document.fichier.open('rb'),
+                as_attachment=True,
+                filename=self._get_download_filename(document)
+            )
+            
+            # Définir le Content-Type
+            response['Content-Type'] = self._get_content_type(document.extension)
+            
+            return response
+            
+        except Document.DoesNotExist:
+            return Response(
+                {'error': 'Document non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def _can_download(self, user, document):
+        """Vérifie si l'utilisateur peut télécharger le document"""
+        if document.niveau_confidentialite == 'PUBLIC':
+            return True
+        elif document.niveau_confidentialite == 'INTERNE':
+            return user.is_authenticated
+        elif document.niveau_confidentialite == 'CONFIDENTIEL':
+            return user.has_perm('documents.view_confidential_documents')
+        elif document.niveau_confidentialite == 'TRES_CONFIDENTIEL':
+            return user.has_perm('documents.view_confidential_documents') and user.is_staff
+        return False
+    
+    def _get_download_filename(self, document):
+        """Génère un nom de fichier pour le téléchargement"""
+        # Utiliser le titre ou la référence
+        base_name = document.titre or document.reference
+        # Nettoyer le nom
+        safe_name = "".join(c for c in base_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        return f"{safe_name}.{document.extension}"
+    
+    def _get_content_type(self, extension):
+        """Retourne le Content-Type approprié"""
+        content_types = {
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'zip': 'application/zip',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls': 'application/vnd.ms-excel',
+        }
+        return content_types.get(extension.lower(), 'application/octet-stream')
+    
 class DocumentDownloadAPIView(APIView):
     """API pour télécharger un document"""
     permission_classes = [IsAuthenticated]

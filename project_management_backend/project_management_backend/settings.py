@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     # Apps locales
     'account',
     'manager',
+    'notification'
 ]
 
 REST_FRAMEWORK = {

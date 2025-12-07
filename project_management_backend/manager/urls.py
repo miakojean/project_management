@@ -19,7 +19,8 @@ from .view.documents_views import(
     DocumentsAPIView,
     DocumentDownloadAPIView,
     MultipleDocumentDownloadAPIView,
-    DocumentPreviewAPIView
+    DocumentPreviewAPIView,
+    DocumentDirectDownloadAPIView,
 )
 
 from .view.categories_views import(CategoryView)
@@ -45,6 +46,16 @@ urlpatterns = [
 
     # View to manage documents
     path('documents/',DocumentsAPIView.as_view(), name="documents" ),
+    path('documents/download/', DocumentDownloadAPIView.as_view(), name='documents-download-list'),
+    path('documents/download/<int:document_id>/', DocumentDownloadAPIView.as_view(), name='document-download'),
+    path('documents/<int:document_id>/download/', DocumentDirectDownloadAPIView.as_view(), name='document-direct-download'),
+    
+    # Téléchargement multiple
+    path('documents/download-multiple/', MultipleDocumentDownloadAPIView.as_view(), name='documents-download-multiple'),
+    
+    # Prévisualisation
+    path('documents/preview/<int:document_id>/', DocumentPreviewAPIView.as_view(), name='document-preview'),
+
 
     #Category
     path('category', CategoryView.as_view(), name="category-view")
