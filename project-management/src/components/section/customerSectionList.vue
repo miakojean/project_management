@@ -2,21 +2,23 @@
     <div class="customer-container">
         <!-- Loading State -->
         <div v-if="store.loading" class="loading-container">
-            <div class="loading-spinner"></div>
-            <p>Chargement des clients...</p>
+            <skeleton :isLoading="true"/>
         </div>
 
         <!-- Error State -->
         <div v-else-if="store.error" class="error-container">
-            <div class="error-icon">⚠️</div>
-            <p>Erreur: {{ store.error }}</p>
+            <div class="error-icon">
+                <img src="../../assets/undraw_no-data_ig65.svg" alt="Aucun dossier">
+            </div>
+            <p>{{ store.error }}</p>
             <button @click="refreshData" class="retry-btn">Réessayer</button>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="displayedCustomers.length === 0" class="empty-container">
-            <div class="empty-icon">👥</div>
-            <p>Aucun client trouvé</p>
+            <div class="error-icon">
+                <img src="../../assets/undraw_no-data_ig65.svg" alt="Aucun dossier">
+            </div>
             <button @click="refreshData" class="retry-btn">Actualiser</button>
         </div>
 
@@ -111,11 +113,13 @@ import { ref, computed, onMounted, watch } from 'vue';
 import customerCards from '../cards/customerCards.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 import customerModale from '../modales/customerModale.vue';
+import skeleton from '../tools/skeleton.vue';
 
 export default {
     components: {
         customerCards,
         customerModale,
+        skeleton
     },
     setup() {
         const store = useCustomerStore();
@@ -283,6 +287,12 @@ export default {
     justify-content: center;
     padding: 3rem;
     text-align: center;
+    width: 100%;
+}
+
+.error-icon img{
+    width: 320px;
+    height: 320px;
 }
 
 .loading-spinner {

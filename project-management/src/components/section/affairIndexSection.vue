@@ -8,15 +8,16 @@
         </div>
 
         <!-- État de chargement -->
-        <div v-if="dossierStore.loading" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Chargement des dossiers...</p>
+        <div v-if="dossierStore.loading" class="w-full">
+            <skeleton :isLoading="true"/>
         </div>
 
         <!-- État d'erreur -->
-        <div v-else-if="dossierStore.error" class="error-state">
-            <div class="error-icon">⚠️</div>
-            <p class="error-message">Erreur: {{ dossierStore.error }}</p>
+        <div v-else-if="dossierStore.error" class="error-state w-full">
+            <div class="error-icon">
+                <img src="../../assets/undraw_no-data_ig65.svg" alt="Aucun dossier">
+            </div>
+            <p class="error-message">{{ dossierStore.error }}</p>
             <button @click="refreshData" class="retry-btn">Réessayer</button>
         </div>
 
@@ -70,6 +71,7 @@
             :duration="5000"
             :message="notificationPopup.message"
         />
+
     </section>
 </template>
 
@@ -80,6 +82,7 @@ import cardAffairsFolder from '../cards/cardAffairsFolder.vue';
 import pagination from '../tools/pagination.vue'; // Assurez-vous du bon chemin
 import { useDossierStore } from '@/stores/dossierStore';
 import notificationPopup from '../tools/notificationPopup.vue';
+import skeleton from '../tools/skeleton.vue';
 
 export default {
     name: 'AffairIndexSection',
@@ -87,6 +90,7 @@ export default {
         cardAffairsFolder,
         pagination,
         notificationPopup,
+        skeleton
     },
 
     setup() {
@@ -303,8 +307,7 @@ export default {
     padding: 3rem;
     text-align: center;
     background: #f8fafc;
-    border-radius: 12px;
-    border: 2px dashed #e2e8f0;
+    width: 100%;
 }
 
 .loading-spinner {
@@ -326,6 +329,11 @@ export default {
 .empty-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
+}
+
+.error-icon img{
+    width: 320px;
+    height: 320px;
 }
 
 .error-message,

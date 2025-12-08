@@ -232,10 +232,6 @@ export default {
         const logout = async () => {
             if (isLoggingOut.value) return;
             
-            if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                return;
-            }
-            
             isLoggingOut.value = true;
             
             try {
