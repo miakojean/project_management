@@ -39,6 +39,7 @@ class Dossier(models.Model):
         ('BLOQUE', 'Bloqué'),
         ('TERMINE', 'Terminé'),
         ('CLOTURE', 'Clôturé'),
+        ('ARCHIVE', 'Archivé'),
         ('ANNULE', 'Annulé'),
     ]
     

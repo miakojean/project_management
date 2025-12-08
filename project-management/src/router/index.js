@@ -47,6 +47,11 @@ const router = createRouter({
       component: () => import('@/views/affairDashboard.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path:'/dashboard/archives',
+      name:'archives',
+      component: () => import('@/views/dashboardArchiveView.vue')
+    },
 
     /* Register new customer, add folder affairs and add documents */
     {

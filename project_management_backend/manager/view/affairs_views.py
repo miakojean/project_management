@@ -43,7 +43,7 @@ class DossierCreateAPIView(APIView):
         # 5. Réponse d'erreur de validation
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class DossierListCreateAPIView(APIView):
+class DossierListCreateAPIView(APIView): # Is about creation and reading
     """
     Vue pour lister et créer des dossiers
     """
@@ -78,6 +78,21 @@ class DossierListCreateAPIView(APIView):
                 dossiers = dossiers.filter(priorite=priorite)
                 filters_applied['priorite'] = priorite
             
+            # Filtrage par statut d'archive
+            est_archive = request.query_params.get('est_archive')
+            if est_archive is not None:
+                # Convertir la chaîne en booléen
+                if est_archive.lower() in ['true', '1', 'yes', 'vrai', 'oui']:
+                    dossiers = dossiers.filter(est_archive=True)
+                    filters_applied['est_archive'] = True
+                elif est_archive.lower() in ['false', '0', 'no', 'faux', 'non']:
+                    dossiers = dossiers.filter(est_archive=False)
+                    filters_applied['est_archive'] = False
+                else:
+                    # Valeur invalide, on ignore le filtre
+                    pass
+            # ============ FIN DE L'AJOUT ============
+
             # Filtrage par client
             client_id = request.query_params.get('client_id')
             if client_id:
@@ -227,7 +242,7 @@ class DossierDetailAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def put(self, request, pk, format=None):
+    def put(self, request, pk, format=None): 
         """
         Met à jour complètement un dossier
         """

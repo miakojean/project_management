@@ -1,7 +1,7 @@
 <template>
     <section class="w-full flex flex-col gap-8">
         <div class="section-header">
-            <h2 class="section-title">Dossiers récents</h2>
+            <h2 class="section-title">Dossiers archivés</h2>
             <div class="section-stats" v-if="!dossierStore.loading && !dossierStore.error">
                 <span class="stat-badge">{{ totalItems }} dossier(s)</span>
             </div>
@@ -106,7 +106,7 @@ export default {
         const paginatedDossiers = computed(() => {
             const startIndex = (currentPage.value - 1) * pageSize.value;
             const endIndex = startIndex + pageSize.value;
-            return dossierStore.dossiers.slice(startIndex, endIndex);
+            return dossierStore.dossiersArchives.slice(startIndex, endIndex);
         });
 
         const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
@@ -233,7 +233,7 @@ export default {
             console.log('📂 Chargement des dossiers pour affairIndexSection...');
             
             if (dossierStore.dossiers.length === 0) {
-                await dossierStore.fetchDossiers();
+                await dossierStore.fetchArchivesDossiers();
             }
             
             console.log('✅ Dossiers disponibles:', dossierStore.dossiers.length);

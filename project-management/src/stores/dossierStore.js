@@ -12,6 +12,7 @@ export const useDossierStore = defineStore('dossier', () => {
     const error = ref(null);
     const stats = ref({});
     const categories = ref([]);
+    const dossiersArchives = ref([]);
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
@@ -90,6 +91,17 @@ export const useDossierStore = defineStore('dossier', () => {
         }
     }
 
+    async function fetchArchivesDossiers(){
+        try {
+            const response = await api.get(`/manager/affairs?est_archive=true`)
+            dossiersArchives.value = response.data.data.dossiers
+            console.log('Documents archivés', dossiersArchives)
+        } catch (err) {
+            error.value = err.response?.data?.error || "Un problème est lors de la réccupération des archives"
+            console.error(error)
+        }   
+    }
+
     async function fetchDossierById(id) {
         loading.value = true;
         error.value = null;
@@ -155,7 +167,7 @@ export const useDossierStore = defineStore('dossier', () => {
         
         try {
             const method = partial ? 'patch' : 'put';
-            const response = await api[method](`/dossiers/${id}/`, dossierData);
+            const response = await api[method](`/manager/affairs/details/${id}/`, dossierData);
             
             // Mettre à jour dans la liste
             const index = dossiers.value.findIndex(d => d.id === id);
@@ -284,7 +296,8 @@ export const useDossierStore = defineStore('dossier', () => {
         stats,
         customerDossier,
         categories,
-        
+        dossiersArchives,
+
         // Getters
         totalDossiers,
         dossiersActifs,
@@ -300,6 +313,7 @@ export const useDossierStore = defineStore('dossier', () => {
         fetchDossiers,
         fetchDossierById,
         fetchDossiersByClient,
+        fetchArchivesDossiers,
         createDossier,
         updateDossier,
         deleteDossier,

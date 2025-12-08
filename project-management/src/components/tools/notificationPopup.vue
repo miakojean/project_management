@@ -11,7 +11,7 @@
                     <p class="notification-message">{{ message }}</p>
                 </div>
                 <button class="notification-close" @click="close" aria-label="Fermer la notification">
-                    ×
+                  x
                 </button>
             </div>
             <div class="progress-bar">
@@ -125,7 +125,7 @@ export default {
 
 .notification-popup.success {
   border-left: 4px solid #10b981;
-  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  background: linear-gradient(135deg, #b2e8c2, #ffffff);
 }
 
 .notification-popup.error {
