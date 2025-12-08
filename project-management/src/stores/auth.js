@@ -199,7 +199,7 @@ export const useAuthStore = defineStore('auth', () => {
             // ✅ 2. Appeler l'API de déconnexion si on a un token
             if (refreshToken) {
                 try {
-                    await api.post('manager/logout/', { 
+                    await api.post('account/logout', { 
                         refresh: refreshToken 
                     });
                     console.log('✅ Token blacklisté côté serveur');

@@ -37,6 +37,9 @@
                             <span v-if="item.id === 'getCustomer'" class="nav-count">
                                 {{ customersCount }}
                             </span>
+                            <span v-if="item.id === 'Archives'" class="nav-count">
+                                {{ dossiersArchivesCount }}
+                            </span>
                             <span v-else-if="item.count" class="nav-count">
                                 {{ item.count }}
                             </span>
@@ -177,8 +180,8 @@ export default {
             return dossierStore.totalDossiers || dossierStore.stats.count || 0;
         })
 
-        const dossiersArchives = computed(()=>{
-            return dossierStore.dossiersActifs.length || 0;
+        const dossiersArchivesCount = computed(()=>{
+            return dossierStore.dossiersArchives.length || 0;
         })
 
         const userName = computed(() => {
@@ -220,6 +223,7 @@ export default {
             try {
                 console.log('🔄 Chargement des dossiers dans sidebar...');
                 await dossierStore.fetchDossiers();
+                await dossierStore.fetchArchivesDossiers()
             } catch (error) {
                 console.warn('⚠️ Erreur non critique chargement dossiers sidebar:', error);
             }
@@ -251,6 +255,7 @@ export default {
             await loadCustomers();
             await loadDossiers();
             await authStore.fetchCurrentUser();
+            console.log('Nombre de dossier archivés',dossiersArchivesCount.value)
 
         });
 
@@ -270,7 +275,7 @@ export default {
             // Computed
             customersCount,
             dossiersCount, // EXPOSER dossiersCount
-            dossiersArchives,
+            dossiersArchivesCount,
             userName,
             userRole,
             userAvatar,

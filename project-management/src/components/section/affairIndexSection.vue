@@ -40,9 +40,6 @@
                     @view="goToFolderDetail(dossier)"
                     @archive="archiveFolder(dossier)"
                     @mark-as-done="handleMarkAsDone(dossier)" 
-                    @delete="handleDeleteDossier"
-                    @dossier-action="handleDossierAction"
-                    @card-click="handleCardClick"
                     class="dossier-card"
                 />
             </div>
@@ -163,6 +160,9 @@ export default {
         const archiveFolder = async(dossier) => {
             // CORRECTION : Envoyer seulement est_archive
             const formData = {
+                titre:dossier?.titre,
+                type_dossier:dossier?.type_dossier,
+                client:dossier?.client?.id,
                 est_archive: true
             }
             
@@ -170,6 +170,7 @@ export default {
                 // Utiliser partial=true pour mise à jour partielle
                 await dossierStore.updateDossier(dossier?.id, formData, true);
                 
+                console.log("Formulaire à envoyer", formData)
                 console.log("📁 Dossier archivé avec succès:", dossier?.reference_dossier);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Dossier archivé avec succès";

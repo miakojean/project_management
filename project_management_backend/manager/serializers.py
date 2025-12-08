@@ -352,7 +352,7 @@ class DossierSerializer(serializers.ModelSerializer):
         model = Dossier
         fields = [
             'id', 'reference_dossier', 'titre', 'type_dossier',
-            'description', 'client', 'client_details',
+            'description', 'client', 'client_details', 'est_archive',
             'statut', 'priorite', 'collaborateurs',
             'date_ouverture', 'date_echeance', 'date_cloture',
             'honoraires_prevus', 'honoraires_factures', 'solde_honoraires',

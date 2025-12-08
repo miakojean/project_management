@@ -101,7 +101,7 @@ export default {
         const pageSize = ref(9); // 3x3 grid
 
         // Computed properties
-        const totalItems = computed(() => dossierStore.dossiers.length);
+        const totalItems = computed(() => dossierStore.dossiersArchives.length);
         
         const paginatedDossiers = computed(() => {
             const startIndex = (currentPage.value - 1) * pageSize.value;
