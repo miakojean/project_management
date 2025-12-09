@@ -100,6 +100,10 @@
                 <div class="progress-bar">
                     <div class="progress-fill" :style="`width: ${avancement}%`"></div>
                 </div>
+                <div class="priority-tag" v-if="priorite !== 'NORMALE'">
+                    {{ prioriteText }}
+                </div>
+
             </div>
         </div>
 
@@ -109,9 +113,6 @@
                     <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
                 </svg>
                 {{ documentsCount }} document(s)
-            </div>
-            <div class="priority-tag" v-if="priorite !== 'NORMALE'">
-                {{ prioriteText }}
             </div>
             <div class="status-badge" :class="statusClass">
                 {{ statusText }}
@@ -635,6 +636,9 @@ export default {
     margin-top: 1.25rem;
     padding-top: 1rem;
     border-top: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .progress-header {
@@ -686,11 +690,12 @@ export default {
 
 .priority-tag {
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: 16px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    width: auto;
 }
 
 .priority-tag {

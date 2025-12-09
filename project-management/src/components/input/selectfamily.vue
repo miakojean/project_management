@@ -24,6 +24,7 @@
 import { watch } from 'vue';
 
 export default {
+  name:'selectfamily',
   props: {
     label: {
       type: String,

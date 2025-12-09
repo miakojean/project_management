@@ -18,6 +18,7 @@
 
 <script>
 export default {
+  name:'inputfamily',
   props: {
     identifiant: {
       type: String,

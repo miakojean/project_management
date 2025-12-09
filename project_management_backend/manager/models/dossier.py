@@ -243,28 +243,31 @@ class Dossier(models.Model):
     
     @property
     def score_actuel(self):
-        """Score actuel basé sur les documents présents"""
-        score = 10  # Score de base à la création
-        
-        for categorie in CategorieDocument.objects.filter(est_actif=True):
-            # Vérifie s'il y a AU MOINS UN document dans cette catégorie
-            if self.documents.filter(categorie=categorie).exists():
-                score += categorie.poids
-        
-        return min(score, 100)
+        """Score actuel - DOIT UTILISER LA MÊME LOGIQUE QUE taux_avancement"""
+        return self.taux_avancement  # ← À CHANGER!
     
     @property
     def taux_avancement(self):
-        """Retourne le taux d'avancement en pourcentage"""
-        return self.score_actuel  # score_actuel est déjà en pourcentage
+        """Prend le poids maximum parmi les catégories avec documents"""
+        max_poids = 10  # Base minimum de 10%
+        
+        for categorie in CategorieDocument.objects.filter(est_actif=True):
+            # Vérifier si cette catégorie a au moins un document dans ce dossier
+            if self.documents.filter(categorie=categorie).exists():
+                # Si le poids de cette catégorie est supérieur au maximum actuel
+                if categorie.poids > max_poids:
+                    max_poids = categorie.poids
+        
+        # Limiter à 100% maximum
+        return min(max_poids, 100)
     
     @property
     def avancement_detaille(self):
         """Retourne un dict détaillé de l'avancement par catégorie"""
         details = {
-            'score_total': self.score_total,
-            'score_actuel': self.score_actuel,
-            'pourcentage': self.score_actuel,
+            'score_total': 100,
+            'score_actuel': self.taux_avancement,
+            'pourcentage': self.taux_avancement,
             'categories': []
         }
         
@@ -343,24 +346,23 @@ class Dossier(models.Model):
         return (timezone.now().date() - self.date_ouverture).days
     
     def mettre_a_jour_statut_par_score(self):
-        """Met à jour le statut du dossier basé sur le score"""
+        """Met à jour le statut basé sur le pourcentage max"""
         if self.statut in ['ANNULE', 'CLOTURE', 'TERMINE']:
             return
         
-        score = self.score_actuel
+        pourcentage = self.taux_avancement  # ← Utiliser taux_avancement, pas score_actuel
         nouveau_statut = self.statut
         
-        if score <= 10:
+        # Ajuster les seuils selon vos besoins
+        if pourcentage <= 10:
             nouveau_statut = 'NOUVEAU'
-        elif score <= 40:
+        elif pourcentage <= 25:  # Identification
             nouveau_statut = 'EN_COURS'
-        elif score <= 70:
-            nouveau_statut = 'AJOUT_PIECE'
-        elif score <= 90:
+        elif pourcentage <= 75:  # Constitutifs
             nouveau_statut = 'DOCU_FONDA'
-        elif score < 100:
+        elif pourcentage <= 95:  # Procédures
             nouveau_statut = 'EN_ATTENTE'
-        elif score == 100:
+        else:  # 100%
             nouveau_statut = 'TERMINE'
         
         if nouveau_statut != self.statut:

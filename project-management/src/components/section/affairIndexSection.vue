@@ -1,9 +1,26 @@
 <template>
     <section class="w-full flex flex-col gap-8">
         <div class="section-header">
-            <h2 class="section-title">Dossiers récents</h2>
+            <!-- Composant de filtrage -->
+            <div class="filter__header w-2/3">
+                <filterFamily @filter-change="handleFilterChange"/>
+            </div>
+            
             <div class="section-stats" v-if="!dossierStore.loading && !dossierStore.error">
                 <span class="stat-badge">{{ totalItems }} dossier(s)</span>
+                <span v-if="dossierStore.stats && dossierStore.stats.total" class="stat-badge ml-2">
+                    {{ dossierStore.stats.total }} total
+                </span>
+                <span v-if="activeFilterCount > 0" class="stat-badge ml-2 bg-yellow-100 text-yellow-800">
+                    {{ activeFilterCount }} filtre(s) actif(s)
+                </span>
+                <button 
+                    v-if="activeFilterCount > 0" 
+                    @click="clearFilters" 
+                    class="clear-all-btn ml-2"
+                >
+                    Effacer les filtres
+                </button>
             </div>
         </div>
 
@@ -38,9 +55,12 @@
                     :typeDossier="dossier.type_dossier"
                     :avancement="dossier.taux_avancement"
                     :documentsCount="dossier.documents_count"
+                    :est-archive="dossier.est_archive"
+                    :est-en-retard="dossier.est_en_retard"
+                    :priorite="dossier.priorite"
                     @view="goToFolderDetail(dossier)"
                     @archive="archiveFolder(dossier)"
-                    @mark-as-done="handleMarkAsDone(dossier)" 
+                    @mark-as-done="handleMarkAsDone(dossier)"
                     class="dossier-card"
                 />
             </div>
@@ -49,7 +69,15 @@
             <div v-if="paginatedDossiers.length === 0" class="empty-state">
                 <div class="empty-icon">📁</div>
                 <p class="empty-message">Aucun dossier trouvé</p>
-                <p class="empty-subtitle">Créez votre premier dossier pour commencer</p>
+                <p v-if="activeFilterCount > 0" class="empty-subtitle">
+                    Essayez de modifier vos critères de recherche
+                </p>
+                <p v-else class="empty-subtitle">
+                    Créez votre premier dossier pour commencer
+                </p>
+                <button v-if="activeFilterCount > 0" @click="clearFilters" class="retry-btn mt-4">
+                    Effacer les filtres
+                </button>
             </div>
 
             <!-- Pagination -->
@@ -70,8 +98,14 @@
             :visible="notificationPopup.isVisible"
             :duration="5000"
             :message="notificationPopup.message"
+            :type="notificationPopup.type"
         />
 
+        <editModale 
+            :is-open="isModalOpen"
+            @close="()=>isModalOpen = false"
+            :customer="dossierStore.currentDossier"
+        />
     </section>
 </template>
 
@@ -79,10 +113,12 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import cardAffairsFolder from '../cards/cardAffairsFolder.vue';
-import pagination from '../tools/pagination.vue'; // Assurez-vous du bon chemin
+import pagination from '../tools/pagination.vue';
 import { useDossierStore } from '@/stores/dossierStore';
 import notificationPopup from '../tools/notificationPopup.vue';
 import skeleton from '../tools/skeleton.vue';
+import filterFamily from '../input/filterFamily.vue';
+import editModale from '../modales/editModale.vue';
 
 export default {
     name: 'AffairIndexSection',
@@ -90,7 +126,9 @@ export default {
         cardAffairsFolder,
         pagination,
         notificationPopup,
-        skeleton
+        skeleton,
+        filterFamily,
+        editModale,
     },
 
     setup() {
@@ -100,6 +138,15 @@ export default {
         // États de pagination
         const currentPage = ref(1);
         const pageSize = ref(9); // 3x3 grid
+
+        // Filtres actifs
+        const activeFilters = ref({});
+        const activeFilterCount = computed(() => {
+            return Object.keys(activeFilters.value).filter(key => {
+                const value = activeFilters.value[key];
+                return value !== '' && value !== null && value !== undefined;
+            }).length;
+        });
 
         // Computed properties
         const totalItems = computed(() => dossierStore.dossiers.length);
@@ -112,42 +159,70 @@ export default {
 
         const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
 
-        // Méthodes about card
-
+        // Notification
         const notificationPopup = ref({
             type: "success",
             isVisible: false,
-            message:"",
-            duration:5000
+            message: "",
+            duration: 5000
         });
 
-        const goToFolderDetail = (dossier) => { //View
+        // Gestion des filtres
+        const handleFilterChange = async (filters) => {
+            console.log('🔍 Filtres reçus:', filters);
+            activeFilters.value = filters;
+            currentPage.value = 1; // Retour à la première page
+            
+            // Nettoyer les filtres vides
+            const cleanFilters = {};
+            Object.keys(filters).forEach(key => {
+                if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+                    cleanFilters[key] = filters[key];
+                }
+            });
+            
+            console.log('🔍 Filtres nettoyés:', cleanFilters);
+            await dossierStore.fetchDossiers(cleanFilters);
+        };
+
+        const clearFilters = async () => {
+            activeFilters.value = {};
+            currentPage.value = 1;
+            await dossierStore.fetchDossiers();
+        };
+
+
+        // Manage modale
+        const isModalOpen = ref(false);
+        const showModal = (currentAffair)=>{
+            dossierStore.currentDossier = currentAffair
+            isModalOpen.value = true;
+            console.log(currentAffair)
+        };
+
+        // Méthodes existantes pour gérer les options sur le dossier 
+        const goToFolderDetail = (dossier) => {
             router.push(`/dashboard/customer/affairs/`);
             dossierStore.attachAffair(dossier);
-            console.log('Le dossier selectionné', dossier)
+            console.log('Le dossier selectionné', dossier);
         };
 
         const handleMarkAsDone = async(dossier) => {
-            // CORRECTION : Envoyer seulement le statut
             const formData = {
                 statut: "CLOTURE"
-            }
+            };
             
             try {
-                // Utiliser partial=true pour mise à jour partielle
                 await dossierStore.updateDossier(dossier?.id, formData, true);
                 
-                // Notifications
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Dossier clôturé avec succès";
                 notificationPopup.value.type = "success";
                 
-                // Fermer automatiquement après 5 secondes
                 setTimeout(() => {
                     notificationPopup.value.isVisible = false;
                 }, 5000);
                 
-                // Rafraîchir les données
                 await refreshData();
             } catch (error) {
                 console.error("❌ Erreur lors du marquage:", error);
@@ -159,33 +234,28 @@ export default {
                     notificationPopup.value.isVisible = false;
                 }, 5000);
             }
-        }
+        };
 
         const archiveFolder = async(dossier) => {
-            // CORRECTION : Envoyer seulement est_archive
             const formData = {
-                titre:dossier?.titre,
-                type_dossier:dossier?.type_dossier,
-                client:dossier?.client?.id,
+                titre: dossier?.titre,
+                type_dossier: dossier?.type_dossier,
+                client: dossier?.client?.id,
                 est_archive: true
-            }
+            };
             
             try {
-                // Utiliser partial=true pour mise à jour partielle
                 await dossierStore.updateDossier(dossier?.id, formData, true);
                 
-                console.log("Formulaire à envoyer", formData)
                 console.log("📁 Dossier archivé avec succès:", dossier?.reference_dossier);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Dossier archivé avec succès";
                 notificationPopup.value.type = "success";
                 
-                // Fermer automatiquement après 5 secondes
                 setTimeout(() => {
                     notificationPopup.value.isVisible = false;
                 }, 5000);
                 
-                // Rafraîchir les données
                 await refreshData();
             } catch (error) {
                 console.error("❌ Erreur lors de l'archivage:", error);
@@ -197,7 +267,7 @@ export default {
                     notificationPopup.value.isVisible = false;
                 }, 5000);
             }
-        }
+        };
 
         const handlePageChange = (page) => {
             currentPage.value = page;
@@ -206,13 +276,13 @@ export default {
 
         const handlePageSizeChange = (size) => {
             pageSize.value = size;
-            currentPage.value = 1; // Retour à la première page
+            currentPage.value = 1;
         };
 
         const refreshData = async () => {
             try {
-                await dossierStore.fetchDossiers();
-                currentPage.value = 1; // Reset à la première page
+                await dossierStore.fetchDossiers(activeFilters.value);
+                currentPage.value = 1;
             } catch (error) {
                 console.error('Erreur lors du rafraîchissement:', error);
             }
@@ -226,7 +296,6 @@ export default {
         watch(
             () => dossierStore.dossiers,
             () => {
-                // Réinitialiser la pagination si les données changent
                 if (currentPage.value > totalPages.value) {
                     currentPage.value = Math.max(1, totalPages.value);
                 }
@@ -242,20 +311,25 @@ export default {
             }
             
             console.log('✅ Dossiers disponibles:', dossierStore.dossiers.length);
-            if (dossierStore.dossiers.length > 0) {
-                console.log('📋 Structure d\'un dossier:', dossierStore.dossiers[0]);
-            }
         });
 
         return {
+
+            // About modale
+            isModalOpen,
+            showModal,
+            
+            //
             dossierStore,
             paginatedDossiers,
             totalItems,
             currentPage,
             pageSize,
-
+            activeFilters,
+            activeFilterCount,
             notificationPopup,
-
+            handleFilterChange,
+            clearFilters,
             handleMarkAsDone,
             archiveFolder,
             goToFolderDetail,
@@ -271,20 +345,16 @@ export default {
 .section-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 1rem;
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .section-stats {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .stat-badge {
@@ -294,6 +364,22 @@ export default {
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 500;
+}
+
+.clear-all-btn {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-all-btn:hover {
+    background: #e5e7eb;
 }
 
 /* États de chargement, erreur et vide */
@@ -308,30 +394,10 @@ export default {
     text-align: center;
     background: #f8fafc;
     width: 100%;
+    border-radius: 12px;
 }
 
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #e2e8f0;
-    border-top: 4px solid #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.error-icon,
-.empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.error-icon img{
+.error-icon img {
     width: 320px;
     height: 320px;
 }
@@ -347,6 +413,8 @@ export default {
 .empty-subtitle {
     color: #6b7280;
     font-size: 0.875rem;
+    max-width: 300px;
+    margin: 0 auto;
 }
 
 .retry-btn {
@@ -375,16 +443,24 @@ export default {
 /* Grille des dossiers */
 .dossiers-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .dossiers-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 .dossier-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
 }
 
 .dossier-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* Pagination */
@@ -395,7 +471,7 @@ export default {
 /* Responsive */
 @media (max-width: 1024px) {
     .dossiers-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1rem;
     }
 }
@@ -403,8 +479,8 @@ export default {
 @media (max-width: 768px) {
     .section-header {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
+        align-items: stretch;
+        gap: 1rem;
     }
     
     .dossiers-grid {
@@ -412,8 +488,8 @@ export default {
         gap: 1rem;
     }
     
-    .section-title {
-        font-size: 1.25rem;
+    .section-stats {
+        justify-content: flex-start;
     }
 }
 
@@ -424,9 +500,9 @@ export default {
         padding: 2rem;
     }
     
-    .error-icon,
-    .empty-icon {
-        font-size: 2.5rem;
+    .error-icon img {
+        width: 240px;
+        height: 240px;
     }
 }
 </style>
