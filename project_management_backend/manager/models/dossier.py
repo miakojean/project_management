@@ -39,7 +39,6 @@ class Dossier(models.Model):
         ('BLOQUE', 'Bloqué'),
         ('TERMINE', 'Terminé'),
         ('CLOTURE', 'Clôturé'),
-        ('ARCHIVE', 'Archivé'),
         ('ANNULE', 'Annulé'),
     ]
     
@@ -193,9 +192,9 @@ class Dossier(models.Model):
 
             self.reference_dossier = f"{prefix}-{year}-{new_num:05d}"
 
-        # ===================================================================
-        # 2. Valeurs par défaut importantes
-        # ===================================================================
+        # ==================================================================
+        # 2. Valeurs par défaut importantes                                 
+        # ==================================================================
         if not self.date_ouverture:
             self.date_ouverture = timezone.now().date()
 
@@ -346,23 +345,24 @@ class Dossier(models.Model):
         return (timezone.now().date() - self.date_ouverture).days
     
     def mettre_a_jour_statut_par_score(self):
-        """Met à jour le statut basé sur le pourcentage max"""
         if self.statut in ['ANNULE', 'CLOTURE', 'TERMINE']:
             return
         
-        pourcentage = self.taux_avancement  # ← Utiliser taux_avancement, pas score_actuel
+        pourcentage = self.taux_avancement
         nouveau_statut = self.statut
         
-        # Ajuster les seuils selon vos besoins
+        # Seuils fixes basés sur vos catégories (corrigés)
         if pourcentage <= 10:
             nouveau_statut = 'NOUVEAU'
-        elif pourcentage <= 25:  # Identification
+        elif pourcentage <= 45:  # Identification
             nouveau_statut = 'EN_COURS'
-        elif pourcentage <= 75:  # Constitutifs
+        elif pourcentage <= 60:  # Constitutifs
             nouveau_statut = 'DOCU_FONDA'
-        elif pourcentage <= 95:  # Procédures
+        elif pourcentage <= 75:  # Procédures
             nouveau_statut = 'EN_ATTENTE'
-        else:  # 100%
+        elif pourcentage <= 95:  # Opérationnels
+            nouveau_statut = 'EN_ATTENTE_VALIDATION'
+        else:  # 96-100% = Livrables
             nouveau_statut = 'TERMINE'
         
         if nouveau_statut != self.statut:

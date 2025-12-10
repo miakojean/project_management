@@ -194,7 +194,7 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
-            await api.delete(`/dossiers/${id}/`);
+            await api.delete(`/manager/affairs/details/${id}/`);
             
             // Retirer de la liste
             const index = dossiers.value.findIndex(d => d.id === id);

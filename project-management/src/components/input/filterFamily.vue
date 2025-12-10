@@ -18,21 +18,6 @@
         </select>
       </div>
 
-      <!-- Filtre par type de dossier -->
-      <div class="input__family">
-        <label>Type de dossier</label>
-        <select 
-          v-model="filters.type_dossier"
-          @change="applyFilters"
-        >
-          <option value="">Tous les types</option>
-          <option value="CONSULTATION">Consultation</option>
-          <option value="LITIGE">Litige</option>
-          <option value="CONTRAT">Contrat</option>
-          <option value="AUTRE">Autre</option>
-        </select>
-      </div>
-
       <!-- Filtre par archive -->
         <div class="input__family">
             <label>État</label>

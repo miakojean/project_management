@@ -302,6 +302,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
             'categorie', 'categorie_nom', 'client', 'client_nom',
             'dossier', 'dossier_reference', 'dossier_titre',
             'statut', 'niveau_confidentialite', 'taille_lisible',
+            'description',
             'date_document', 'date_validite', 'est_valide',
             'est_original', 'est_certifie_conforme',
             'necessite_signature', 'est_signe_completement',

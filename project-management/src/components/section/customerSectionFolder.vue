@@ -33,8 +33,8 @@
                 :size="doc.taille_lisible"
                 :status="doc.statut"
                 :documentType="doc.extension"
+                :description="doc.description"
                 @download="handleDownload(doc.id, doc.titre)"
-                
             />
         </div>
     </section>

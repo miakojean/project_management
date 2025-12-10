@@ -61,6 +61,7 @@
                     @view="goToFolderDetail(dossier)"
                     @archive="archiveFolder(dossier)"
                     @mark-as-done="handleMarkAsDone(dossier)"
+                    @delete="showDeleteModal(dossier)"
                     class="dossier-card"
                 />
             </div>
@@ -106,6 +107,15 @@
             @close="()=>isModalOpen = false"
             :customer="dossierStore.currentDossier"
         />
+
+        <deleteModale 
+            :is-open="isDeleteModaleOpen"
+            :document="dossierStore.currentDossier"
+            :itemToDelete="dossierToDelete"
+            message="Voulez vraiment supprimé ce dossier"
+            @confirm="handleDeleteFolder(dossier?.id)"
+            @close="()=>isDeleteModaleOpen = false"
+        />
     </section>
 </template>
 
@@ -119,6 +129,7 @@ import notificationPopup from '../tools/notificationPopup.vue';
 import skeleton from '../tools/skeleton.vue';
 import filterFamily from '../input/filterFamily.vue';
 import editModale from '../modales/editModale.vue';
+import deleteModale from '../modales/deleteModale.vue';
 
 export default {
     name: 'AffairIndexSection',
@@ -129,6 +140,7 @@ export default {
         skeleton,
         filterFamily,
         editModale,
+        deleteModale
     },
 
     setup() {
@@ -192,13 +204,22 @@ export default {
         };
 
 
-        // Manage modale
+        // Manage all modales
         const isModalOpen = ref(false);
         const showModal = (currentAffair)=>{
             dossierStore.currentDossier = currentAffair
             isModalOpen.value = true;
             console.log(currentAffair)
         };
+
+        // Delete modal
+        const isDeleteModaleOpen = ref(false);
+        const showDeleteModal = (doc) =>{
+            isDeleteModaleOpen.value =  true;
+            dossierToDelete.value = doc;
+            console.log('Dossier sélectionné', doc)
+        }
+        const dossierToDelete = ref(null);
 
         // Méthodes existantes pour gérer les options sur le dossier 
         const goToFolderDetail = (dossier) => {
@@ -269,6 +290,33 @@ export default {
             }
         };
 
+        const handleDeleteFolder = async(dossier) => {
+
+            dossierToDelete.value = dossier
+
+            try{
+                //await dossierStore.deleteDossier(dossier?.id);
+                console.log('Dossier supprimé avec succèes', dossier);
+                console.log('Id du dossier à supprimer', dossier)
+                notificationPopup.value.isVisible = true;
+                notificationPopup.value.message = "Dossier supprimé avec succès";
+                notificationPopup.value.type = "success";
+            } catch(error){
+                console.error("❌ Erreur lors de la suppression du dossier", error);
+                notificationPopup.value.isVisible = true;
+                notificationPopup.value.message = "Une erreur est survenue lors de l'archivage";
+                notificationPopup.value.type = "error";
+                
+                setTimeout(() => {
+                    notificationPopup.value.isVisible = false;
+                }, 5000);
+            } finally {
+                // IMPORTANT : Fermer et nettoyer l'état de la modale après succès ou erreur
+                isDeleteModaleOpen.value = false;
+                dossierToDelete.value = null;
+            }
+        }
+
         const handlePageChange = (page) => {
             currentPage.value = page;
             scrollToTop();
@@ -318,10 +366,13 @@ export default {
             // About modale
             isModalOpen,
             showModal,
+            isDeleteModaleOpen,
+            showDeleteModal,
             
             //
             dossierStore,
             paginatedDossiers,
+            dossierToDelete,
             totalItems,
             currentPage,
             pageSize,
@@ -330,7 +381,10 @@ export default {
             notificationPopup,
             handleFilterChange,
             clearFilters,
+
+            // Actions
             handleMarkAsDone,
+            handleDeleteFolder,
             archiveFolder,
             goToFolderDetail,
             handlePageChange,

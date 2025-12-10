@@ -286,9 +286,24 @@ class Document(models.Model):
         
         super().save(*args, **kwargs)
         
-        if is_new and self.dossier and self.dossier.statut == 'NOUVEAU':
-            self.dossier.statut = 'EN_COURS'
-            self.dossier.save(update_fields=['statut'])
+        # =============================================================
+        # MISE À JOUR DU STATUT DU DOSSIER
+        # =============================================================
+        if self.dossier:
+            # 1. Mettre à jour le statut basé sur le scoring
+            self.dossier.mettre_a_jour_statut_par_score()
+            
+            # 2. Ancienne logique (gardée pour compatibilité)
+            if is_new and self.dossier.statut == 'NOUVEAU':
+                self.dossier.statut = 'EN_COURS'
+                self.dossier.save(update_fields=['statut'])
+        
+        # =============================================================
+        # POUR LES MODIFICATIONS DE DOCUMENTS EXISTANTS
+        # =============================================================
+        elif not is_new and self.dossier:
+            # Si un document existant est modifié, recalculer aussi
+            self.dossier.mettre_a_jour_statut_par_score()
     
     def generer_reference(self):
         """Génère la référence unique du document"""
@@ -309,6 +324,19 @@ class Document(models.Model):
         
         self.reference = f"{categorie_prefix}-{year}-{new_num:06d}"
     
+    def delete(self, *args, **kwargs):
+        """Surcharger la suppression pour mettre à jour le dossier"""
+        dossier = self.dossier  # Sauvegarder la référence avant suppression
+        
+        # Appeler la suppression parente
+        result = super().delete(*args, **kwargs)
+        
+        # Mettre à jour le dossier après suppression
+        if dossier:
+            dossier.mettre_a_jour_statut_par_score()
+        
+        return result
+
     @property
     def est_valide(self):
         """Vérifie si le document est encore valide"""
