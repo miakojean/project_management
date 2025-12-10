@@ -295,13 +295,6 @@ class DossierDetailAPIView(APIView):
         try:
             dossier = get_object_or_404(Dossier, pk=pk)
             
-            # Vérifications avant suppression
-            if dossier.documents.exists():
-                return Response(
-                    {"error": "Impossible de supprimer un dossier contenant des documents"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
             with transaction.atomic():
                 dossier.delete()
             

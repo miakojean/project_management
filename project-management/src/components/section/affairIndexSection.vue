@@ -100,6 +100,7 @@
             :duration="5000"
             :message="notificationPopup.message"
             :type="notificationPopup.type"
+            @close="()=>notificationPopup.isVisible = false"
         />
 
         <editModale 
@@ -111,10 +112,9 @@
         <deleteModale 
             :is-open="isDeleteModaleOpen"
             :document="dossierStore.currentDossier"
-            :itemToDelete="dossierToDelete"
-            message="Voulez vraiment supprimé ce dossier"
-            @confirm="handleDeleteFolder(dossier?.id)"
-            @close="()=>isDeleteModaleOpen = false"
+            :item-to-delete="dossierToDelete"
+            message="Ce dossier peut comporter des documents!!! Voulez-vous vraiment supprimer ce dossier?"
+            @confirm="handleDeleteFolder" @close="()=>isDeleteModaleOpen = false"
         />
     </section>
 </template>
@@ -292,19 +292,18 @@ export default {
 
         const handleDeleteFolder = async(dossier) => {
 
-            dossierToDelete.value = dossier
-
             try{
-                //await dossierStore.deleteDossier(dossier?.id);
-                console.log('Dossier supprimé avec succèes', dossier);
-                console.log('Id du dossier à supprimer', dossier)
+                await dossierStore.deleteDossier(dossier?.id);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Dossier supprimé avec succès";
                 notificationPopup.value.type = "success";
+                setTimeout(() => {
+                    notificationPopup.value.isVisible = false;
+                }, 5000);
             } catch(error){
                 console.error("❌ Erreur lors de la suppression du dossier", error);
                 notificationPopup.value.isVisible = true;
-                notificationPopup.value.message = "Une erreur est survenue lors de l'archivage";
+                notificationPopup.value.message = "Une erreur est survenue lors de la suppression";
                 notificationPopup.value.type = "error";
                 
                 setTimeout(() => {

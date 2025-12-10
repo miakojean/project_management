@@ -128,9 +128,9 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
-    document:{
+    documents:{
         type:Object,
-        default:()=>{}
+        default:()=>[]
     }
 })
 

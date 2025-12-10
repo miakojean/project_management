@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from ..models import Document
 from manager.serializer.documentSerializer import (
@@ -43,6 +44,33 @@ class DocumentsAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk, format=None):
+        """
+        Supprime un document par son ID (pk).
+        """
+        try:
+            # Récupère le document ou lève une 404
+            document = get_object_or_404(Document, pk=pk)
+            
+            # [Optionnel] Ajouter ici une vérification de permission
+            # e.g., if document.uploade_par != request.user and not request.user.is_staff:
+            #     return Response(status=status.HTTP_403_FORBIDDEN)
+
+            document.delete()
+            
+            # 204 No Content est la réponse standard pour une suppression réussie
+            return Response(
+                {"message": "Document supprimé avec succès"},
+                status=status.HTTP_204_NO_CONTENT
+            )
+            
+        except Exception as e:
+            # Gère les erreurs de suppression ou de base de données
+            return Response(
+                {"error": f"Erreur lors de la suppression du document: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 # documents_views.py - AJOUTEZ CETTE CLASSE
 class DocumentDirectDownloadAPIView(APIView):

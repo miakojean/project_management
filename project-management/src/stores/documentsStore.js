@@ -116,12 +116,42 @@ export const useDocumentStore = defineStore('documents', ()=>{
         }
     }
 
-    async function addCustomerDocuments(){
-        // Votre logique ici
-    }
+    async function deleteDocument(doc) {
+        if (!doc || !doc.id) {
+            console.error("Erreur: L'objet document ou son ID est manquant.");
+            // Vous pouvez choisir de lever une erreur ou de retourner silencieusement
+            throw new Error("ID de document non fourni.");
+        }
 
+        try {
+            // La méthode .delete() de l'objet 'api' doit cibler l'URL spécifique
+            // du document, qui inclut son ID.
+            const response = await api.delete(`/manager/documents/${doc.id}/`);
+            
+            // La vue DRF retourne un statut 204 No Content en cas de succès,
+            // donc la `response.data` peut être vide, mais le statut est suffisant.
+
+            console.log(`Document ${doc.id} supprimé avec succès.`, response);
+
+            // Optionnel : Retourner le statut ou un message de succès
+            return { 
+                success: true, 
+                message: response.data?.message || "Document supprimé avec succès." 
+            };
+
+        } catch (error) {
+            // Gestion des erreurs
+            const errorMessage = error.response?.data?.error || error.message || "Erreur inconnue lors de la suppression.";
+            console.error(`Erreur lors de la suppression du document ${doc.id}:`, errorMessage, error);
+
+            // Propagation de l'erreur pour que le composant appelant puisse la gérer
+            throw new Error(errorMessage);
+        }
+    }
+    
     return{
         customerDocuments,
         downloadDocuments,
+        deleteDocument
     }
 })

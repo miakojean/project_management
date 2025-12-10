@@ -1,24 +1,62 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue"; // <-- watch est importé ici
 import api from "@/_services/api";
 
+// =================================================================
+// LOGIQUE DE CACHE POUR LE HOT RELOAD
+// =================================================================
+
+const CACHE_KEY = 'dossierStoreCache';
+
+/**
+ * Charge l'état du store depuis localStorage.
+ * @returns {object} L'état ou un objet vide si échec.
+ */
+function loadStateFromCache() {
+    try {
+        const cachedState = localStorage.getItem(CACHE_KEY);
+        if (cachedState) {
+            // Retourne les données parsées.
+            return JSON.parse(cachedState);
+        }
+    } catch (e) {
+        console.error("Erreur lors du chargement du cache:", e);
+    }
+    return {};
+}
+
+/**
+ * Sauvegarde l'état partiel du store dans localStorage.
+ * @param {object} state - L'objet contenant les valeurs à mettre en cache.
+ */
+function saveStateToCache(state) {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error("Erreur lors de la sauvegarde du cache:", e);
+    }
+}
+
+
 export const useDossierStore = defineStore('dossier', () => {
-    // State
-    const customerDossier = ref([]);
-    const dossiers = ref([]);
-    const currentDossier = ref(null);
-    const currentDossierDocuments = ref([]);
+    
+    const cached = loadStateFromCache(); // <-- Chargement du cache au départ
+
+    // State (Initialisation avec le cache si disponible)
+    const customerDossier = ref(cached.customerDossier || []);
+    const dossiers = ref(cached.dossiers || []); // <-- Initialisé avec le cache
+    const currentDossier = ref(cached.currentDossier || null); // <-- Initialisé avec le cache
+    const currentDossierDocuments = ref(cached.currentDossierDocuments || []);
     const loading = ref(false);
     const error = ref(null);
-    const stats = ref({});
-    const categories = ref([]);
-    const dossiersArchives = ref([]);
+    const stats = ref(cached.stats || {}); // <-- Initialisé avec le cache
+    const categories = ref(cached.categories || []);
+    const dossiersArchives = ref(cached.dossiersArchives || []);
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
     const getCurrentDossier = computed(()=>currentDossier.value)
-
-    // Attach Affair
+    // ... (autres getters inchangés) ...
     function attachAffair(affair){
         currentDossier.value = affair;
         console.log('Dossier selectionné', affair);
@@ -47,14 +85,12 @@ export const useDossierStore = defineStore('dossier', () => {
     });
 
     // Actions
+    // ... (Toutes les actions restent inchangées) ...
 
-    // Dans dossierStore.js - ajoutez ceci à la fonction fetchCategories
     async function fetchCategories () {
         try {
             const response = await api.get(`/manager/category`);
-            console.log("Listes des catégories", response.data);
-            
-            // Formater les catégories pour les rendre utilisables dans les selects
+            // ... (votre logique existante) ...
             const formattedCategories = response.data.map(category => ({
                 id: category.id,
                 nom: category.nom,
@@ -65,10 +101,10 @@ export const useDossierStore = defineStore('dossier', () => {
             }));
             
             categories.value = formattedCategories;
-            return formattedCategories; // Retourner les catégories formatées
+            return formattedCategories;
         } catch(err) {
             error.value = err.response?.data?.error || "Erreur lors de la récupération";
-            throw err; // Propager l'erreur
+            throw err;
         }
     }
 
@@ -80,11 +116,10 @@ export const useDossierStore = defineStore('dossier', () => {
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
-            console.log("Les statistiques", stats.value);
-            console.log("Les dossiers chargés", dossiers.value);
+            // ... (logique existante) ...
             return response.data;
         } catch (err) {
-            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers';  
+            error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers'; 
             throw err;
         } finally {
             loading.value = false;
@@ -99,7 +134,7 @@ export const useDossierStore = defineStore('dossier', () => {
         } catch (err) {
             error.value = err.response?.data?.error || "Un problème est lors de la réccupération des archives"
             console.error(error)
-        }   
+        }   
     }
 
     async function fetchDossierById(id) {
@@ -109,7 +144,7 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`/manager/affairs/details/${id}/`);
             currentDossier.value = response.data;
-            console.log('Les données réçues sont', response.data);
+            // ... (logique existante) ...
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
@@ -127,7 +162,7 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`manager/affairs?client_id=${clientId}`);
             customerDossier.value = response.data.data.dossiers
-            console.log('Données du dossier du client', customerDossier.value)
+            // ... (logique existante) ...
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers du client';
@@ -137,31 +172,24 @@ export const useDossierStore = defineStore('dossier', () => {
         }
     }
 
-    // Dans votre store
     async function createDossier(dossierData) {
-        console.log("🔄 STORE: Début de createDossier");
-        console.trace("Stack trace du store"); // ← TRÈS IMPORTANT
-        
+        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         try {
-            console.log("📡 STORE: Envoi requête API vers /manager/dossier/create/");
             const response = await api.post('/manager/dossier/create/', dossierData);
-            
-            console.log("✅ STORE: Réponse reçue", response.data);
             dossiers.value.unshift(response.data);
             return response.data;
         } catch (err) {
-            console.error("❌ STORE: Erreur", err);
             error.value = err.response?.data?.error || 'Erreur lors de la création du dossier';
             throw err;
         } finally {
             loading.value = false;
-            console.log("🏁 STORE: Fin de createDossier");
         }
     }
 
     async function updateDossier(id, dossierData, partial = false) {
+        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
@@ -190,6 +218,7 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function deleteDossier(id) {
+        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
@@ -217,6 +246,7 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function fetchDossierStats() {
+        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
@@ -284,7 +314,27 @@ export const useDossierStore = defineStore('dossier', () => {
         currentDossier.value = null;
         stats.value = {};
         error.value = null;
+        // Optionnel : Vider le cache lors d'un reset complet
+        localStorage.removeItem(CACHE_KEY); 
     }
+
+    // =================================================================
+    // WATCHER POUR CACHE - DÉCLENCHÉ À CHAQUE CHANGEMENT
+    // =================================================================
+    watch(
+        [dossiers, currentDossier, stats, customerDossier, categories, dossiersArchives], 
+        ([newDossiers, newCurrentDossier, newStats, newCustomerDossier, newCategories, newDossiersArchives]) => {
+        saveStateToCache({
+            dossiers: newDossiers,
+            currentDossier: newCurrentDossier,
+            stats: newStats,
+            customerDossier: newCustomerDossier,
+            categories: newCategories,
+            dossiersArchives: newDossiersArchives,
+        });
+    }, 
+    { deep: true, immediate: false });
+
 
     return {
         // State
