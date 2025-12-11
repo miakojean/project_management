@@ -1,5 +1,6 @@
 <template>
     <aside class="sidebar-area">
+        
         <brand/>
 
         <nav class="main-nav">

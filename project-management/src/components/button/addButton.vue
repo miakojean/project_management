@@ -85,7 +85,6 @@ export default {
     border: none;
     background: var(--primary-color, #3b82f6);
     color: white;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.5;
     white-space: nowrap;
 }

@@ -119,7 +119,7 @@ export default {
 }
 
 .browse-btn {
-  background: #3b82f6;
+  background: #0081C6;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;

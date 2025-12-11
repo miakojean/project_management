@@ -699,7 +699,7 @@ export default {
 }
 
 .priority-tag {
-    background: #fed7d7;
+    background: none;
     color: #c53030;
 }
 

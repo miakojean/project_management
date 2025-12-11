@@ -299,7 +299,7 @@ export default {
     width: 40px;
     height: 40px;
     border: 4px solid #e2e8f0;
-    border-top: 4px solid #3b82f6;
+    border-top: 4px solid #0081C6;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
@@ -319,7 +319,7 @@ export default {
 .retry-btn {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
-    background: #3b82f6;
+    background: #0081C6;
     color: white;
     border: none;
     border-radius: 6px;
@@ -328,7 +328,7 @@ export default {
 }
 
 .retry-btn:hover {
-    background: #2563eb;
+    background: #0081C6;
 }
 
 /* Pagination Styles (garder les styles précédents) */
@@ -373,9 +373,9 @@ export default {
 }
 
 .pagination-btn:hover:not(:disabled) {
-    background: #3b82f6;
+    background: #0081C6;
     color: white;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-btn:disabled {
@@ -412,13 +412,13 @@ export default {
 
 .pagination-page:hover {
     background: #f1f5f9;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-page.active {
-    background: #3b82f6;
+    background: #0081C6;
     color: white;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-ellipsis {

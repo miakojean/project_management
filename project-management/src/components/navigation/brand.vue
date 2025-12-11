@@ -1,7 +1,6 @@
 <template>
     <div class="logo" @click="goToDashboard">
         <img src="../../../public/LOGO.png" alt="logo de Adn consulting">
-        <h4> <span>ADN</span> CONSULTING</h4>
     </div>
 </template>
 
@@ -32,8 +31,8 @@ export default {
 }
 
 img{
-    width:50px;
-    height:50px;
+    width:80px;
+    height:80px;
     background-size: cover;
 }
 

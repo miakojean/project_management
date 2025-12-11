@@ -202,7 +202,7 @@ form h3 {
 }
 
 form p, svg {
-    color: #2f80ed;
+    color: var(--primary-color);
     font-size: 1rem;
     cursor: pointer;
 }

@@ -222,9 +222,9 @@ export default {
 }
 
 .pagination-btn:hover:not(:disabled) {
-    background: #3b82f6;
+    background: #0081C6;
     color: white;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-btn:disabled {
@@ -261,13 +261,13 @@ export default {
 
 .pagination-page:hover {
     background: #f1f5f9;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-page.active {
-    background: #3b82f6;
+    background: #0081C6;
     color: white;
-    border-color: #3b82f6;
+    border-color: #0081C6;
 }
 
 .pagination-ellipsis {

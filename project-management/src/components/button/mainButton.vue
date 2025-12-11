@@ -38,7 +38,7 @@ export default defineComponent({
 
 <style scoped>
 .main-button {
-    background: #2f80ed;
+    background: var(--primary-color);
     padding: 0.8rem;
     border: none;
     border-radius: 4px;
