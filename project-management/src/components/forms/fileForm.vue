@@ -60,7 +60,7 @@
         />
 
         <div class="form-actions">
-          <prevButton @click="handlePrevStep" />
+          <prevButton type="button" @click="handlePrevStep" />
           <mainButton 
             :isloading="isLoading"
             label="Ajouter document"
@@ -195,7 +195,7 @@ const handleFileError = (error) => {
 
 const handlePrevStep = async() => {
   // Charger les catégories au retour
-  await loadCategories();
+  router.push('/dashboard/customer/affairs/')
 }
 
 // Charger les catégories et formater les options

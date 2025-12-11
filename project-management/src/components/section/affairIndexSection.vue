@@ -97,7 +97,7 @@
 
         <notificationPopup 
             :visible="notificationPopup.isVisible"
-            :duration="5000"
+            :duration="notificationPopup.duration"
             :message="notificationPopup.message"
             :type="notificationPopup.type"
             @close="()=>notificationPopup.isVisible = false"
