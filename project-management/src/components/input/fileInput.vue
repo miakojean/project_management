@@ -302,7 +302,7 @@ export default {
 }
 
 .browse-btn {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -313,7 +313,7 @@ export default {
 }
 
 .browse-btn:hover {
-  background: #2563eb;
+  background: var(--primary-color-dark);
 }
 
 .file-info {

@@ -59,7 +59,7 @@ export default defineComponent({
 
 .main-button:hover {
     border-radius: 0.2rem;
-    background: #2f80ed;
+    background: var(--primary-color-dark);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px #dfdfdf;
 }

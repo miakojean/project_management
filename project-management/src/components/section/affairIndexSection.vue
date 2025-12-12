@@ -130,6 +130,7 @@ import skeleton from '../tools/skeleton.vue';
 import filterFamily from '../input/filterFamily.vue';
 import editModale from '../modales/editModale.vue';
 import deleteModale from '../modales/deleteModale.vue';
+import folderCard from '../cards/folderCard.vue';
 
 export default {
     name: 'AffairIndexSection',
@@ -140,7 +141,8 @@ export default {
         skeleton,
         filterFamily,
         editModale,
-        deleteModale
+        deleteModale,
+        folderCard
     },
 
     setup() {
