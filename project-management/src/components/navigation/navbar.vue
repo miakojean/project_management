@@ -5,15 +5,37 @@
         </div>
         <addButton @click="handleAddClick"/>
         <div class="btn__frame">
-            <!-- Icône de notification avec bulle -->
             <div class="notification-wrapper" @click="handleNotificationClick">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="size-8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                 </svg>
-                <!-- Bulle de notification -->
-                <span v-if="notificationCount > 0" class="notification-bubble">
-                    {{ notificationCount > 99 ? '99+' : notificationCount }}
+                <span v-if="notifStore.hasUnread" class="notification-bubble">
+                    {{ notifStore.displayCount }}
                 </span>
+
+                <div v-if="showNotificationsDropdown" class="notification-dropdown">
+                    <div class="dropdown-header">
+                        <h4>Notifications ({{ notifStore.unreadCount }} non lues)</h4>
+                        <button v-if="notifStore.hasUnread" @click.stop="clearNotifications" class="btn-clear">
+                            Tout marquer comme lu
+                        </button>
+                    </div>
+                    <div class="dropdown-content">
+                        <p v-if="notifStore.isLoading" class="loading-message">Chargement...</p>
+                        <p v-else-if="!notifStore.hasUnread" class="empty-message">
+                            Vous êtes à jour !
+                        </p>
+                        <ul v-else>
+                            <li v-for="notif in notifStore.notifications" :key="notif.id" class="notification-item" :class="{'is-read': notif.is_read}">
+                                {{ notif.message }}
+                                <span class="timestamp">{{ formatTime(notif.created_at) }}</span>
+                            </li>
+                            <li v-if="notifStore.notifications.length >= 10" class="notification-item more-link">
+                                Voir toutes les notifications
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -24,6 +46,7 @@ import { ref, onMounted, watch } from 'vue';
 import researchfamily from '../input/researchfamily.vue';
 import addButton from '../button/addButton.vue';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from '@/stores/notifications';
 
 export default {
     name: 'NavigationBar',
@@ -43,122 +66,63 @@ export default {
         // routing
         const router = useRouter();
 
+        // 🚀 INITIALISATION DU STORE
+        const notifStore = useNotificationStore();
+
         // Réactives
-        const notificationCount = ref(0);
-        const isLoading = ref(false);
+        // 🚀 Anciens: notificationCount et isLoading sont remplacés par le store
+        const showNotificationsDropdown = ref(false); 
 
-        // Méthodes API
-        const loadNotifications = async () => {
-            isLoading.value = true;
-            try {
-                // Simuler un appel API
-                const response = await fetch('/api/notifications/count');
-                const data = await response.json();
-                notificationCount.value = data.count;
-                
-                return { 
-                    success: true, 
-                    count: data.count 
-                };
-            } catch (error) {
-                console.error('Erreur chargement notifications:', error);
-                return { 
-                    success: false, 
-                    error: error.message 
-                };
-            } finally {
-                isLoading.value = false;
-            }
+        // Méthode utilitaire de formatage de temps (simple pour l'exemple)
+        const formatTime = (isoString) => {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
         };
 
-        const addNotification = async (notificationData) => {
-            try {
-                // Simuler un appel API
-                const response = await fetch('/api/notifications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(notificationData)
-                });
-                const data = await response.json();
-                
-                notificationCount.value++;
-                
-                return { 
-                    success: true, 
-                    data: data 
-                };
-            } catch (error) {
-                console.error('Erreur ajout notification:', error);
-                return { 
-                    success: false, 
-                    error: error.message 
-                };
-            }
+
+        // 🚀 NOUVELLE LOGIQUE: Remplace loadNotifications et getNotificationDetails
+        const refreshData = async () => {
+            await notifStore.loadUnreadCount(); // Met à jour le compteur
         };
+        
+        // Méthodes pour le composant (simplifiées grâce au store)
+        
+        // 🚀 Remplace markNotificationsAsRead
+        const clearNotifications = async () => {
+            if (!notifStore.hasUnread) return;
 
-        const markNotificationsAsRead = async () => {
-            if (notificationCount.value === 0) {
-                return { 
-                    success: true, 
-                    message: 'Aucune notification à marquer comme lue' 
-                };
+            const clearedCount = await notifStore.markAllAsRead(); 
+            
+            if (clearedCount > 0) {
+                // Émet l'événement après succès
+                emit('notifications-cleared', clearedCount);
             }
-
-            try {
-                const response = await fetch('/api/notifications/mark-as-read', {
-                    method: 'PUT'
-                });
-                const data = await response.json();
-                const previousCount = notificationCount.value;
-                notificationCount.value = 0;
-                
-                return { 
-                    success: true, 
-                    data: data,
-                    clearedCount: previousCount
-                };
-            } catch (error) {
-                console.error('Erreur marquage notifications:', error);
-                return { 
-                    success: false, 
-                    error: error.message 
-                };
-            }
-        };
-
-        const getNotificationDetails = async () => {
-            try {
-                const response = await fetch('/api/notifications');
-                const data = await response.json();
-                
-                return { 
-                    success: true, 
-                    data: data,
-                    count: data.length
-                };
-            } catch (error) {
-                console.error('Erreur détails notifications:', error);
-                return { 
-                    success: false, 
-                    error: error.message 
-                };
-            }
+            
+            return {
+                success: clearedCount > 0,
+                clearedCount: clearedCount
+            };
         };
 
         // Gestion des événements
         const handleNotificationClick = async () => {
-            if (notificationCount.value > 0) {
-                const result = await markNotificationsAsRead();
-                if (result.success) {
-                    emit('notifications-cleared', result.clearedCount);
-                }
+            
+            // 1. Basculer l'état du dropdown
+            showNotificationsDropdown.value = !showNotificationsDropdown.value;
+
+            // 2. Si on ouvre le dropdown, charger les détails
+            if (showNotificationsDropdown.value) {
+                await notifStore.loadNotifications(); // Charge la liste détaillée
+                
+                // 3. (Optionnel) Marquer les notifications comme lues à l'ouverture
+                // On laisse la méthode clearNotifications() gérer le marquage complet.
+                // Si vous voulez marquer à la lecture, décommentez la ligne suivante :
+                // await clearNotifications(); 
             }
             
             emit('notification-click', {
-                count: notificationCount.value,
-                hasUnread: notificationCount.value > 0
+                count: notifStore.unreadCount,
+                hasUnread: notifStore.hasUnread
             });
         };
 
@@ -166,44 +130,12 @@ export default {
             emit('add-click');
             router.push('/customer')
         };
-
-        // Méthodes utilitaires
-        const simulateNotification = async (type = 'info', message = 'Nouvelle notification') => {
-            const notificationData = {
-                type: type,
-                message: message,
-                timestamp: new Date().toISOString(),
-                read: false
-            };
-
-            const result = await addNotification(notificationData);
-            if (result.success) {
-                emit('notification-added', result.data);
-            }
-            return result;
-        };
-
-        const clearNotifications = async () => {
-            const result = await markNotificationsAsRead();
-            return result;
-        };
-
-        const refreshNotifications = async () => {
-            const result = await loadNotifications();
-            return result;
-        };
-
-        const getNotificationStatus = () => {
-            return {
-                count: notificationCount.value,
-                hasNotifications: notificationCount.value > 0,
-                isLoading: isLoading.value,
-                displayCount: notificationCount.value > 99 ? '99+' : notificationCount.value.toString()
-            };
-        };
-
-        // Watcher pour les changements du compteur
-        watch(notificationCount, (newCount, oldCount) => {
+        
+        // Les méthodes simulateNotification, refreshNotifications, et getNotificationStatus peuvent
+        // être retirées ou adaptées pour utiliser les actions directes du store.
+        
+        // Watcher pour les changements du compteur (observe la propriété du store)
+        watch(() => notifStore.unreadCount, (newCount, oldCount) => {
             if (newCount !== oldCount) {
                 emit('notification-count-changed', {
                     newCount,
@@ -213,39 +145,37 @@ export default {
             }
         });
 
-        // Lifecycle
+        // Lifecycle: Charger le compte au montage
         onMounted(() => {
-            loadNotifications();
+            refreshData();
         });
 
         // Retour des éléments exposés
         return {
-            // Réactives
+            // Réactives/Store
             router,
-            notificationCount,
-            isLoading,
+            notifStore, // Exposer le store entier pour un accès facile
+            showNotificationsDropdown,
             
-            // Méthodes API
-            loadNotifications,
-            addNotification,
-            markNotificationsAsRead,
-            getNotificationDetails,
-            
-            // Gestion des événements
-            handleNotificationClick,
+            // Getters/State pour le template
+            notificationCount: notifStore.unreadCount, // Reste pour la compatibilité
+            isLoading: notifStore.isLoading,
+
+            // Méthodes
             handleAddClick,
-            
-            // Méthodes utilitaires
-            simulateNotification,
+            handleNotificationClick,
             clearNotifications,
-            refreshNotifications,
-            getNotificationStatus
+            formatTime,
+            
+            // Anciennes méthodes à garder si elles sont appelées de l'extérieur
+            refreshNotifications: refreshData,
         };
     }
 }
 </script>
 
 <style scoped>
+/* Les styles restent inchangés car ils sont déjà fonctionnels */
 nav{
     padding: 1rem;
     display:flex;
@@ -258,29 +188,16 @@ nav{
 .research__box{
     width: 400px;
 }
-
-input{
-    border: 1px solid #dbdbdb;
-    border-radius: 0.5rem;
-    padding: 0.7rem;
-    width: 100%;
-}
-
-ul{
-    display:flex;
-    align-items: center;
-    gap: 1rem;
-}
-
 .btn__frame{
     display: flex;
     align-items: center;
     gap: 1rem;
 }
 
+
 /* Styles pour le wrapper de notification */
 .notification-wrapper {
-    position: relative;
+    position: relative; 
     display: inline-block;
     cursor: pointer;
 }
@@ -294,7 +211,7 @@ svg:hover{
     border-radius: 50%;
 }
 
-/* Styles pour la bulle de notification */
+/* Styles pour la bulle de notification (inchangés) */
 .notification-bubble {
     position: absolute;
     top: -5px;
@@ -314,37 +231,120 @@ svg:hover{
     animation: pulse 2s infinite;
 }
 
-/* Animation pour attirer l'attention */
+/* Styles pour le dropdown */
+.notification-dropdown {
+    position: absolute;
+    top: 100%; 
+    right: 0;
+    width: 400px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000; 
+    margin-top: 10px; 
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.btn-clear {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-clear:hover {
+    background-color: #f0f0f0;
+}
+
+.dropdown-content {
+    padding: 0;
+}
+
+.dropdown-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-direction: column; 
+}
+
+.notification-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.9rem;
+    color: #555;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-item.is-read {
+    background-color: #fafafa;
+    color: #999;
+}
+
+.notification-item .timestamp {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-left: 10px;
+}
+
+.notification-item:hover {
+    background-color: #f0f0f0;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.empty-message, .loading-message {
+    padding: 15px;
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+.more-link {
+    text-align: center;
+    color: #007bff;
+    font-weight: bold;    
+    cursor: pointer;
+}
+
+/* Animations (inchangées) */
 @keyframes pulse {
     0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+     transform: scale(1);
+     box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
     }
     50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 5px rgba(255, 68, 68, 0);
+     transform: scale(1.05);
+     box-shadow: 0 0 0 5px rgba(255, 68, 68, 0);
     }
     100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+     transform: scale(1);
+     box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
     }
-}
-
-/* Version alternative sans animation */
-.notification-bubble.no-animation {
-    animation: none;
-}
-
-/* Différentes couleurs selon le nombre de notifications */
-.notification-bubble.low {
-    background: #4CAF50; /* Vert pour peu de notifications */
-}
-
-.notification-bubble.medium {
-    background: #FF9800; /* Orange pour un nombre moyen */
-}
-
-.notification-bubble.high {
-    background: #ff4444; /* Rouge pour beaucoup de notifications */
 }
 </style>

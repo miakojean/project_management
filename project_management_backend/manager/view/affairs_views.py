@@ -1,15 +1,20 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage
-
 from ..models import Dossier
 from ..serializers import DossierSerializer, DossierListSerializer
-# Pas besoin du modèle directement si tout passe par le serializer
+from account.models import Utilisateur
+import logging
+
+
+# About Notifications
+from notification.utils import notify_users
+
+logger = logging.getLogger(__name__)
 
 class DossierCreateAPIView(APIView):
     """
@@ -29,6 +34,23 @@ class DossierCreateAPIView(APIView):
                 with transaction.atomic():
                     # On passe l'utilisateur connecté manuellement ici
                     dossier = serializer.save(cree_par=request.user)
+                    # 🚀 2. LOGIQUE DE NOTIFICATION - CRÉATION
+                    actor_user = request.user
+                    try:
+                        # Notifier tout le monde sauf l'acteur
+                        recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='DOSSIER_AJOUTE', # Utilisé par vous dans l'autre POST
+                            message=f"Le dossier '{dossier.reference_dossier}' du client {dossier.client} a été ajouté par {actor_user.get_full_name()}.",
+                            content_object=dossier,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        # On log l'erreur mais on ne bloque pas la transaction
+                        logger.error(f"Erreur lors de la création de la notification pour le dossier {dossier.id}: {e}")
+                    # FIN DE NOTIFICATION
                 
                 # 4. Réponse de succès
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -198,29 +220,6 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def post(self, request, format=None):
-        """
-        Crée un nouveau dossier
-        """
-        serializer = DossierSerializer(data=request.data)
-
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    dossier = serializer.save(cree_par=request.user)
-                
-                # Retourner les données complètes du dossier créé
-                response_serializer = DossierSerializer(dossier)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-            
-            except Exception as e:
-                return Response(
-                    {"error": f"Erreur technique lors de la création: {str(e)}"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class DossierDetailAPIView(APIView):
     """
     Vue pour récupérer, mettre à jour et supprimer un dossier spécifique
@@ -276,6 +275,23 @@ class DossierDetailAPIView(APIView):
             if serializer.is_valid():
                 with transaction.atomic():
                     updated_dossier = serializer.save()
+
+                    # 🚀 2. LOGIQUE DE NOTIFICATION - MISE À JOUR (PUT)
+                    actor_user = request.user
+                    try:
+                        # Notifier tout le monde sauf l'acteur
+                        recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='DOSSIER_MISE_A_JOUR',
+                            message=f"Le dossier '{updated_dossier.reference_dossier}' a été mis à jour par {actor_user.get_full_name()}.",
+                            content_object=updated_dossier,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        logger.error(f"Erreur lors de la création de la notification de mise à jour (PUT) pour le dossier {dossier.id}: {e}")
+                    # FIN DE NOTIFICATION
                 
                 response_serializer = DossierSerializer(updated_dossier)
                 return Response(response_serializer.data)
@@ -294,6 +310,19 @@ class DossierDetailAPIView(APIView):
         """
         try:
             dossier = get_object_or_404(Dossier, pk=pk)
+            
+            actor_user = request.user
+            try:
+                recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                notify_users(
+                    recipients=list(recipients),
+                    verb='DOSSIER_SUPPRIME',
+                    message=f"Le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    content_object=dossier,
+                    actor=actor_user
+                )
+            except Exception as e:
+                logger.error(f"Erreur lors de la notification de suppression: {e}")
             
             with transaction.atomic():
                 dossier.delete()

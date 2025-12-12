@@ -2,26 +2,17 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
-# Récupère le modèle utilisateur configuré (généralement auth.User)
 User = get_user_model()
 
 class Notification(models.Model):
     """
     Modèle pour stocker une notification dans l'application.
+    Supporte plusieurs destinataires via une relation ManyToMany.
     """
 
-    # --- Destinataire et Émetteur ---
-
-    # L'utilisateur qui reçoit la notification
-    recipient = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='notifications',
-        verbose_name="Destinataire"
-    )
-
-    # L'utilisateur qui a déclenché l'action (optionnel)
+    # --- Émetteur ---
     actor = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -32,44 +23,36 @@ class Notification(models.Model):
     )
 
     # --- Contenu et Type ---
-    
-    # Types d'événements (pour un rendu facile)
     EVENT_CHOICES = (
         ('DOSSIER_CREATION', 'Dossier créé'),
         ('DOSSIER_MISE_A_JOUR', 'Dossier mis à jour'),
         ('DOCUMENT_TELEVERSE', 'Document téléversé'),
         ('DOCUMENT_SUPPRIME', 'Document supprimé'),
         ('CLIENT_AJOUTE', 'Nouveau client ajouté'),
-        # Ajoutez d'autres types d'événements ici
     )
     
-    # Le type d'événement qui a déclenché la notification
     verb = models.CharField(
         max_length=50,
         choices=EVENT_CHOICES,
         verbose_name="Action"
     )
 
-    # Le message affiché à l'utilisateur
     message = models.TextField(verbose_name="Message de notification")
 
+    # --- Destinataires (plusieurs) ---
+    recipients = models.ManyToManyField(
+        User,
+        through='NotificationRecipient',
+        related_name='notifications',
+        verbose_name="Destinataires"
+    )
+
     # --- Statut et Temps ---
-
-    # Si la notification a été lue ou non
-    is_read = models.BooleanField(default=False, verbose_name="Lue")
-
-    # Date et heure de création
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Créée le")
     
-    # --- Lien vers l'objet source (Generic Foreign Key) ---
-
-    # Contient le modèle de l'objet source (ex: 'Dossier' ou 'Document')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    
-    # L'ID de l'objet source (ex: l'ID du Dossier ou du Document)
-    object_id = models.PositiveIntegerField()
-    
-    # Champ calculé pour accéder directement à l'objet source (Dossier, Document...)
+    # --- Lien vers l'objet source ---
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
@@ -78,4 +61,28 @@ class Notification(models.Model):
         verbose_name_plural = "Notifications"
 
     def __str__(self):
-        return f"[{'LU' if self.is_read else 'NON LU'}] {self.recipient.email} - {self.get_verb_display()}"
+        return f"{self.get_verb_display()} - {self.recipients.count()} destinataire(s)"
+
+
+class NotificationRecipient(models.Model):
+    """
+    Table intermédiaire pour gérer le statut de lecture par utilisateur.
+    """
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False, verbose_name="Lue")
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name="Lue le")
+
+    class Meta:
+        unique_together = ['notification', 'recipient']
+        verbose_name = "Destinataire de notification"
+        verbose_name_plural = "Destinataires de notifications"
+
+    def mark_as_read(self):
+        if self.is_read:
+            return False # Déjà lu, rien à faire
+        
+        self.is_read = True
+        self.read_at = timezone.now() # Assurez-vous d'utiliser django.utils.timezone
+        self.save()
+        return True # Marqué comme lu

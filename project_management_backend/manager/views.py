@@ -8,8 +8,7 @@ from .serializers import ClientSerializer, ClientCreateSerializer, ClientListSer
 from account.models import Utilisateur
 import logging
 from django.db.models import Q, Count 
-
-# views.py - Version simplifiée
+from notification.utils import notify_users
 
 # Configuration basique du logger
 logger = logging.getLogger(__name__)
@@ -25,7 +24,6 @@ class ClientCreateAPIView(APIView):
         Création d'un nouveau client
         """
         try:
-            # Plus besoin de traiter les dates ici, c'est fait dans le serializer
             serializer = ClientCreateSerializer(
                 data=request.data, 
                 context={'request': request}
@@ -34,7 +32,28 @@ class ClientCreateAPIView(APIView):
             if serializer.is_valid():
                 with transaction.atomic():
                     client = serializer.save()
+                    actor_user = request.user
                     self._log_creation(client, request.user)
+
+                    try:
+                        # Définir les destinataires : Tous les utilisateurs actifs SAUF l'acteur
+                        # On suppose que 'Utilisateur' a un champ 'is_active'
+                        recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='CLIENT_AJOUTE', # Correspond à EVENT_CHOICES dans models.py
+                            message=f"Le nouveau client '{client.nom_complet}' a été ajouté par {actor_user.get_full_name()}.",
+                            content_object=client, # L'objet source pour la GFK
+                            actor=actor_user,
+                        )
+                        
+                    except Exception as e:
+                        # IMPORTANT : En cas d'erreur de notification, on log et on continue la transaction.
+                        logger.error(f"Erreur lors de la création des notifications pour le client {client.id}: {e}")
+                        
+                    # --- 3. Log et Réponse ---
+                    self._log_creation(client, actor_user)
                     
                     client_serializer = ClientSerializer(client)
                     

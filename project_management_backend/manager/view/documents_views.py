@@ -1,9 +1,9 @@
-# Exemple d'APIView pour les documents
 from rest_framework.views import APIView
 from rest_framework.response import Response 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.db.models import Q
 from ..models import Document
 from manager.serializer.documentSerializer import (
@@ -19,9 +19,14 @@ import os
 import zipfile
 import io
 import json
-from tempfile import NamedTemporaryFile
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
+from notification.utils import notify_users
+import logging
+
+from account.models import Utilisateur
+
+logger = logging.getLogger(__name__)
 
 class DocumentsAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -32,41 +37,89 @@ class DocumentsAPIView(APIView):
         return Response(serializer.data)
     
     def post(self, request):
+        """
+        Crée un ou plusieurs documents et notifie les utilisateurs.
+        """
         serializer = DocumentCreateSerializer( 
             data=request.data,
             context={'request': request}
         )
         if serializer.is_valid():
-            documents = serializer.save()  # Liste de 1 ou N documents
-            return Response({
-                'message': f'{len(documents)} document(s) créé(s) avec succès',
-                'documents': DocumentListSerializer(documents, many=True).data
-            }, status=status.HTTP_201_CREATED)
+            try:
+                with transaction.atomic():
+                    # documents est une liste (ou un seul objet) retourné par le serializer.save()
+                    documents = serializer.save() 
+                    
+                    # 🚀 LOGIQUE DE NOTIFICATION - TÉLÉVERSEMENT
+                    actor_user = request.user
+                    recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                    
+                    documents_list = documents if isinstance(documents, list) else [documents]
+                    
+                    for doc in documents_list:
+                        try:
+                            notify_users(
+                                recipients=list(recipients),
+                                verb='DOCUMENT_TELEVERSE',
+                                message=f"Le document '{doc.nom_fichier}' (ID: {doc.id}) a été téléversé par {actor_user.get_full_name()}.",
+                                content_object=doc,
+                                actor=actor_user
+                            )
+                        except Exception as e:
+                            logger.error(f"Erreur lors de la création de la notification pour le document {doc.id}: {e}")
+                    # FIN DE NOTIFICATION
+
+                return Response({
+                    'message': f'{len(documents_list)} document(s) créé(s) avec succès',
+                    'documents': DocumentListSerializer(documents_list, many=True).data
+                }, status=status.HTTP_201_CREATED)
+            
+            except Exception as e:
+                logger.error(f"Erreur technique lors de la création du document: {e}")
+                return Response(
+                    {"error": f"Erreur technique lors de la création: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk, format=None):
         """
-        Supprime un document par son ID (pk).
+        Supprime un document par son ID (pk) et notifie les utilisateurs.
         """
         try:
-            # Récupère le document ou lève une 404
             document = get_object_or_404(Document, pk=pk)
             
-            # [Optionnel] Ajouter ici une vérification de permission
-            # e.g., if document.uploade_par != request.user and not request.user.is_staff:
-            #     return Response(status=status.HTTP_403_FORBIDDEN)
+            # --- Capture des données pour la notification AVANT la suppression ---
+            document_name = document.nom_fichier
+            actor_user = request.user
 
-            document.delete()
+            with transaction.atomic():
+                document.delete()
+                
+                # 🚀 LOGIQUE DE NOTIFICATION - SUPPRESSION
+                try:
+                    recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                    
+                    # Pour la suppression, on ne peut pas lier l'objet car il est supprimé.
+                    # On le passe quand même, mais la GFK sera nulle, et le message est suffisant.
+                    notify_users(
+                        recipients=list(recipients),
+                        verb='DOCUMENT_SUPPRIME',
+                        message=f"Le document '{document_name}' a été supprimé par {actor_user.get_full_name()}.",
+                        # content_object est facultatif ici ou sera un lien brisé
+                        actor=actor_user
+                    )
+                except Exception as e:
+                    logger.error(f"Erreur lors de la notification de suppression du document {pk}: {e}")
+                # FIN DE NOTIFICATION
             
-            # 204 No Content est la réponse standard pour une suppression réussie
             return Response(
                 {"message": "Document supprimé avec succès"},
                 status=status.HTTP_204_NO_CONTENT
             )
             
         except Exception as e:
-            # Gère les erreurs de suppression ou de base de données
             return Response(
                 {"error": f"Erreur lors de la suppression du document: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
