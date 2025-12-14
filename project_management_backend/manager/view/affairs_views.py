@@ -444,7 +444,7 @@ class CommentaireListCreateAPIView(APIView):
             # Récupérer les commentaires du dossier
             commentaires = dossier.commentaires.all().order_by('-date_creation')
             
-            # Sérialiser avec le serializer minimal
+            # Sérialiser avec un serializer qui inclut les détails de l'auteur mais pas les réponses imbriquées
             serializer = CommentaireMinimalSerializer(commentaires, many=True)
             
             return Response({
@@ -701,7 +701,7 @@ class ReponseListCreateAPIView(APIView):
             
             # Récupérer les réponses
             reponses = commentaire.reponses.all().order_by('date_creation')
-            serializer = ReponseMinimalSerializer(reponses, many=True)
+            serializer = ReponseSerializer(reponses, many=True)
             
             return Response({
                 'success': True,

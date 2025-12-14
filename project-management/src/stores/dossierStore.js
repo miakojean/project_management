@@ -446,10 +446,14 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
+            console.log('fetchDossierById appelé avec id:', id);
             const response = await api.get(`/manager/affairs/details/${id}/`);
+            console.log('Réponse fetchDossierById:', response.data);
             currentDossier.value = response.data;
+            console.log('currentDossier mis à jour:', currentDossier.value);
             return response.data;
         } catch (err) {
+            console.error('Erreur fetchDossierById:', err);
             error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
             console.error('Une erreur est intervenue lors de la récupération du dossier');
             throw err;

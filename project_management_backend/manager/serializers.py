@@ -471,9 +471,14 @@ class DossierListSerializer(serializers.ModelSerializer):
 
 class UtilisateurMinimalSerializer(serializers.ModelSerializer):
     """Serializer minimal pour les utilisateurs"""
+    nom_complet = serializers.SerializerMethodField()
+    
     class Meta:
         model = Utilisateur
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'nom_complet', 'email']
+    
+    def get_nom_complet(self, obj):
+        return obj.get_full_name()
 
 
 class ReponseSerializer(serializers.ModelSerializer):
@@ -523,25 +528,30 @@ class CommentaireSerializer(serializers.ModelSerializer):
 
 # Version ultra-minimale (sans les détails des auteurs)
 class ReponseMinimalSerializer(serializers.ModelSerializer):
-    """Serializer ultra-minimal pour les réponses"""
+    """Serializer pour les réponses avec détails de l'auteur"""
+    auteur = UtilisateurMinimalSerializer(read_only=True)
+    
     class Meta:
         model = Reponse
-        fields = ['id', 'auteur_id', 'message', 'date_creation']
-        read_only_fields = ['id', 'auteur_id', 'date_creation']
+        fields = ['id', 'auteur', 'auteur_id', 'message', 'date_creation']
+        read_only_fields = ['id', 'auteur', 'auteur_id', 'date_creation']
 
 
 class CommentaireMinimalSerializer(serializers.ModelSerializer):
-    """Serializer ultra-minimal pour les commentaires"""
+    """Serializer pour les commentaires avec détails de l'auteur"""
+    auteur = UtilisateurMinimalSerializer(read_only=True)
+    
     class Meta:
         model = Commentaire
         fields = [
             'id', 
             'dossier_id', 
-            'auteur_id', 
+            'auteur', 
+            'auteur_id',  # Garder pour compatibilité
             'message',
             'date_creation'
         ]
-        read_only_fields = ['id', 'auteur_id', 'date_creation']
+        read_only_fields = ['id', 'auteur', 'auteur_id', 'date_creation']
 
 
 # Version pour création avec auteur automatique

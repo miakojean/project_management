@@ -120,10 +120,15 @@ export default {
             duration:5000
         });
 
-        const goToFolderDetail = (dossier) => { //View
-            router.push(`/dashboard/customer/affairs/`);
-            dossierStore.attachAffair(dossier);
-            console.log('Le dossier selectionné', dossier)
+        const goToFolderDetail = async (dossier) => { //View
+            try {
+                router.push(`/dashboard/customer/affairs/`);
+                console.log('Chargement du dossier archive:', dossier.id);
+                await dossierStore.fetchDossierById(dossier.id);
+                console.log('Dossier archive chargé avec succès');
+            } catch (error) {
+                console.error('Erreur lors du chargement du dossier archive:', error);
+            }
         };
 
         const handleMarkAsDone = async(dossier) => {

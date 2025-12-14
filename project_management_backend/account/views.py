@@ -355,6 +355,7 @@ class UserProfileView(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'nom_complet': user.get_full_name(),
                 'phone_number': user.phone_number,
                 'category_title': user.category_title,
                 'date_joined': user.date_joined,

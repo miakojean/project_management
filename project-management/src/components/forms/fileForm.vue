@@ -242,15 +242,22 @@ const handleSubmit = async () => {
   if (dossierStore.currentDossier?.id) {
     formDataToSend.append('dossier', dossierStore.currentDossier.id)
   }
-  if (dossierStore.currentDossier?.client?.id || dossierStore.currentDossier.id) {
-    formDataToSend.append('client', dossierStore.currentDossier.client)
+
+  // Nouveau code
+  const clientId = dossierStore.currentDossier?.client?.id || 
+                  dossierStore.currentDossier?.client || 
+                  dossierStore.currentDossier?.id;
+
+  if (clientId) {
+    formDataToSend.append('client', clientId);
   }
 
   try {
     const response = await api.post('manager/documents/', formDataToSend)
     
-    // Réponse : { message: "X document(s) créé(s)...", documents: [...] }
     const count = response.data.documents?.length || selectedFiles.value.length
+
+    console.log('Formulaire à envoyer',formData)
     
     // Afficher la notification de succès
     showNotificationPopup('success', `${count} document(s) ajouté(s) avec succès`, 4000)
@@ -259,7 +266,7 @@ const handleSubmit = async () => {
     emit('notification', {
       type: 'success',
       message: `${count} document(s) ajouté(s) avec succès`,
-      duration: 4000,
+      duration: 5000,
     })
 
     // Rediriger après la notification
