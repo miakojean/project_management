@@ -1,7 +1,13 @@
 <template>
     <nav>
         <div class="research__box">
-            <researchfamily/>
+            <researchfamily 
+                placeholder="Rechercher un dossier, document, client..."
+                :searchFunction="customSearchFunction"
+                :maxResults="8"
+                @search="handleSearch"
+                @select="handleSelect"
+            />
         </div>
         <addButton @click="handleAddClick"/>
         <div class="btn__frame">
@@ -22,14 +28,44 @@
                     </div>
                     <div class="dropdown-content">
                         <p v-if="notifStore.isLoading" class="loading-message">Chargement...</p>
-                        <p v-else-if="!notifStore.hasUnread" class="empty-message">
-                            Vous êtes à jour !
+                        <p v-else-if="notifStore.notifications.length === 0" class="empty-message">
+                            Aucune notification
                         </p>
                         <ul v-else>
-                            <li v-for="notif in notifStore.notifications" :key="notif.id" class="notification-item" :class="{'is-read': notif.is_read}">
-                                {{ notif.message }}
+                            <!-- Afficher d'abord les non lues -->
+                            <li v-for="notif in notifStore.unreadNotifications" 
+                                :key="`unread-${notif.id}`" 
+                                class="notification-item unread"
+                                @click="markAsRead(notif.id)">
+                                <div class="notification-content">
+                                    <span class="unread-indicator">●</span>
+                                    <div class="notification-text">
+                                        <strong>{{ notif.verb_display || notif.verb }}</strong>
+                                        <p>{{ notif.message }}</p>
+                                    </div>
+                                </div>
                                 <span class="timestamp">{{ formatTime(notif.created_at) }}</span>
                             </li>
+                            
+                            <!-- Séparateur -->
+                            <li v-if="notifStore.unreadNotifications.length > 0 && notifStore.notifications.length > notifStore.unreadNotifications.length" 
+                                class="notification-separator">
+                                <hr>
+                            </li>
+                            
+                            <!-- Puis les lues -->
+                            <li v-for="notif in notifStore.notifications.filter(n => n.is_read_for_current_user)" 
+                                :key="`read-${notif.id}`" 
+                                class="notification-item read">
+                                <div class="notification-content">
+                                    <div class="notification-text">
+                                        <strong>{{ notif.verb_display || notif.verb }}</strong>
+                                        <p>{{ notif.message }}</p>
+                                    </div>
+                                </div>
+                                <span class="timestamp">{{ formatTime(notif.created_at) }}</span>
+                            </li>
+                            
                             <li v-if="notifStore.notifications.length >= 10" class="notification-item more-link">
                                 Voir toutes les notifications
                             </li>
@@ -42,7 +78,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import researchfamily from '../input/researchfamily.vue';
 import addButton from '../button/addButton.vue';
 import { useRouter } from 'vue-router';
@@ -80,9 +116,9 @@ export default {
         };
 
 
-        // 🚀 NOUVELLE LOGIQUE: Remplace loadNotifications et getNotificationDetails
         const refreshData = async () => {
-            await notifStore.loadUnreadCount(); // Met à jour le compteur
+            // Appelle directement loadUnreadCount qui met à jour unreadCount
+            await notifStore.loadUnreadCount();
         };
         
         // Méthodes pour le composant (simplifiées grâce au store)
@@ -130,6 +166,21 @@ export default {
             emit('add-click');
             router.push('/customer')
         };
+
+        const markAsRead = async (notificationId) => {
+            if (!notificationId) return;
+            
+            try {
+                // Marquer comme lue via le store
+                await notifStore.markAsRead(notificationId);
+                
+                // Optionnel: Émettre un événement
+                emit('notification-read', notificationId);
+                
+            } catch (error) {
+                console.error('Erreur lors du marquage de la notification:', error);
+            }
+        };
         
         // Les méthodes simulateNotification, refreshNotifications, et getNotificationStatus peuvent
         // être retirées ou adaptées pour utiliser les actions directes du store.
@@ -145,9 +196,17 @@ export default {
             }
         });
 
-        // Lifecycle: Charger le compte au montage
         onMounted(() => {
+        // Charger le nombre de notifications non lues au montage
             refreshData();
+            
+            // Optionnel: recharger périodiquement (toutes les 30 secondes)
+            const interval = setInterval(refreshData, 300000);
+            
+            // Nettoyer l'intervalle quand le composant est détruit
+            onUnmounted(() => {
+                clearInterval(interval);
+            });
         });
 
         // Retour des éléments exposés
@@ -166,6 +225,7 @@ export default {
             handleNotificationClick,
             clearNotifications,
             formatTime,
+            markAsRead,
             
             // Anciennes méthodes à garder si elles sont appelées de l'extérieur
             refreshNotifications: refreshData,
@@ -330,6 +390,80 @@ svg:hover{
     color: #007bff;
     font-weight: bold;    
     cursor: pointer;
+}
+
+/* Styles pour les notifications non lues */
+.notification-item.unread {
+    background-color: #f0f8ff; /* Bleu très clair */
+    border-left: 3px solid #007bff; /* Bordure bleue à gauche */
+    font-weight: 500;
+}
+
+.notification-item.unread:hover {
+    background-color: #e6f2ff;
+}
+
+/* Indicateur de non-lu */
+.unread-indicator {
+    color: #007bff;
+    font-size: 1.2rem;
+    margin-right: 8px;
+    animation: pulse 1.5s infinite;
+}
+
+/* Styles pour les notifications lues */
+.notification-item.read {
+    background-color: #fafafa;
+    color: #777;
+    border-left: 3px solid #ccc;
+}
+
+.notification-item.read:hover {
+    background-color: #f0f0f0;
+}
+
+/* Contenu de la notification */
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.notification-text {
+    flex: 1;
+}
+
+.notification-text strong {
+    display: block;
+    margin-bottom: 4px;
+    color: inherit;
+}
+
+.notification-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+/* Séparateur entre lues et non lues */
+.notification-separator {
+    padding: 5px 0;
+}
+
+.notification-separator hr {
+    border: none;
+    border-top: 1px dashed #ddd;
+    margin: 5px 15px;
+}
+
+/* Animation pour l'indicateur */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* Animations (inchangées) */

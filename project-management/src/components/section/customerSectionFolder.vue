@@ -34,7 +34,10 @@
                 :documentType="document.extension"
                 :description="document.description"
                 @download="handleDownload(document.id, document.titre)"
-                @delete="showDeleteDocumentModal(document)" />
+                @delete="showDeleteDocumentModal(document)" 
+            />
+
+            <emptyCards/>
         </div>
 
         <deleteModale 
@@ -48,7 +51,7 @@
         <notificationPopup 
             :visible="notificationPopup.isVisible"
             :message="notificationPopup.message"
-            :duration="notificationPopup.type"
+            :duration="notificationPopup.duration"
         />
 
     </section>
@@ -58,6 +61,7 @@
 import cardsaffairs from '../cards/cardsaffairs.vue';
 import documentList from '../items/documentList.vue';
 import uploadFileButton from '../button/uploadFileButton.vue';
+import emptyCards from '../cards/emptyCards.vue';
 import { onMounted, watch, ref, computed } from 'vue';
 import fileCards from '../cards/fileCards.vue';
 import deleteModale from '../modales/deleteModale.vue';
@@ -74,7 +78,8 @@ export default {
         uploadFileButton,
         fileCards,
         deleteModale,
-        notificationPopup
+        notificationPopup,
+        emptyCards
     },
     setup(){
         const doc = ref({})
@@ -101,7 +106,8 @@ export default {
         const notificationPopup = ref({
             isVisible: false,
             message: '',
-            type: 'success' // 'success' ou 'error'
+            type: 'success', // 'success' ou 'error'
+            duration:5000
         });
 
 

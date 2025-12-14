@@ -43,7 +43,7 @@ class DossierCreateAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='DOSSIER_AJOUTE', # Utilisé par vous dans l'autre POST
-                            message=f"Le dossier '{dossier.reference_dossier}' du client {dossier.client} a été ajouté par {actor_user.get_full_name()}.",
+                            message=f"Le dossier '{dossier.reference_dossier}' du client {dossier.client} a été ajouté.",
                             content_object=dossier,
                             actor=actor_user
                         )

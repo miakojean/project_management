@@ -61,7 +61,7 @@ class DocumentsAPIView(APIView):
                             notify_users(
                                 recipients=list(recipients),
                                 verb='DOCUMENT_TELEVERSE',
-                                message=f"Le document '{doc.nom_fichier}' (ID: {doc.id}) a été téléversé par {actor_user.get_full_name()}.",
+                                message=f"Le document '{doc.titre}' (ID: {doc.id}) a été téléversé par {actor_user.get_full_name()}.",
                                 content_object=doc,
                                 actor=actor_user
                             )
@@ -91,7 +91,7 @@ class DocumentsAPIView(APIView):
             document = get_object_or_404(Document, pk=pk)
             
             # --- Capture des données pour la notification AVANT la suppression ---
-            document_name = document.nom_fichier
+            document_name = document.titre
             actor_user = request.user
 
             with transaction.atomic():

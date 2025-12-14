@@ -7,7 +7,6 @@ from .models import (
     Document, 
     SignatureDocument,
     HistoriqueDocument, 
-    EtapeDossier 
 )
 from rest_framework import serializers
 from account.models import Utilisateur
@@ -319,7 +318,6 @@ class DossierSerializer(serializers.ModelSerializer):
     client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
 
     # Champs calculés
-    solde_honoraires = serializers.ReadOnlyField()
     est_en_retard = serializers.ReadOnlyField()
     taux_avancement = serializers.ReadOnlyField()
 
@@ -356,7 +354,6 @@ class DossierSerializer(serializers.ModelSerializer):
             'description', 'client', 'client_details', 'est_archive',
             'statut', 'priorite', 'collaborateurs',
             'date_ouverture', 'date_echeance', 'date_cloture',
-            'honoraires_prevus', 'honoraires_factures', 'solde_honoraires',
             'numero_tribunal', 'juridiction', 'numero_rg',
             'observations', 'est_en_retard', 'taux_avancement',
             'cree_par', 'date_creation', 'date_derniere_activite',
@@ -366,7 +363,6 @@ class DossierSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'reference_dossier',
             'chemin_dossier',
-            'solde_honoraires',
             'est_en_retard',
             'taux_avancement',
             'cree_par',
@@ -546,38 +542,7 @@ class HistoriqueDocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['date_action']
 
-# Serializer pour EtapeDossier
-class EtapeDossierSerializer(serializers.ModelSerializer):
-    dossier_reference = serializers.CharField(source='dossier.reference_dossier', read_only=True)
-    dossier_titre = serializers.CharField(source='dossier.titre', read_only=True)
-    duree_etape = serializers.SerializerMethodField()
-    est_en_retard = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = EtapeDossier
-        fields = [
-            'id', 'dossier', 'dossier_reference', 'dossier_titre',
-            'nom', 'description', 'ordre', 'date_debut', 'date_fin',
-            'est_terminee', 'date_creation', 'date_modification',
-            'duree_etape', 'est_en_retard'
-        ]
-        read_only_fields = ['date_creation', 'date_modification']
-    
-    def get_duree_etape(self, obj):
-        if obj.date_debut and obj.date_fin:
-            return (obj.date_fin - obj.date_debut).days
-        return None
-    
-    def get_est_en_retard(self, obj):
-        if obj.date_fin and not obj.est_terminee:
-            from django.utils import timezone
-            return timezone.now().date() > obj.date_fin
-        return False
 
-# Serializer pour la création d'étape
-class EtapeDossierCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EtapeDossier
         fields = ['dossier', 'nom', 'description', 'ordre', 'date_debut', 'date_fin', 'est_terminee']
 
 

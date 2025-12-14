@@ -71,7 +71,7 @@ class Document(models.Model):
         _("Référence du document"),
         max_length=100,
         unique=True,
-        editable=False
+        editable=False 
     )
     titre = models.CharField(_("Titre du document"), max_length=300)
     description = models.TextField(_("Description"), blank=True)

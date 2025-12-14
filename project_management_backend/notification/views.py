@@ -3,57 +3,69 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-# Correction des imports pour utiliser la table pivot
 from .models import Notification, NotificationRecipient 
-# Assurez-vous d'importer le bon sérialiseur pour la table pivot
-from .serializers import NotificationRecipientSerializer # <-- Assurez-vous que c'est le bon nom
+from .serializers import (
+    NotificationRecipientSerializer,
+    NotificationSerializer
+)
 
 class NotificationListAPIView(APIView):
     """
-    API pour récupérer la liste des notifications de l'utilisateur connecté 
-    (en interrogeant la table pivot NotificationRecipient).
+    API pour récupérer la liste des notifications de l'utilisateur connecté.
     """
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
+    def get_notification_queryset(self):
         """
-        Retourne le queryset de base : toutes les entrées NotificationRecipient 
-        pour l'utilisateur connecté, triées par la date de création de la Notification parente.
+        Retourne le queryset de base des notifications pour l'utilisateur connecté.
         """
-        # CORRECTION MAJEURE : On filtre sur la table pivot
-        return (NotificationRecipient.objects
-                .filter(recipient=self.request.user)
-                # Trier par la date de création de la notification parente
-                .order_by('-notification__created_at')) 
+        return Notification.objects.filter(
+            notificationrecipient__recipient=self.request.user
+        ).distinct().order_by('-created_at')
+    
+    def get_notificationrecipient_queryset(self):
+        """
+        Retourne le queryset de base des NotificationRecipient pour l'utilisateur connecté.
+        """
+        return NotificationRecipient.objects.filter(
+            recipient=self.request.user
+        )
     
     def get(self, request):
         """
         Récupère les notifications de l'utilisateur.
         """
-        
         unread_only = request.query_params.get('unread', '').lower() == 'true'
         limit = request.query_params.get('limit')
         
-        # Le queryset de base est NotificationRecipient pour l'utilisateur
-        base_queryset = self.get_queryset() 
-        queryset = base_queryset
+        # Base queryset pour les notifications
+        base_notification_queryset = self.get_notification_queryset()
         
-        # Filtre optionnel pour n'afficher que les non lues
+        # Filtre pour les non lues si nécessaire
         if unread_only:
-            # 'is_read' est un champ direct sur NotificationRecipient
-            queryset = queryset.filter(is_read=False)
-            
-        # Pré-calcul des totaux
-        unread_count = base_queryset.filter(is_read=False).count()
-        total_count = base_queryset.count()
+            # Filtrer les notifications non lues pour l'utilisateur courant
+            notifications = base_notification_queryset.filter(
+                notificationrecipient__recipient=request.user,
+                notificationrecipient__is_read=False
+            ).distinct()
+        else:
+            notifications = base_notification_queryset
+        
+        # Calcul des totaux à partir de NotificationRecipient
+        notificationrecipient_queryset = self.get_notificationrecipient_queryset()
+        unread_count = notificationrecipient_queryset.filter(is_read=False).count()
+        total_count = notificationrecipient_queryset.count()
         
         # Limitation du nombre de résultats
         if limit and limit.isdigit():
-            queryset = queryset[:int(limit)]
+            notifications = notifications[:int(limit)]
         
-        # Sérialisation de la table pivot
-        # Le sérialiseur doit embarquer les détails de la notification parente
-        serializer = NotificationRecipientSerializer(queryset, many=True)
+        # Sérialisation
+        serializer = NotificationSerializer(
+            notifications, 
+            many=True,
+            context={'request': request}
+        )
         
         return Response({
             'notifications': serializer.data,
@@ -69,13 +81,14 @@ class NotificationListAPIView(APIView):
         Marque TOUTES les notifications non lues de l'utilisateur comme lues.
         """
         # Mise à jour sur la table pivot NotificationRecipient
-        updated_count = self.get_queryset().filter(is_read=False).update(is_read=True)
+        notificationrecipient_queryset = self.get_notificationrecipient_queryset()
+        updated_count = notificationrecipient_queryset.filter(is_read=False).update(is_read=True)
         
         return Response({
             'status': 'success',
             'message': f'{updated_count} notifications marquées comme lues',
             'marked_read': updated_count,
-            'unread_count': self.get_queryset().filter(is_read=False).count()
+            'unread_count': notificationrecipient_queryset.filter(is_read=False).count()
         }, status=status.HTTP_200_OK)
 
 

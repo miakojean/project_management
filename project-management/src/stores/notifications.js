@@ -1,131 +1,151 @@
 import { defineStore } from "pinia";
 import { ref, computed } from 'vue';
-import api from '@/_services/api'; // Service API (e.g., Axios instance)
+import api from '@/_services/api';
 
 export const useNotificationStore = defineStore('notif', () => {
     
     // ===================================
     // 1. ÉTAT (State)
     // ===================================
-
-    /** @type {import('vue').Ref<number>} Le nombre de notifications non lues. */
     const unreadCount = ref(0);
-    
-    /** @type {import('vue').Ref<Array<Object>>} La liste détaillée des notifications. */
     const notifications = ref([]);
-    
-    /** @type {import('vue').Ref<boolean>} Indicateur de chargement. */
     const isLoading = ref(false);
 
     // ===================================
     // 2. GETTERS (Computed)
     // ===================================
-
-    /** Vérifie s'il y a des notifications non lues. */
     const hasUnread = computed(() => unreadCount.value > 0);
-
-    /** Renvoie le nombre formaté (ex: 12, ou '99+' si > 99). */
     const displayCount = computed(() => {
         return unreadCount.value > 99 ? '99+' : unreadCount.value.toString();
     });
-
-    /** Renvoie uniquement les notifications non lues */
     const unreadNotifications = computed(() => {
-        return notifications.value.filter(n => !n.is_read);
+        return notifications.value.filter(n => !n.is_read_for_current_user);
     });
 
     // ===================================
     // 3. ACTIONS
     // ===================================
-
-    /** * Récupère le compte des notifications non lues depuis le backend.
-     * C'est la fonction principale utilisée pour rafraîchir la bulle.
+    
+    /**
+     * Récupère uniquement le compte des notifications non lues
+     * Utilisée pour la bulle de notification
      */
     const loadUnreadCount = async () => {
-        isLoading.value = true;
         try {
-            // Supposons que cet endpoint renvoie directement le compte ou un objet avec 'count'
-            const response = await api.get('/notification/notif-index'); 
+            // Appel l'API qui retourne les métadonnées avec les counts
+            const response = await api.get('notification/notif-index'); // Assurez-vous que c'est la bonne URL
             
-            // Adapter la lecture de la réponse selon la structure réelle de votre backend
-            const count = response.data.count || 0; 
-
-            unreadCount.value = count;
-
-            return count;
-
+            // Votre API Django retourne un format avec 'metadata'
+            if (response.data.metadata) {
+                unreadCount.value = response.data.metadata.unread_count || 0;
+                console.log('notifications', response.data)
+                return unreadCount.value;
+            }
+            
+            // Fallback si l'API a un format différent
+            unreadCount.value = response.data.unread_count || 0;
+            console.log('notifications', response.data)
+            return unreadCount.value;
+            
         } catch (error) {
-            console.error("Erreur Pinia - chargement du compte de notifications:", error);
-            // Ne pas modifier le compte en cas d'erreur pour éviter une désynchronisation
-        } finally {
-            isLoading.value = false;
+            console.error("Erreur - chargement du compte de notifications:", error);
+            return 0;
         }
     };
 
-    /** * Récupère la liste complète des notifications pour le dropdown.
+    /**
+     * Récupère la liste complète des notifications avec détails
+     * Utilisée pour le dropdown
      */
     const loadNotifications = async () => {
         isLoading.value = true;
         try {
-            const response = await api.get('/notification/notif-index'); 
+            const response = await api.get('notification/notif-index');
             
-            // Assurez-vous que la réponse contient les notifications et potentiellement le compte non lu
-            const data = response.data.data;
-            notifications.value = data.dossiers || response.data; // Adapter si la réponse est directe ou structurée
-            
-            // Tenter de mettre à jour le compte par la même occasion
-            if (data.metadata && data.metadata.count !== undefined) {
-                 // Supposons que le backend renvoie le count total et on filtre les non-lus
-                 unreadCount.value = unreadNotifications.value.length; 
-            } else {
-                // Si l'endpoint principal donne la liste, on compte les non-lus
-                unreadCount.value = notifications.value.filter(n => !n.is_read).length;
+            // Votre API retourne les notifications dans 'notifications'
+            if (response.data.notifications) {
+                notifications.value = response.data.notifications;
+                
+                // Met à jour aussi le compteur depuis les métadonnées
+                if (response.data.metadata) {
+                    unreadCount.value = response.data.metadata.unread_count || 0;
+                } else {
+                    // Fallback: compte les non-lues dans la liste
+                    unreadCount.value = notifications.value.filter(
+                        n => !n.is_read_for_current_user
+                    ).length;
+                }
             }
-
+            console.log('notifications', response.data)
+            
             return notifications.value;
         } catch (error) {
-            console.error("Erreur Pinia - chargement de la liste de notifications:", error);
+            console.error("Erreur - chargement de la liste de notifications:", error);
             notifications.value = [];
+            return [];
         } finally {
             isLoading.value = false;
         }
     };
 
-    /** * Marque toutes les notifications non lues comme lues et met à jour le store.
+    /**
+     * Marque toutes les notifications non lues comme lues
      */
     const markAllAsRead = async () => {
         if (!hasUnread.value) return 0;
         
         try {
-            // Endpoint pour marquer tout comme lu
-            const response = await api.put('/api/notifications/mark-as-read'); 
-
-            const clearedCount = unreadCount.value;
+            // Utilise la méthode POST sur l'endpoint de liste
+            const response = await api.post('notification/notif-index');
             
-            // Mettre à jour l'état local après succès
+            // Votre API retourne 'marked_read' dans la réponse
+            const markedRead = response.data.marked_read || 0;
+            
+            // Met à jour l'état local
             unreadCount.value = 0;
-            // Optionnel : mettre à jour le statut dans la liste locale
-            notifications.value.forEach(n => n.is_read = true);
-
-            return clearedCount;
+            // Met à jour le statut de lecture dans la liste locale
+            notifications.value.forEach(n => {
+                n.is_read_for_current_user = true;
+            });
+            
+            return markedRead;
         } catch (error) {
-            console.error("Erreur Pinia - marquage des notifications:", error);
+            console.error("Erreur - marquage des notifications:", error);
             return 0;
         }
     };
     
-    // Optionnel : Fonction pour ajouter une notification (si vous utilisez les WebSockets ou le polling en temps réel)
-    const addNotification = (newNotification) => {
-        notifications.value.unshift(newNotification);
-        if (!newNotification.is_read) {
-            unreadCount.value++;
+    /**
+     * Marque une notification spécifique comme lue
+     */
+    const markAsRead = async (notificationId) => {
+        try {
+            // Utilise PUT sur l'endpoint de détail
+            const response = await api.put(`/api/notifications/${notificationId}/`, {
+                is_read: true
+            });
+            
+            // Met à jour l'état local
+            const notification = notifications.value.find(n => n.id === notificationId);
+            if (notification) {
+                notification.is_read_for_current_user = true;
+            }
+            
+            // Décrémente le compteur si la notification n'était pas déjà lue
+            if (notification && !notification.is_read_for_current_user) {
+                unreadCount.value = Math.max(0, unreadCount.value - 1);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("Erreur - marquage d'une notification:", error);
+            return false;
         }
     };
 
     // ===================================
     // EXPOSITION DES ÉLÉMENTS DU STORE
     // ===================================
-
     return {
         // État
         unreadCount,
@@ -141,6 +161,6 @@ export const useNotificationStore = defineStore('notif', () => {
         loadUnreadCount,
         loadNotifications,
         markAllAsRead,
-        addNotification,
+        markAsRead,
     };
 });

@@ -81,32 +81,6 @@ class Dossier(models.Model):
     date_echeance = models.DateField(_("Date d'échéance"), null=True, blank=True)
     date_derniere_activite = models.DateTimeField(_("Date dernière activité"), auto_now=True)
     
-    # Aspects financiers
-    honoraires_prevus = models.DecimalField(
-        _("Honoraires prévus (FCFA)"),
-        max_digits=12,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
-        null=True,
-        blank=True
-    )
-    
-    honoraires_factures = models.DecimalField(
-        _("Honoraires facturés (FCFA)"),
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))]
-    )
-    
-    acompte_recu = models.DecimalField(
-        _("Acompte reçu (FCFA)"),
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))]
-    )
-    
     # Informations juridiques spécifiques
     numero_tribunal = models.CharField(_("Numéro tribunal/greffe"), max_length=100, blank=True)
     juridiction = models.CharField(_("Juridiction compétente"), max_length=100, blank=True)
@@ -407,32 +381,61 @@ class Dossier(models.Model):
         if self.chemin_dossier:
             return os.path.join(settings.MEDIA_ROOT, self.chemin_dossier)
         return None
-
-
-class EtapeDossier(models.Model):
+    
+class Commentaire(models.Model):
     """
-    Modèle pour gérer les étapes d'un dossier
+    Modèle simple pour les commentaires sur les dossiers
     """
     dossier = models.ForeignKey(
         Dossier,
         on_delete=models.CASCADE,
-        related_name='etapes',
+        related_name='commentaires',
         verbose_name=_("Dossier")
     )
-    nom = models.CharField(_("Nom de l'étape"), max_length=200)
-    description = models.TextField(_("Description"), blank=True)
-    ordre = models.PositiveIntegerField(_("Ordre"), default=1)
-    date_debut = models.DateField(_("Date début"), null=True, blank=True)
-    date_fin = models.DateField(_("Date fin"), null=True, blank=True)
-    est_terminee = models.BooleanField(_("Est terminée"), default=False)
+    auteur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name='commentaires',
+        verbose_name=_("Auteur")
+    )
+    message = models.TextField(_("Message"))
     
     date_creation = models.DateTimeField(_("Date de création"), auto_now_add=True)
     date_modification = models.DateTimeField(_("Date de modification"), auto_now=True)
     
     class Meta:
-        ordering = ['dossier', 'ordre']
-        verbose_name = _("Étape de dossier")
-        verbose_name_plural = _("Étapes de dossier")
+        ordering = ['-date_creation']
+        verbose_name = _("Commentaire")
+        verbose_name_plural = _("Commentaires")
     
     def __str__(self):
-        return f"{self.dossier.reference_dossier} - {self.nom}"
+        return f"Commentaire sur {self.dossier.reference_dossier} par {self.auteur}"
+
+
+class Reponse(models.Model):
+    """
+    Modèle simple pour les réponses aux commentaires
+    """
+    commentaire = models.ForeignKey(
+        Commentaire,
+        on_delete=models.CASCADE,
+        related_name='reponses',
+        verbose_name=_("Commentaire")
+    )
+    auteur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name='reponses',
+        verbose_name=_("Auteur")
+    )
+    message = models.TextField(_("Message"))
+    
+    date_creation = models.DateTimeField(_("Date de création"), auto_now_add=True)
+    
+    class Meta:
+        ordering = ['date_creation']
+        verbose_name = _("Réponse")
+        verbose_name_plural = _("Réponses")
+    
+    def __str__(self):
+        return f"Réponse à {self.commentaire}"

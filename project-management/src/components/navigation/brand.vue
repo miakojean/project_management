@@ -31,8 +31,8 @@ export default {
 }
 
 img{
-    width:80px;
-    height:80px;
+    width:50px;
+    height:50px;
     background-size: cover;
 }
 

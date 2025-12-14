@@ -453,8 +453,8 @@ export default {
 }
 
 .error-icon img {
-    width: 320px;
-    height: 320px;
+    width: 300px;
+    height: 300px;
 }
 
 .error-message,
