@@ -58,5 +58,8 @@ urlpatterns = [
 
 
     #Category
-    path('category', CategoryView.as_view(), name="category-view")
+    path('category', CategoryView.as_view(), name="category-view"),
+
+    # Comment management
+    path('affairs/comment')
 ]

@@ -24,8 +24,9 @@
                 <uploadFileButton />
             </div>
         </div>
-
-        <div class=" grid grid-cols-3 w-full gap-2">
+        
+        <!-- SECTION DES DOCUMENTS -->
+        <div v-if="hasDocuments" class="grid grid-cols-3 w-full gap-2">
             <fileCards v-for="document in doc.documents"
                 :key="document.id"
                 :title="document.titre"
@@ -36,24 +37,38 @@
                 @download="handleDownload(document.id, document.titre)"
                 @delete="showDeleteDocumentModal(document)" 
             />
-
-            <emptyCards/>
+        </div>
+        
+        <!-- ÉTAT VIDE - PREND TOUTE LA LARGEUR -->
+        <div v-else class="w-full">
+            <emptyCards />
         </div>
 
-        <deleteModale 
-            :is-open="isDeleteModaleOpen"
-            :item-to-delete="documentToDelete"
+        <div class="w-full">
+            <commentInput/>
+        </div>
+
+        <div class="w-full">
+            <commentSection/>
+        </div>
+        
+        <!-- MODALE DE SUPPRESSION -->
+        <deleteModale
+            v-if="isDeleteModaleOpen"
+            :isVisible="isDeleteModaleOpen"
             :message="deleteModalMessage"
-            @close="() => isDeleteModaleOpen = false"
             @confirm="handleDelete"
+            @cancel="isDeleteModaleOpen = false"
         />
-
-        <notificationPopup 
-            :visible="notificationPopup.isVisible"
+        
+        <!-- NOTIFICATION POPUP -->
+        <notificationPopup
+            v-if="notificationPopup.isVisible"
+            :isVisible="notificationPopup.isVisible"
             :message="notificationPopup.message"
-            :duration="notificationPopup.duration"
+            :type="notificationPopup.type"
+            @close="notificationPopup.isVisible = false"
         />
-
     </section>
 </template>
 
@@ -66,6 +81,8 @@ import { onMounted, watch, ref, computed } from 'vue';
 import fileCards from '../cards/fileCards.vue';
 import deleteModale from '../modales/deleteModale.vue';
 import notificationPopup from '../tools/notificationPopup.vue';
+import commentInput from '../input/commentInput.vue';
+import commentSection from './commentSection.vue';
 
 // Store 
 import { useDossierStore } from '@/stores/dossierStore';
@@ -79,7 +96,9 @@ export default {
         fileCards,
         deleteModale,
         notificationPopup,
-        emptyCards
+        emptyCards,
+        commentInput,
+        commentSection
     },
     setup(){
         const doc = ref({})
@@ -174,9 +193,11 @@ export default {
             console.log('Vous voulez télécharger', docId)
         };
 
-        // =================================================================
-        // ✅ CORRECTION 3 : LOGIQUE DE SUPPRESSION COMPLÈTE
-        // =================================================================
+        const hasDocuments = computed(() => {
+            // Vérifie si doc.value existe et si son tableau documents a une longueur > 0
+            return doc.value?.documents?.length > 0;
+        });
+        
         const handleDelete = async () => {
             const document = documentToDelete.value; 
             
@@ -266,6 +287,7 @@ export default {
             documents,
             documentStore,
             dossierStore,
+            hasDocuments,
             getStatus,
             formatDate,
             calculateProgress,

@@ -1,5 +1,4 @@
 # serializers.py
-
 from .models import (
     Client, 
     Dossier, 

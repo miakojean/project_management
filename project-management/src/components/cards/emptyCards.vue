@@ -169,6 +169,7 @@ onMounted(() => {
     position: relative;
     overflow: hidden;
     cursor: default;
+    width: 100%;
 }
 
 .empty-folder-card.has-action {
