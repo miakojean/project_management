@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed, watch } from "vue"; // <-- watch est importé ici
+import { ref, computed, watch } from "vue";
 import api from "@/_services/api";
 
 // =================================================================
@@ -8,15 +8,10 @@ import api from "@/_services/api";
 
 const CACHE_KEY = 'dossierStoreCache';
 
-/**
- * Charge l'état du store depuis localStorage.
- * @returns {object} L'état ou un objet vide si échec.
- */
 function loadStateFromCache() {
     try {
         const cachedState = localStorage.getItem(CACHE_KEY);
         if (cachedState) {
-            // Retourne les données parsées.
             return JSON.parse(cachedState);
         }
     } catch (e) {
@@ -25,10 +20,6 @@ function loadStateFromCache() {
     return {};
 }
 
-/**
- * Sauvegarde l'état partiel du store dans localStorage.
- * @param {object} state - L'objet contenant les valeurs à mettre en cache.
- */
 function saveStateToCache(state) {
     try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(state));
@@ -37,31 +28,33 @@ function saveStateToCache(state) {
     }
 }
 
-
 export const useDossierStore = defineStore('dossier', () => {
     
-    const cached = loadStateFromCache(); // <-- Chargement du cache au départ
+    const cached = loadStateFromCache();
 
     // State (Initialisation avec le cache si disponible)
     const customerDossier = ref(cached.customerDossier || []);
-    const dossiers = ref(cached.dossiers || []); // <-- Initialisé avec le cache
-    const currentDossier = ref(cached.currentDossier || null); // <-- Initialisé avec le cache
+    const dossiers = ref(cached.dossiers || []);
+    const currentDossier = ref(cached.currentDossier || null);
     const currentDossierDocuments = ref(cached.currentDossierDocuments || []);
     const loading = ref(false);
     const error = ref(null);
-    const stats = ref(cached.stats || {}); // <-- Initialisé avec le cache
+    const stats = ref(cached.stats || {});
     const categories = ref(cached.categories || []);
     const dossiersArchives = ref(cached.dossiersArchives || []);
+    
+    // =================================================================
+    // NOUVEAU : ÉTAT POUR LES COMMENTAIRES
+    // =================================================================
+    const commentaires = ref(cached.commentaires || []);
+    const currentCommentaire = ref(cached.currentCommentaire || null);
+    const reponses = ref(cached.reponses || []);
+    const commentairesLoading = ref(false);
+    const commentairesError = ref(null);
 
     // Getters
     const totalDossiers = computed(() => dossiers.value.length);
-    const getCurrentDossier = computed(()=>currentDossier.value)
-    // ... (autres getters inchangés) ...
-    function attachAffair(affair){
-        currentDossier.value = affair;
-        console.log('Dossier selectionné', affair);
-        return currentDossier;
-    }
+    const getCurrentDossier = computed(() => currentDossier.value);
     
     const dossiersActifs = computed(() => 
         dossiers.value.filter(d => 
@@ -84,13 +77,325 @@ export const useDossierStore = defineStore('dossier', () => {
         return grouped;
     });
 
-    // Actions
-    // ... (Toutes les actions restent inchangées) ...
+    // =================================================================
+    // NOUVEAU : GETTERS POUR LES COMMENTAIRES
+    // =================================================================
+    const getCommentairesByDossier = computed(() => (dossierId) => {
+        return commentaires.value.filter(commentaire => 
+            commentaire.dossier_id === dossierId || commentaire.dossier === dossierId
+        );
+    });
 
-    async function fetchCategories () {
+    const getReponsesByCommentaire = computed(() => (commentaireId) => {
+        return reponses.value.filter(reponse => 
+            reponse.commentaire_id === commentaireId || reponse.commentaire === commentaireId
+        );
+    });
+
+    const commentairesCount = computed(() => commentaires.value.length);
+    const reponsesCount = computed(() => reponses.value.length);
+
+    // =================================================================
+    // ACTIONS POUR LES COMMENTAIRES
+    // =================================================================
+
+    // 1. CRUD Commentaires
+    async function fetchCommentairesByDossier(dossierId) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.get(`/manager/affairs/${dossierId}/commentaires/`);
+            // Mettre à jour le store avec les nouveaux commentaires
+            const newCommentaires = response.data.commentaires || [];
+            
+            // Fusionner avec les commentaires existants (éviter les doublons)
+            newCommentaires.forEach(newComment => {
+                const existingIndex = commentaires.value.findIndex(c => c.id === newComment.id);
+                if (existingIndex === -1) {
+                    commentaires.value.push(newComment);
+                } else {
+                    commentaires.value[existingIndex] = newComment;
+                }
+            });
+            console.log(response)
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors du chargement des commentaires';
+            console.error('Erreur fetchCommentaires:', err);
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function fetchCommentaireById(commentaireId) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.get(`/manager/commentaires/${commentaireId}/`);
+            currentCommentaire.value = response.data;
+            
+            // Mettre à jour dans la liste
+            const index = commentaires.value.findIndex(c => c.id === commentaireId);
+            if (index !== -1) {
+                commentaires.value[index] = response.data;
+            } else {
+                commentaires.value.push(response.data);
+            }
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors du chargement du commentaire';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function createCommentaire(dossierId, message) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.post(`/manager/affairs/${dossierId}/commentaires/`, {
+                message
+            });
+            
+            // Ajouter le nouveau commentaire au store
+            commentaires.value.push(response.data);
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la création du commentaire';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function updateCommentaire(commentaireId, message) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.put(`/manager/commentaires/${commentaireId}/`, {
+                message
+            });
+            
+            // Mettre à jour dans le store
+            const index = commentaires.value.findIndex(c => c.id === commentaireId);
+            if (index !== -1) {
+                commentaires.value[index] = response.data;
+            }
+            
+            // Mettre à jour le commentaire courant si c'est le même
+            if (currentCommentaire.value && currentCommentaire.value.id === commentaireId) {
+                currentCommentaire.value = response.data;
+            }
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la modification du commentaire';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function deleteCommentaire(commentaireId) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            await api.delete(`/manager/commentaires/${commentaireId}/`);
+            
+            // Retirer du store
+            const commentaireIndex = commentaires.value.findIndex(c => c.id === commentaireId);
+            if (commentaireIndex !== -1) {
+                commentaires.value.splice(commentaireIndex, 1);
+            }
+            
+            // Retirer les réponses associées
+            reponses.value = reponses.value.filter(r => 
+                r.commentaire_id !== commentaireId && r.commentaire !== commentaireId
+            );
+            
+            // Vider le commentaire courant si c'est le même
+            if (currentCommentaire.value && currentCommentaire.value.id === commentaireId) {
+                currentCommentaire.value = null;
+            }
+            
+            return true;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la suppression du commentaire';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    // 2. CRUD Réponses
+    async function fetchReponsesByCommentaire(commentaireId) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.get(`/manager/commentaires/${commentaireId}/reponses/`);
+            
+            // Mettre à jour le store avec les nouvelles réponses
+            const newReponses = response.data.reponses || [];
+            
+            newReponses.forEach(newReponse => {
+                const existingIndex = reponses.value.findIndex(r => r.id === newReponse.id);
+                if (existingIndex === -1) {
+                    reponses.value.push(newReponse);
+                } else {
+                    reponses.value[existingIndex] = newReponse;
+                }
+            });
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors du chargement des réponses';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function createReponse(commentaireId, message) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.post(`/manager/commentaires/${commentaireId}/reponses/`, {
+                message
+            });
+            
+            // Ajouter la nouvelle réponse au store
+            reponses.value.push(response.data);
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la création de la réponse';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function updateReponse(reponseId, message) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            const response = await api.put(`/manager/reponses/${reponseId}/`, {
+                message
+            });
+            
+            // Mettre à jour dans le store
+            const index = reponses.value.findIndex(r => r.id === reponseId);
+            if (index !== -1) {
+                reponses.value[index] = response.data;
+            }
+            
+            return response.data;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la modification de la réponse';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    async function deleteReponse(reponseId) {
+        commentairesLoading.value = true;
+        commentairesError.value = null;
+        
+        try {
+            await api.delete(`/manager/reponses/${reponseId}/`);
+            
+            // Retirer du store
+            const reponseIndex = reponses.value.findIndex(r => r.id === reponseId);
+            if (reponseIndex !== -1) {
+                reponses.value.splice(reponseIndex, 1);
+            }
+            
+            return true;
+        } catch (err) {
+            commentairesError.value = err.response?.data?.error || 'Erreur lors de la suppression de la réponse';
+            throw err;
+        } finally {
+            commentairesLoading.value = false;
+        }
+    }
+
+    // 3. Actions utilitaires pour les commentaires
+    async function loadCommentairesForDossier(dossierId) {
+        try {
+            // Charger les commentaires du dossier
+            await fetchCommentairesByDossier(dossierId);
+            
+            // Pour chaque commentaire, charger ses réponses
+            const dossierCommentaires = getCommentairesByDossier.value(dossierId);
+            for (const commentaire of dossierCommentaires) {
+                await fetchReponsesByCommentaire(commentaire.id);
+            }
+            
+            return {
+                commentaires: dossierCommentaires,
+                reponses: reponses.value.filter(r => 
+                    dossierCommentaires.some(c => c.id === (r.commentaire_id || r.commentaire))
+                )
+            };
+        } catch (err) {
+            console.error('Erreur lors du chargement complet des commentaires:', err);
+            throw err;
+        }
+    }
+
+    function getCommentaireWithReponses(commentaireId) {
+        const commentaire = commentaires.value.find(c => c.id === commentaireId);
+        if (!commentaire) return null;
+        
+        const commentaireReponses = getReponsesByCommentaire.value(commentaireId);
+        
+        return {
+            ...commentaire,
+            reponses: commentaireReponses
+        };
+    }
+
+    function clearCurrentCommentaire() {
+        currentCommentaire.value = null;
+    }
+
+    function resetCommentairesError() {
+        commentairesError.value = null;
+    }
+
+    function clearCommentairesStore() {
+        commentaires.value = [];
+        reponses.value = [];
+        currentCommentaire.value = null;
+        commentairesError.value = null;
+    }
+
+    // =================================================================
+    // ACTIONS EXISTANTES POUR LES DOSSIERS (inchangées)
+    // =================================================================
+    
+    function attachAffair(affair){
+        currentDossier.value = affair;
+        console.log('Dossier selectionné', affair);
+        return currentDossier;
+    }
+    
+    async function fetchCategories() {
         try {
             const response = await api.get(`/manager/category`);
-            // ... (votre logique existante) ...
             const formattedCategories = response.data.map(category => ({
                 id: category.id,
                 nom: category.nom,
@@ -116,7 +421,6 @@ export const useDossierStore = defineStore('dossier', () => {
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
-            // ... (logique existante) ...
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers'; 
@@ -134,7 +438,7 @@ export const useDossierStore = defineStore('dossier', () => {
         } catch (err) {
             error.value = err.response?.data?.error || "Un problème est lors de la réccupération des archives"
             console.error(error)
-        }   
+        }   
     }
 
     async function fetchDossierById(id) {
@@ -144,7 +448,6 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`/manager/affairs/details/${id}/`);
             currentDossier.value = response.data;
-            // ... (logique existante) ...
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
@@ -162,7 +465,6 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`manager/affairs?client_id=${clientId}`);
             customerDossier.value = response.data.data.dossiers
-            // ... (logique existante) ...
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers du client';
@@ -173,7 +475,6 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function createDossier(dossierData) {
-        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         try {
@@ -189,7 +490,6 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function updateDossier(id, dossierData, partial = false) {
-        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
@@ -197,13 +497,11 @@ export const useDossierStore = defineStore('dossier', () => {
             const method = partial ? 'patch' : 'put';
             const response = await api[method](`/manager/affairs/details/${id}/`, dossierData);
             
-            // Mettre à jour dans la liste
             const index = dossiers.value.findIndex(d => d.id === id);
             if (index !== -1) {
                 dossiers.value[index] = response.data;
             }
             
-            // Mettre à jour le dossier courant si c'est le même
             if (currentDossier.value && currentDossier.value.id === id) {
                 currentDossier.value = response.data;
             }
@@ -218,20 +516,17 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function deleteDossier(id) {
-        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
         try {
             await api.delete(`/manager/affairs/details/${id}/`);
             
-            // Retirer de la liste
             const index = dossiers.value.findIndex(d => d.id === id);
             if (index !== -1) {
                 dossiers.value.splice(index, 1);
             }
             
-            // Vider le dossier courant si c'est le même
             if (currentDossier.value && currentDossier.value.id === id) {
                 currentDossier.value = null;
             }
@@ -246,7 +541,6 @@ export const useDossierStore = defineStore('dossier', () => {
     }
 
     async function fetchDossierStats() {
-        // ... (logique existante) ...
         loading.value = true;
         error.value = null;
         
@@ -314,27 +608,50 @@ export const useDossierStore = defineStore('dossier', () => {
         currentDossier.value = null;
         stats.value = {};
         error.value = null;
-        // Optionnel : Vider le cache lors d'un reset complet
-        localStorage.removeItem(CACHE_KEY); 
+        clearCommentairesStore();
+        localStorage.removeItem(CACHE_KEY);
     }
 
     // =================================================================
     // WATCHER POUR CACHE - DÉCLENCHÉ À CHAQUE CHANGEMENT
     // =================================================================
     watch(
-        [dossiers, currentDossier, stats, customerDossier, categories, dossiersArchives], 
-        ([newDossiers, newCurrentDossier, newStats, newCustomerDossier, newCategories, newDossiersArchives]) => {
-        saveStateToCache({
-            dossiers: newDossiers,
-            currentDossier: newCurrentDossier,
-            stats: newStats,
-            customerDossier: newCustomerDossier,
-            categories: newCategories,
-            dossiersArchives: newDossiersArchives,
-        });
-    }, 
-    { deep: true, immediate: false });
-
+        [
+            dossiers, 
+            currentDossier, 
+            stats, 
+            customerDossier, 
+            categories, 
+            dossiersArchives,
+            commentaires,
+            currentCommentaire,
+            reponses
+        ], 
+        ([
+            newDossiers, 
+            newCurrentDossier, 
+            newStats, 
+            newCustomerDossier, 
+            newCategories, 
+            newDossiersArchives,
+            newCommentaires,
+            newCurrentCommentaire,
+            newReponses
+        ]) => {
+            saveStateToCache({
+                dossiers: newDossiers,
+                currentDossier: newCurrentDossier,
+                stats: newStats,
+                customerDossier: newCustomerDossier,
+                categories: newCategories,
+                dossiersArchives: newDossiersArchives,
+                commentaires: newCommentaires,
+                currentCommentaire: newCurrentCommentaire,
+                reponses: newReponses
+            });
+        }, 
+        { deep: true, immediate: false }
+    );
 
     return {
         // State
@@ -347,6 +664,13 @@ export const useDossierStore = defineStore('dossier', () => {
         customerDossier,
         categories,
         dossiersArchives,
+        
+        // NOUVEAU : State pour commentaires
+        commentaires,
+        currentCommentaire,
+        reponses,
+        commentairesLoading,
+        commentairesError,
 
         // Getters
         totalDossiers,
@@ -354,11 +678,33 @@ export const useDossierStore = defineStore('dossier', () => {
         dossiersEnRetard,
         dossiersParStatut,
         getCurrentDossier,
+        
+        // NOUVEAU : Getters pour commentaires
+        getCommentairesByDossier,
+        getReponsesByCommentaire,
+        commentairesCount,
+        reponsesCount,
 
-        // Attach Affair
+        // Actions
         attachAffair,
         
-        // Actions
+        // Actions pour commentaires
+        fetchCommentairesByDossier,
+        fetchCommentaireById,
+        createCommentaire,
+        updateCommentaire,
+        deleteCommentaire,
+        fetchReponsesByCommentaire,
+        createReponse,
+        updateReponse,
+        deleteReponse,
+        loadCommentairesForDossier,
+        getCommentaireWithReponses,
+        clearCurrentCommentaire,
+        resetCommentairesError,
+        clearCommentairesStore,
+
+        // Actions existantes pour dossiers
         fetchCategories,
         fetchDossiers,
         fetchDossierById,

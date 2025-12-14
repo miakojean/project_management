@@ -6,6 +6,8 @@ from .models import (
     Document, 
     SignatureDocument,
     HistoriqueDocument, 
+    Commentaire,
+    Reponse
 )
 from rest_framework import serializers
 from account.models import Utilisateur
@@ -282,7 +284,10 @@ class ClientStatsSerializer(serializers.ModelSerializer):
             }
         return None
 
-# Serializers pour Document
+# =========================================================
+# serializers for Dossier
+# =========================================================
+
 class DocumentListSerializer(serializers.ModelSerializer):
     categorie_nom = serializers.CharField(source='categorie.nom', read_only=True)
     client_nom = serializers.CharField(source='client.nom_complet', read_only=True)
@@ -460,7 +465,112 @@ class DossierListSerializer(serializers.ModelSerializer):
         # Si prefetch_related('documents') fait dans la vue → obj.documents.count() est déjà en cache
         return obj.documents.count()
 
-# serializers.py
+# =========================================================
+# serializers for Commentaire & Reponse (MINIMALISTES)
+# =========================================================
+
+class UtilisateurMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les utilisateurs"""
+    class Meta:
+        model = Utilisateur
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
+
+class ReponseSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les réponses aux commentaires"""
+    auteur = UtilisateurMinimalSerializer(read_only=True)
+    commentaire_id = serializers.PrimaryKeyRelatedField(
+        source='commentaire',
+        queryset=Commentaire.objects.all(),
+        write_only=True
+    )
+    
+    class Meta:
+        model = Reponse
+        fields = ['id', 'commentaire_id', 'auteur', 'message', 'date_creation']
+        read_only_fields = ['id', 'auteur', 'date_creation']
+
+
+class CommentaireSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les commentaires"""
+    auteur = UtilisateurMinimalSerializer(read_only=True)
+    dossier_id = serializers.PrimaryKeyRelatedField(
+        source='dossier',
+        queryset=Dossier.objects.all(),
+        write_only=True
+    )
+    reponses = ReponseSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Commentaire
+        fields = [
+            'id', 
+            'dossier_id', 
+            'auteur', 
+            'message', 
+            'reponses',
+            'date_creation', 
+            'date_modification'
+        ]
+        read_only_fields = [
+            'id', 
+            'auteur', 
+            'date_creation', 
+            'date_modification',
+            'reponses'
+        ]
+
+
+# Version ultra-minimale (sans les détails des auteurs)
+class ReponseMinimalSerializer(serializers.ModelSerializer):
+    """Serializer ultra-minimal pour les réponses"""
+    class Meta:
+        model = Reponse
+        fields = ['id', 'auteur_id', 'message', 'date_creation']
+        read_only_fields = ['id', 'auteur_id', 'date_creation']
+
+
+class CommentaireMinimalSerializer(serializers.ModelSerializer):
+    """Serializer ultra-minimal pour les commentaires"""
+    class Meta:
+        model = Commentaire
+        fields = [
+            'id', 
+            'dossier_id', 
+            'auteur_id', 
+            'message',
+            'date_creation'
+        ]
+        read_only_fields = ['id', 'auteur_id', 'date_creation']
+
+
+# Version pour création avec auteur automatique
+class ReponseCreateSerializer(serializers.ModelSerializer):
+    """Serializer pour créer des réponses (auteur automatique)"""
+    class Meta:
+        model = Reponse
+        fields = ['commentaire', 'message']
+    
+    def create(self, validated_data):
+        validated_data['auteur'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class CommentaireCreateSerializer(serializers.ModelSerializer):
+    """Serializer pour créer des commentaires (auteur automatique)"""
+    class Meta:
+        model = Commentaire
+        fields = ['dossier', 'message']
+    
+    def create(self, validated_data):
+        validated_data['auteur'] = self.context['request'].user
+        return super().create(validated_data)
+
+# =========================================================
+# serializers for Document
+# =========================================================
+
+
 
 # Serializer pour CategorieDocument
 class CategorieDocumentSerializer(serializers.ModelSerializer):
@@ -637,7 +747,7 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
 
 # serializers.py (remplace DocumentCreateSerializer)
 
-# serializers.py
+
 class DocumentCreateSerializer(serializers.ModelSerializer):
     files = serializers.ListField(
         child=serializers.FileField(),

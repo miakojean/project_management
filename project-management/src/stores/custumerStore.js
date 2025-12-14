@@ -77,6 +77,8 @@ export const useCustomerStore = defineStore('customer', () => {
                 }
             });
 
+            // Get Differents customer
+
             const response = await api.get('/manager/clients/', { params: queryParams });
             
             if (response.data.success) {

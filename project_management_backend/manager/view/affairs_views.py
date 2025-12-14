@@ -5,8 +5,15 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage
-from ..models import Dossier
-from ..serializers import DossierSerializer, DossierListSerializer
+from ..models import Dossier, Reponse, Commentaire
+from ..serializers import (
+    DossierSerializer, 
+    DossierListSerializer,
+    CommentaireCreateSerializer,
+    CommentaireMinimalSerializer,
+    ReponseMinimalSerializer,
+    ReponseCreateSerializer
+)
 from account.models import Utilisateur
 import logging
 
@@ -413,5 +420,526 @@ class DossierByClientAPIView(APIView):
         except Exception as e:
             return Response(
                 {"error": f"Erreur lors de la récupération des dossiers du client: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+# =========================================================
+# VUES POUR COMMENTAIRES ET REPONSES (MINIMALISTES)
+# =========================================================
+
+class CommentaireListCreateAPIView(APIView):
+    """
+    Vue pour lister et créer des commentaires sur un dossier
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, dossier_id, format=None):
+        """
+        Récupère tous les commentaires d'un dossier
+        """
+        try:
+            # Vérifier que le dossier existe
+            dossier = get_object_or_404(Dossier, pk=dossier_id)
+            
+            # Récupérer les commentaires du dossier
+            commentaires = dossier.commentaires.all().order_by('-date_creation')
+            
+            # Sérialiser avec le serializer minimal
+            serializer = CommentaireMinimalSerializer(commentaires, many=True)
+            
+            return Response({
+                'success': True,
+                'dossier_id': dossier_id,
+                'dossier_reference': dossier.reference_dossier,
+                'dossier_titre': dossier.titre,
+                'count': commentaires.count(),
+                'commentaires': serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des commentaires: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la récupération des commentaires',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request, dossier_id, format=None):
+        """
+        Crée un nouveau commentaire sur un dossier
+        """
+        try:
+            # Vérifier que le dossier existe
+            dossier = get_object_or_404(Dossier, pk=dossier_id)
+            
+            # Préparer les données
+            data = request.data.copy()
+            data['dossier'] = dossier_id
+            
+            # Utiliser le serializer de création avec auteur automatique
+            serializer = CommentaireCreateSerializer(
+                data=data,
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                with transaction.atomic():
+                    commentaire = serializer.save()
+                    
+                    # 🚀 NOTIFICATION
+                    actor_user = request.user
+                    try:
+                        # Notifier les collaborateurs du dossier
+                        recipients = dossier.collaborateurs.all().exclude(pk=actor_user.pk)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='COMMENTAIRE_AJOUTE',
+                            message=f"Un nouveau commentaire a été ajouté au dossier '{dossier.reference_dossier}' par {actor_user.get_full_name()}.",
+                            content_object=commentaire,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        logger.error(f"Erreur notification commentaire: {e}")
+                    # FIN NOTIFICATION
+                
+                # Retourner le commentaire créé
+                response_serializer = CommentaireMinimalSerializer(commentaire)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(
+                {
+                    'success': False,
+                    'errors': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la création du commentaire: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la création du commentaire',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class CommentaireDetailAPIView(APIView):
+    """
+    Vue pour récupérer, modifier et supprimer un commentaire spécifique
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, commentaire_id, format=None):
+        """
+        Récupère un commentaire spécifique avec ses réponses
+        """
+        try:
+            commentaire = get_object_or_404(Commentaire, pk=commentaire_id)
+            
+            # Vérifier que l'utilisateur a accès au dossier
+            if not request.user.has_perm('view_all_dossiers') and \
+               not commentaire.dossier.collaborateurs.filter(pk=request.user.pk).exists() and \
+               commentaire.auteur != request.user:
+                return Response(
+                    {'error': 'Vous n\'avez pas accès à ce commentaire'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            serializer = CommentaireMinimalSerializer(commentaire)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération du commentaire: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la récupération du commentaire',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def put(self, request, commentaire_id, format=None):
+        """
+        Met à jour un commentaire (seul l'auteur peut modifier)
+        """
+        try:
+            commentaire = get_object_or_404(Commentaire, pk=commentaire_id)
+            
+            # Vérifier que l'utilisateur est l'auteur
+            if commentaire.auteur != request.user:
+                return Response(
+                    {'error': 'Vous ne pouvez modifier que vos propres commentaires'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Préparer les données (ne pas permettre de changer le dossier)
+            data = request.data.copy()
+            if 'dossier' in data:
+                del data['dossier']
+            
+            serializer = CommentaireMinimalSerializer(
+                commentaire, 
+                data=data, 
+                partial=True  # Permet la modification partielle
+            )
+            
+            if serializer.is_valid():
+                with transaction.atomic():
+                    updated_commentaire = serializer.save()
+                    
+                    # 🚀 NOTIFICATION
+                    actor_user = request.user
+                    try:
+                        # Notifier les collaborateurs du dossier
+                        recipients = commentaire.dossier.collaborateurs.all().exclude(pk=actor_user.pk)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='COMMENTAIRE_MODIFIE',
+                            message=f"Un commentaire sur le dossier '{commentaire.dossier.reference_dossier}' a été modifié par {actor_user.get_full_name()}.",
+                            content_object=updated_commentaire,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        logger.error(f"Erreur notification modification commentaire: {e}")
+                    # FIN NOTIFICATION
+                
+                return Response(serializer.data)
+            
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la modification du commentaire: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la modification du commentaire',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, commentaire_id, format=None):
+        """
+        Supprime un commentaire (seul l'auteur ou admin peut supprimer)
+        """
+        try:
+            commentaire = get_object_or_404(Commentaire, pk=commentaire_id)
+            dossier = commentaire.dossier
+            
+            # Vérifier les permissions
+            can_delete = (
+                commentaire.auteur == request.user or
+                request.user.has_perm('delete_commentaire') or
+                request.user.is_superuser
+            )
+            
+            if not can_delete:
+                return Response(
+                    {'error': 'Vous n\'avez pas la permission de supprimer ce commentaire'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # 🚀 NOTIFICATION avant suppression
+            actor_user = request.user
+            try:
+                recipients = dossier.collaborateurs.all().exclude(pk=actor_user.pk)
+                notify_users(
+                    recipients=list(recipients),
+                    verb='COMMENTAIRE_SUPPRIME',
+                    message=f"Un commentaire sur le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    content_object=commentaire,
+                    actor=actor_user
+                )
+            except Exception as e:
+                logger.error(f"Erreur notification suppression commentaire: {e}")
+            
+            with transaction.atomic():
+                commentaire.delete()
+            
+            return Response(
+                {'message': 'Commentaire supprimé avec succès'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la suppression du commentaire: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la suppression du commentaire',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ReponseListCreateAPIView(APIView):
+    """
+    Vue pour lister et créer des réponses à un commentaire
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, commentaire_id, format=None):
+        """
+        Récupère toutes les réponses d'un commentaire
+        """
+        try:
+            # Vérifier que le commentaire existe
+            commentaire = get_object_or_404(Commentaire, pk=commentaire_id)
+            
+            # Récupérer les réponses
+            reponses = commentaire.reponses.all().order_by('date_creation')
+            serializer = ReponseMinimalSerializer(reponses, many=True)
+            
+            return Response({
+                'success': True,
+                'commentaire_id': commentaire_id,
+                'count': reponses.count(),
+                'reponses': serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des réponses: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la récupération des réponses',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request, commentaire_id, format=None):
+        """
+        Crée une nouvelle réponse à un commentaire
+        """
+        try:
+            # Vérifier que le commentaire existe
+            commentaire = get_object_or_404(Commentaire, pk=commentaire_id)
+            
+            # Vérifier l'accès au dossier
+            if not request.user.has_perm('view_all_dossiers') and \
+               not commentaire.dossier.collaborateurs.filter(pk=request.user.pk).exists():
+                return Response(
+                    {'error': 'Vous n\'avez pas accès à ce dossier'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Préparer les données
+            data = request.data.copy()
+            data['commentaire'] = commentaire_id
+            
+            # Utiliser le serializer de création avec auteur automatique
+            serializer = ReponseCreateSerializer(
+                data=data,
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                with transaction.atomic():
+                    reponse = serializer.save()
+                    
+                    # 🚀 NOTIFICATION
+                    actor_user = request.user
+                    try:
+                        # Notifier l'auteur du commentaire original et les collaborateurs
+                        recipients = set()
+                        recipients.add(commentaire.auteur)  # Auteur du commentaire
+                        
+                        # Ajouter les collaborateurs du dossier
+                        for collaborateur in commentaire.dossier.collaborateurs.all():
+                            if collaborateur != actor_user:
+                                recipients.add(collaborateur)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='REPONSE_AJOUTEE',
+                            message=f"Une réponse a été ajoutée à un commentaire sur le dossier '{commentaire.dossier.reference_dossier}'.",
+                            content_object=reponse,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        logger.error(f"Erreur notification réponse: {e}")
+                    # FIN NOTIFICATION
+                
+                # Retourner la réponse créée
+                response_serializer = ReponseMinimalSerializer(reponse)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(
+                {
+                    'success': False,
+                    'errors': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la création de la réponse: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la création de la réponse',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ReponseDetailAPIView(APIView):
+    """
+    Vue pour modifier et supprimer une réponse spécifique
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, reponse_id, format=None):
+        """
+        Met à jour une réponse (seul l'auteur peut modifier)
+        """
+        try:
+            reponse = get_object_or_404(Reponse, pk=reponse_id)
+            commentaire = reponse.commentaire
+            
+            # Vérifier que l'utilisateur est l'auteur
+            if reponse.auteur != request.user:
+                return Response(
+                    {'error': 'Vous ne pouvez modifier que vos propres réponses'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Vérifier l'accès au dossier
+            if not request.user.has_perm('view_all_dossiers') and \
+               not commentaire.dossier.collaborateurs.filter(pk=request.user.pk).exists():
+                return Response(
+                    {'error': 'Vous n\'avez pas accès à ce dossier'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Préparer les données (ne pas permettre de changer le commentaire)
+            data = request.data.copy()
+            if 'commentaire' in data:
+                del data['commentaire']
+            
+            serializer = ReponseMinimalSerializer(
+                reponse, 
+                data=data, 
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                with transaction.atomic():
+                    updated_reponse = serializer.save()
+                    
+                    # 🚀 NOTIFICATION
+                    actor_user = request.user
+                    try:
+                        # Notifier les personnes concernées
+                        recipients = set()
+                        recipients.add(commentaire.auteur)  # Auteur du commentaire original
+                        
+                        for collaborateur in commentaire.dossier.collaborateurs.all():
+                            if collaborateur != actor_user:
+                                recipients.add(collaborateur)
+                        
+                        notify_users(
+                            recipients=list(recipients),
+                            verb='REPONSE_MODIFIEE',
+                            message=f"Une réponse a été modifiée sur le dossier '{commentaire.dossier.reference_dossier}'.",
+                            content_object=updated_reponse,
+                            actor=actor_user
+                        )
+                    except Exception as e:
+                        logger.error(f"Erreur notification modification réponse: {e}")
+                    # FIN NOTIFICATION
+                
+                return Response(serializer.data)
+            
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la modification de la réponse: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la modification de la réponse',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, reponse_id, format=None):
+        """
+        Supprime une réponse (seul l'auteur peut supprimer)
+        """
+        try:
+            reponse = get_object_or_404(Reponse, pk=reponse_id)
+            commentaire = reponse.commentaire
+            
+            # Vérifier que l'utilisateur est l'auteur
+            if reponse.auteur != request.user:
+                return Response(
+                    {'error': 'Vous ne pouvez supprimer que vos propres réponses'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Vérifier l'accès au dossier
+            if not request.user.has_perm('view_all_dossiers') and \
+               not commentaire.dossier.collaborateurs.filter(pk=request.user.pk).exists():
+                return Response(
+                    {'error': 'Vous n\'avez pas accès à ce dossier'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # 🚀 NOTIFICATION avant suppression
+            actor_user = request.user
+            try:
+                recipients = set()
+                recipients.add(commentaire.auteur)  # Auteur du commentaire original
+                
+                for collaborateur in commentaire.dossier.collaborateurs.all():
+                    if collaborateur != actor_user:
+                        recipients.add(collaborateur)
+                
+                notify_users(
+                    recipients=list(recipients),
+                    verb='REPONSE_SUPPRIMEE',
+                    message=f"Une réponse a été supprimée sur le dossier '{commentaire.dossier.reference_dossier}'.",
+                    content_object=reponse,
+                    actor=actor_user
+                )
+            except Exception as e:
+                logger.error(f"Erreur notification suppression réponse: {e}")
+            
+            with transaction.atomic():
+                reponse.delete()
+            
+            return Response(
+                {'message': 'Réponse supprimée avec succès'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la suppression de la réponse: {e}")
+            return Response(
+                {
+                    'success': False,
+                    'error': 'Erreur lors de la suppression de la réponse',
+                    'details': str(e)
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

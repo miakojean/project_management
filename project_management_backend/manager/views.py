@@ -256,7 +256,7 @@ class ClientListAPIView(APIView):
         try:
             # Récupération des paramètres de requête
             type_client = request.GET.get('type_client')
-            statut = request.GET.get('statut')
+            statut = request.GET.get('statut') 
             search = request.GET.get('search')
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 20))

@@ -13,6 +13,12 @@ from .view.affairs_views import (
     DossierListCreateAPIView,
     DossierStatsAPIView,
     DossierDetailAPIView,
+    # ============ AJOUT DES IMPORTS POUR COMMENTAIRES ============
+    CommentaireListCreateAPIView,
+    CommentaireDetailAPIView,
+    ReponseListCreateAPIView,
+    ReponseDetailAPIView,
+    # =============================================================
 )
 
 from .view.documents_views import(
@@ -44,6 +50,30 @@ urlpatterns = [
     path('affairs/details/<int:pk>/', DossierDetailAPIView.as_view(), name='dossier-detail'),
     path('affairs/stats', DossierStatsAPIView.as_view(), name="affairs-stats"),
 
+    # ============ ENDPOINTS POUR COMMENTAIRES ============
+    
+    # Commentaires d'un dossier
+    path('affairs/<int:dossier_id>/commentaires/', 
+         CommentaireListCreateAPIView.as_view(), 
+         name='dossier-commentaires'),
+    
+    # Gestion d'un commentaire spécifique
+    path('commentaires/<int:commentaire_id>/', 
+         CommentaireDetailAPIView.as_view(), 
+         name='commentaire-detail'),
+    
+    # Réponses d'un commentaire
+    path('commentaires/<int:commentaire_id>/reponses/', 
+         ReponseListCreateAPIView.as_view(), 
+         name='commentaire-reponses'),
+    
+    # Gestion d'une réponse spécifique
+    path('reponses/<int:reponse_id>/', 
+         ReponseDetailAPIView.as_view(), 
+         name='reponse-detail'),
+    
+    # =====================================================
+
     # View to manage documents
     path('documents/',DocumentsAPIView.as_view(), name="documents" ),
     path('documents/download/', DocumentDownloadAPIView.as_view(), name='documents-download-list'),
@@ -56,10 +86,6 @@ urlpatterns = [
     # Prévisualisation
     path('documents/preview/<int:document_id>/', DocumentPreviewAPIView.as_view(), name='document-preview'),
 
-
     #Category
     path('category', CategoryView.as_view(), name="category-view"),
-
-    # Comment management
-    path('affairs/comment')
 ]

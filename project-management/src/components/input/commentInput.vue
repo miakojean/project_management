@@ -2,7 +2,7 @@
     <div class="comment__section w-full">
         <form class="w-full flex flex-col gap-4" @submit.prevent="handleSubmit">
             <label for="comment" class="w-full text-base font-semibold text-gray-800 text-left">
-                Ajouter un commentaire
+                {{ props.label }}
             </label>
             
             <textarea 
@@ -12,8 +12,12 @@
                 rows="4"
                 :maxlength="props.maxLength"
                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-300 resize-none text-gray-800 placeholder-gray-500 shadow-sm"
-                :class="{ 'border-red-500 focus:ring-red-100': error }"
+                :class="{ 
+                    'border-red-500 focus:ring-red-100': error,
+                    'border-yellow-500 focus:ring-yellow-100': props.isEditing
+                }"
                 @input="clearError"
+                ref="textareaRef"
             ></textarea>
             
             <!-- Compteur de caractères et message d'erreur -->
@@ -26,8 +30,17 @@
                 </div>
             </div>
             
-            <!-- Bouton aligné à droite -->
+            <!-- Boutons -->
             <div class="w-full flex justify-end gap-3">
+                <button 
+                    v-if="props.isEditing || props.showCancel"
+                    type="button"
+                    @click="handleCancel"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                    :disabled="isSubmitting"
+                >
+                    Annuler
+                </button>
                 <mainButton 
                     max-width="200px"
                     :label="props.buttonText"
@@ -41,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import mainButton from '../button/mainButton.vue'
 
 const props = defineProps({
@@ -52,6 +65,10 @@ const props = defineProps({
     buttonText: {
         type: String,
         default: 'Commenter'
+    },
+    label: {
+        type: String,
+        default: 'Ajouter un commentaire'
     },
     required: {
         type: Boolean,
@@ -64,6 +81,18 @@ const props = defineProps({
     showCounter: {
         type: Boolean,
         default: true
+    },
+    showCancel: {
+        type: Boolean,
+        default: false
+    },
+    isEditing: {
+        type: Boolean,
+        default: false
+    },
+    initialValue: {
+        type: String,
+        default: ''
     }
 })
 
@@ -72,19 +101,19 @@ const emit = defineEmits(['submit', 'cancel'])
 const commentText = ref('')
 const isSubmitting = ref(false)
 const error = ref('')
+const textareaRef = ref(null)
 
 const clearError = () => {
     if (error.value) error.value = ''
 }
 
 const handleSubmit = async () => {
-    // Validation du champ vide
     if (props.required && !commentText.value.trim()) {
         error.value = 'Le commentaire ne peut pas être vide'
+        textareaRef.value?.focus()
         return
     }
     
-    // Validation de la longueur
     if (commentText.value.length > props.maxLength) {
         error.value = `Le commentaire ne peut pas dépasser ${props.maxLength} caractères`
         return
@@ -94,11 +123,11 @@ const handleSubmit = async () => {
     error.value = ''
     
     try {
-        // Envoi de l'événement submit avec le contenu
         await emit('submit', commentText.value.trim())
-        commentText.value = '' // Réinitialiser après succès
+        if (!props.isEditing) {
+            commentText.value = ''
+        }
     } catch (err) {
-        // Gestion de l'erreur
         error.value = err.message || 'Une erreur est survenue lors de la publication.'
     } finally {
         isSubmitting.value = false
@@ -107,14 +136,21 @@ const handleSubmit = async () => {
 
 const handleCancel = () => {
     emit('cancel')
-    commentText.value = ''
+    commentText.value = props.isEditing ? props.initialValue : ''
     error.value = ''
 }
-</script>
 
-<style scoped>
-/* Assure une hauteur minimale pour la zone de texte */
-textarea {
-    min-height: 100px;
-}
-</style>
+// Focus sur le textarea au montage
+onMounted(() => {
+    commentText.value = props.initialValue
+    if (props.isEditing && textareaRef.value) {
+        textareaRef.value.focus()
+        textareaRef.value.select()
+    }
+})
+
+// Mettre à jour la valeur initiale quand elle change
+watch(() => props.initialValue, (newValue) => {
+    commentText.value = newValue
+})
+</script>
