@@ -20,6 +20,9 @@ export const useCustomerStore = defineStore('customer', () => {
         search: '' 
     });
 
+    // Statistiques mensuelles pour les graphiques
+    const monthlyStats = ref({ labels: [], data: [] });
+
     // --- GETTERS ---
     const getCustomers = computed(() => customers.value);
     const getCurrentCustomer = computed(() => currentCustomer.value);
@@ -27,6 +30,7 @@ export const useCustomerStore = defineStore('customer', () => {
     const getError = computed(() => error.value);
     const getPagination = computed(() => pagination.value);
     const getFilters = computed(() => filters.value);
+    const getMonthlyStats = computed(() => monthlyStats.value);
 
     // --- ATTACH CUSTOMER ---
     function attachCustomer(customer){
@@ -105,6 +109,33 @@ export const useCustomerStore = defineStore('customer', () => {
             loading.value = false;
         }
     }
+
+        /**
+         * Récupère les statistiques mensuelles des clients (labels et data)
+         */
+        async function fetchCustomersMonthlyStats() {
+            loading.value = true;
+            error.value = null;
+
+            try {
+                const response = await api.get('/manager/clients/stats/monthly/');
+                if (response.data.success) {
+                    monthlyStats.value = {
+                        labels: response.data.labels || [],
+                        data: response.data.data || []
+                    };
+                    return monthlyStats.value;
+                } else {
+                    throw new Error(response.data.message || 'Erreur lors du chargement des statistiques');
+                }
+            } catch (err) {
+                error.value = err.response?.data?.message || err.message || 'Erreur réseau';
+                console.error('Erreur fetchCustomersMonthlyStats:', err);
+                throw err;
+            } finally {
+                loading.value = false;
+            }
+        }
 
     /**
      * Récupère les détails d'un client spécifique
@@ -350,5 +381,6 @@ export const useCustomerStore = defineStore('customer', () => {
         setPage,
         setPageSize,
         resetStore
+        , fetchCustomersMonthlyStats
     };
 });

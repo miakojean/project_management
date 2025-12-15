@@ -141,11 +141,16 @@ export const useDocumentStore = defineStore('documents', ()=>{
 
         } catch (error) {
             // Gestion des erreurs
-            const errorMessage = error.response?.data?.error || error.message || "Erreur inconnue lors de la suppression.";
-            console.error(`Erreur lors de la suppression du document ${doc.id}:`, errorMessage, error);
+            const status = error.response?.status;
+            const responseData = error.response?.data;
+            const errorMessage = responseData?.error || responseData?.message || error.message || "Erreur inconnue lors de la suppression.";
+            console.error(`Erreur lors de la suppression du document ${doc.id}:`, { status, responseData, error });
 
-            // Propagation de l'erreur pour que le composant appelant puisse la gérer
-            throw new Error(errorMessage);
+            // Propager une erreur plus informative
+            const thrown = new Error(`Erreur suppression document: ${status ? status + ' ' : ''}${errorMessage}`);
+            thrown.status = status;
+            thrown.responseData = responseData;
+            throw thrown;
         }
     }
     

@@ -58,6 +58,12 @@
                 </div>
             </div>
         </div>
+
+        <customerModale
+            :is-open="isOpen"
+            :customer="selectedCustomer"
+            @close="isOpen = false"
+        />
     </div>
 </template>
 
@@ -66,6 +72,7 @@ import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 import { useDossierStore } from '@/stores/dossierStore';
 import { useRouter } from 'vue-router';
+import customerModale from '../modales/customerModale.vue';
 
 export default {
     name: 'SearchInput',
@@ -80,6 +87,10 @@ export default {
             default: 300
         }
     },
+
+    components:{
+        customerModale,
+    },
     
     emits: ['select', 'search'],
     
@@ -90,6 +101,10 @@ export default {
         const loading = ref(false);
         const searchInput = ref(null);
         let debounceTimer = null;
+
+        // About modale management
+        const isOpen = ref(false);
+        const selectedCustomer = ref({});
 
         // Router
         const router = useRouter()
@@ -156,13 +171,28 @@ export default {
                 }
             }, props.debounceTime);
         };
+
+        const goToFolderDetail = async (dossier) => {
+            try {
+                router.push(`/dashboard/customer/affairs/`);
+                console.log('Chargement du dossier:', dossier.id);
+                await dossierStore.fetchDossierById(dossier.id);
+                console.log('Dossier chargé avec succès');
+            } catch (error) {
+                console.error('Erreur lors du chargement du dossier:', error);
+                // Peut-être afficher une notification d'erreur
+            }
+        };
         
         // Sélection d'un résultat (client ou dossier)
         const selectResult = (item) => {
             if (item._type === 'client') {
                 customerStore.attachCustomer(item);
+                isOpen.value=true;
+                selectedCustomer.value = item;
             } else if (item._type === 'dossier') {
                 dossierStore.attachAffair(item);
+                goToFolderDetail(item)
             }
 
             // Émettre l'événement + fermer
@@ -198,7 +228,7 @@ export default {
         // Labels
         const getClientTypeLabel = (type) => clientTypes[type] || type;
         const getStatusLabel = (status) => statusLabels[status] || status;
-        
+
         // Watcher pour détecter les changements de recherche
         watch(() => searchQuery.value, () => {
             if (searchQuery.value) {
@@ -219,6 +249,8 @@ export default {
         const dossiersList = computed(() => searchResults.value.filter(i => i._type === 'dossier'));
         const clientsList = computed(() => searchResults.value.filter(i => i._type === 'client'));
 
+        
+
         return {
             router,
             searchQuery,
@@ -226,6 +258,8 @@ export default {
             showResults,
             loading,
             searchInput,
+            isOpen,
+            selectedCustomer,
             handleSearch,
             selectResult,
             selectFirstResult,
@@ -233,7 +267,8 @@ export default {
             dossiersList,
             clientsList,
             getClientTypeLabel,
-            getStatusLabel
+            getStatusLabel,
+            goToFolderDetail
         };
     }
 };

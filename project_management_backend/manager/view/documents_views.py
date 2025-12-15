@@ -95,7 +95,12 @@ class DocumentsAPIView(APIView):
             actor_user = request.user
 
             with transaction.atomic():
-                document.delete()
+                try:
+                    document.delete()
+                except Exception as e:
+                    # Log the full stacktrace for debugging (file-storage errors, signals, etc.)
+                    logger.exception(f"Erreur lors de la suppression du document (id={pk}): {e}")
+                    raise
                 
                 # 🚀 LOGIQUE DE NOTIFICATION - SUPPRESSION
                 try:
@@ -120,6 +125,8 @@ class DocumentsAPIView(APIView):
             )
             
         except Exception as e:
+            logger.exception(f"Erreur globale suppression document id={pk}: {e}")
+            # Retourner le message d'erreur mais éviter de divulguer des traces sensibles
             return Response(
                 {"error": f"Erreur lors de la suppression du document: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

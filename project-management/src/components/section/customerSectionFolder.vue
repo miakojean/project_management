@@ -81,18 +81,20 @@
         
         <deleteModale
             v-if="isDeleteModaleOpen"
-            :isVisible="isDeleteModaleOpen"
+            :isOpen="isDeleteModaleOpen"
             :message="deleteModalMessage"
-            @confirm="handleDelete"
+            :itemToDelete="documentToDelete"  @confirm="handleDelete"
             @cancel="isDeleteModaleOpen = false"
+            @close="isDeleteModaleOpen = false"
         />
         
         <deleteModale
             v-if="isDeleteCommentModalOpen"
-            :isVisible="isDeleteCommentModalOpen"
+            :isOpen="isDeleteCommentModalOpen"
             :message="deleteCommentModalMessage"
             @confirm="confirmDeleteComment"
             @cancel="isDeleteCommentModalOpen = false"
+            @close="isDeleteCommentModalOpen=false"
         />
         
         <notificationPopup
@@ -400,40 +402,47 @@ const cancelReply = () => {
 
 // Méthodes pour les documents
 const showDeleteDocumentModal = (document) => {
+    // Debug: Vérifiez la structure de l'objet document
+    console.log('Document à supprimer - structure complète:', document);
+    console.log('ID du document:', document.id);
+    
+    // Vérifiez que l'ID existe
+    if (!document || !document.id) {
+        console.error('Document invalide - pas d\'ID:', document);
+        showNotification('Erreur: Document invalide', 'error');
+        return;
+    }
+    
     documentToDelete.value = document;
     isDeleteModaleOpen.value = true;
 };
 
 const handleDelete = async () => {
-    if (!documentToDelete.value) return;
+    // 1. Utilisez .value pour vérifier l'ID
+    if (!documentToDelete.value || !documentToDelete.value.id) {
+        console.error('Aucun document sélectionné ou ID manquant');
+        return;
+    };
     
     try {
-        await documentStore.deleteDocument(documentToDelete.value.id);
+        // 2. ERREUR CORRIGÉE : On passe documentToDelete.value (le contenu)
+        await documentStore.deleteDocument(documentToDelete.value);
         
-        // Retirer le document de la liste
+        // 3. Mise à jour de l'interface
         if (doc.value.documents) {
-            // **CORRECTION/AMÉLIORATION:** Mutation directe évitée/minimisée. 
-            // On manipule l'état local du dossier pour forcer la réactivité du template
-            // Idéalement, on aurait une action dans dossierStore pour gérer ça.
-            
             const updatedDocuments = doc.value.documents.filter(d => d.id !== documentToDelete.value.id);
             
-            // Crée une nouvelle référence pour forcer la mise à jour si le store le permet
-            // Si le store est Pinia, vous pouvez créer une action de mise à jour dédiée.
-            // Sans action Pinia claire, on utilise cette astuce en attendant un rechargement complet
-            // ou une mise à jour du store.
             dossierStore.currentDossier = {
                 ...dossierStore.currentDossier,
                 documents: updatedDocuments
             };
-
         }
         
         showNotification('Document supprimé avec succès', 'success');
         
     } catch (error) {
-        showNotification('Erreur lors de la suppression du document', 'error');
-        console.error('Erreur handleDelete:', error);
+        const errMsg = error?.message || 'Erreur lors de la suppression du document';
+        showNotification(`Erreur : ${errMsg}`, 'error');
     } finally {
         isDeleteModaleOpen.value = false;
         documentToDelete.value = null;

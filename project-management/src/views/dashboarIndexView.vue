@@ -9,6 +9,7 @@
     </header>
 
     <main class="main-area">
+      <clients-monthly-chart />
       <affairIndexSection/>
     </main>
 
@@ -24,6 +25,7 @@ import navbar from '@/components/navigation/navbar.vue';
 import sidebar from '@/components/navigation/sidebar.vue';
 import customerSectionFolder from '@/components/section/customerSectionFolder.vue';
 import affairIndexSection from '@/components/section/affairIndexSection.vue';
+import clientsMonthlyChart from '@/components/charts/ClientsMonthlyChart.vue';
 
 export default {
     name: 'DashboardLayout',
@@ -32,6 +34,7 @@ export default {
       sidebar,
       customerSectionFolder,
       affairIndexSection
+      , clientsMonthlyChart
     }
 }
 </script>

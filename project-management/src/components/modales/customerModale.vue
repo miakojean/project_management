@@ -59,6 +59,7 @@
                                     :reference="dossier.reference_dossier"
                                     :statut="dossier.statut"
                                     :titre="dossier.titre"
+                                    @view="goToFolderDetail(dossier)"
                                 />
                             </div>
 
@@ -177,6 +178,18 @@ const loadCustomerDossiers = async () => {
         loading.value = false
     }
 }
+
+const goToFolderDetail = async (dossier) => {
+    try {
+        router.push(`/dashboard/customer/affairs/`);
+        console.log('Chargement du dossier:', dossier.id);
+        await dossierStore.fetchDossierById(dossier.id);
+        console.log('Dossier chargé avec succès');
+    } catch (error) {
+        console.error('Erreur lors du chargement du dossier:', error);
+        // Peut-être afficher une notification d'erreur
+    }
+};
 
 const resetStates = () => {
     loading.value = false

@@ -38,7 +38,7 @@ export default defineComponent({
     border: none;
     border-radius: 0.5rem;
     color: white;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 500;
     width: 100%;
     max-width: 100px;

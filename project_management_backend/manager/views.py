@@ -8,6 +8,7 @@ from .serializers import ClientSerializer, ClientCreateSerializer, ClientListSer
 from account.models import Utilisateur
 import logging
 from django.db.models import Q, Count 
+from django.db.models.functions import TruncMonth
 from notification.utils import notify_users
 
 # Configuration basique du logger
@@ -371,3 +372,28 @@ class ClientSearchAPIView(APIView):
                 'message': 'Erreur lors de la recherche',
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ClientMonthlyRegistrationStatsAPIView(APIView):
+    """Retourne le nombre de clients créés par mois."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            # Agrégation par mois en utilisant TruncMonth
+            qs = (
+                Client.objects
+                .annotate(month=TruncMonth('date_creation'))
+                .values('month')
+                .annotate(count=Count('id'))
+                .order_by('month')
+            )
+
+            labels = [item['month'].strftime('%Y-%m') if item['month'] else None for item in qs]
+            data = [item['count'] for item in qs]
+
+            return Response({'success': True, 'labels': labels, 'data': data}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des stats clients mensuelles: {e}")
+            return Response({'success': False, 'message': 'Erreur lors de la récupération des statistiques', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

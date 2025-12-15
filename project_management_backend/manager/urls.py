@@ -6,6 +6,7 @@ from .views import (
     ClientWithDossierCreateAPIView,
     ClientListAPIView,
     ClientSearchAPIView
+    , ClientMonthlyRegistrationStatsAPIView
 )
 
 from .view.affairs_views import (
@@ -43,6 +44,8 @@ urlpatterns = [
     path('clients/ajouter/', ClientCreateAPIView.as_view(), name='client-create'),
     path('clients/ajouter-multiple/', ClientBulkCreateAPIView.as_view(), name='client-bulk-create'),
     path('clients/ajouter-avec-dossier/', ClientWithDossierCreateAPIView.as_view(), name='client-with-dossier-create'),
+    # Statistiques clients
+    path('clients/stats/monthly/', ClientMonthlyRegistrationStatsAPIView.as_view(), name='client-monthly-stats'),
 
     # View to manage affairs 
     path('dossier/create/', DossierCreateAPIView.as_view(), name="create-affairs"),
