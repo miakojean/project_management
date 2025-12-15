@@ -22,34 +22,37 @@
 
             <!-- No results -->
             <div v-else-if="!loading && searchResults.length === 0" class="no-results">
-                Aucun client trouvé pour "{{ searchQuery }}"
+                Aucun résultat pour "{{ searchQuery }}"
             </div>
 
             <!-- Results -->
             <div v-else class="results-list">
-                <div v-for="client in searchResults" :key="client.id" 
-                     class="result-item"
-                     @click="selectClient(client)">
-                    <div class="client-info">
-                        <div class="client-name">
-                            <strong>{{ client.nom_complet || client.raison_sociale }}</strong>
-                            <span class="client-type" :class="client.type_client">
-                                {{ getClientTypeLabel(client.type_client) }}
-                            </span>
+                <div v-if="dossiersList.length">
+                    <div class="results-section-title">Dossiers</div>
+                    <div v-for="item in dossiersList" :key="'dossier-'+item.id" class="result-item" @click="selectResult(item)">
+                        <div class="dossier-info">
+                            <div class="dossier-title"><strong>{{ item.titre || item.reference_dossier }}</strong></div>
+                            <div class="dossier-meta">
+                                <span v-if="item.reference_dossier">Réf: {{ item.reference_dossier }}</span>
+                                <span v-if="item.client_nom">• Client: {{ item.client_nom }}</span>
+                                <span v-if="item.statut">• Statut: {{ getStatusLabel(item.statut) }}</span>
+                            </div>
                         </div>
-                        <div class="client-details">
-                            <span v-if="client.reference_client" class="ref">
-                                Réf: {{ client.reference_client }}
-                            </span>
-                            <span v-if="client.email" class="email">
-                                {{ client.email }}
-                            </span>
-                            <span v-if="client.telephone_1" class="phone">
-                                📞 {{ client.telephone_1 }}
-                            </span>
-                        </div>
-                        <div class="client-status" :class="client.statut">
-                            {{ getStatusLabel(client.statut) }}
+                    </div>
+                </div>
+
+                <div v-if="clientsList.length">
+                    <div class="results-section-title">Clients</div>
+                    <div v-for="item in clientsList" :key="'client-'+item.id" class="result-item" @click="selectResult(item)">
+                        <div class="client-info">
+                            <div class="client-name">
+                                <strong>{{ item.nom_complet || item.raison_sociale }}</strong>
+                                <span class="client-type" :class="item.type_client">{{ getClientTypeLabel(item.type_client) }}</span>
+                            </div>
+                            <div class="client-details">
+                                <span v-if="item.reference_client" class="ref">Réf: {{ item.reference_client }}</span>
+                                <span v-if="item.email" class="email">{{ item.email }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -59,8 +62,9 @@
 </template>
 
 <script>
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useCustomerStore } from '@/stores/custumerStore';
+import { useDossierStore } from '@/stores/dossierStore';
 import { useRouter } from 'vue-router';
 
 export default {
@@ -90,8 +94,9 @@ export default {
         // Router
         const router = useRouter()
         
-        // Utilisation du store
+        // Utilisation des stores
         const customerStore = useCustomerStore();
+        const dossierStore = useDossierStore();
         
         // Types de clients
         const clientTypes = {
@@ -120,18 +125,31 @@ export default {
             
             debounceTimer = setTimeout(async () => {
                 try {
-                    // Utilisation du store pour la recherche
-                    const results = await customerStore.searchCustomers(searchQuery.value);
-                    searchResults.value = results || [];
-                    
+                    // Lancer les deux recherches en parallèle (clients + dossiers)
+                    const q = searchQuery.value;
+                    const [clientsRes, dossiersRes] = await Promise.allSettled([
+                        customerStore.searchCustomers(q),
+                        dossierStore.searchDossiers(q)
+                    ]);
+
+                    const clients = (clientsRes.status === 'fulfilled') ? (clientsRes.value || []) : [];
+                    const dossiers = (dossiersRes.status === 'fulfilled') ? (dossiersRes.value || []) : [];
+
+                    // Normaliser les résultats (ajouter un type)
+                    const normalizedClients = clients.map(c => ({ ...c, _type: 'client' }));
+                    const normalizedDossiers = dossiers.map(d => ({ ...d, _type: 'dossier' }));
+
+                    // Fusionner: dossiers d'abord puis clients (ou configurable)
+                    searchResults.value = [...normalizedDossiers, ...normalizedClients];
+
                     // Émission de l'événement
                     emit('search', {
-                        query: searchQuery.value,
+                        query: q,
                         results: searchResults.value
                     });
-                    
+
                 } catch (error) {
-                    console.error('Erreur lors de la recherche:', error);
+                    console.error('Erreur lors de la recherche combinée:', error);
                     searchResults.value = [];
                 } finally {
                     loading.value = false;
@@ -139,19 +157,18 @@ export default {
             }, props.debounceTime);
         };
         
-        // Sélection d'un client
-        const selectClient = (client) => {
-            // Mettre à jour le client courant dans le store
-            customerStore.attachCustomer(client);
-            
-            // Émettre l'événement
-            emit('select', client);
-            
-            // Fermer les résultats
+        // Sélection d'un résultat (client ou dossier)
+        const selectResult = (item) => {
+            if (item._type === 'client') {
+                customerStore.attachCustomer(item);
+            } else if (item._type === 'dossier') {
+                dossierStore.attachAffair(item);
+            }
+
+            // Émettre l'événement + fermer
+            emit('select', item);
             searchQuery.value = '';
             showResults.value = false;
-            
-            // Focus sur l'input pour une autre recherche
             searchInput.value?.focus();
         };
         
@@ -199,6 +216,9 @@ export default {
             document.removeEventListener('click', handleClickOutside);
         });
         
+        const dossiersList = computed(() => searchResults.value.filter(i => i._type === 'dossier'));
+        const clientsList = computed(() => searchResults.value.filter(i => i._type === 'client'));
+
         return {
             router,
             searchQuery,
@@ -207,9 +227,11 @@ export default {
             loading,
             searchInput,
             handleSearch,
-            selectClient,
+            selectResult,
             selectFirstResult,
             clearSearch,
+            dossiersList,
+            clientsList,
             getClientTypeLabel,
             getStatusLabel
         };

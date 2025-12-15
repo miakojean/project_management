@@ -218,21 +218,18 @@ const loadCommentaires = async () => {
     console.log('Chargement des commentaires pour le dossier:', doc.value.id);
     commentairesLoading.value = true;
     try {
-        // Charger les commentaires du dossier
-        await dossierStore.fetchCommentairesByDossier(doc.value.id);
-        
-        // Mettre à jour la liste locale
-        let tempCommentaires = dossierStore.getCommentairesByDossier(doc.value.id);
-        console.log('Commentaires récupérés:', tempCommentaires);
-        
-        // Pour chaque commentaire, charger ses réponses (en parallèle si possible, mais séquentiel ici pour la simplicité)
-        for (const commentaire of tempCommentaires) {
-            await dossierStore.fetchReponsesByCommentaire(commentaire.id);
-            // Mettre à jour le commentaire avec ses réponses
-            commentaire.reponses = dossierStore.getReponsesByCommentaire(commentaire.id);
-        }
-        
-        commentaires.value = tempCommentaires;
+        // Utiliser la fonction utilitaire du store qui charge commentaires + réponses
+        const result = await dossierStore.loadCommentairesForDossier(doc.value.id);
+        // Résultat: { commentaires, reponses }
+        console.log('loadCommentairesForDossier result:', result);
+
+        // Associer les réponses à chaque commentaire pour l'affichage
+        const commentairesAvecReponses = result.commentaires.map(c => ({
+            ...c,
+            reponses: result.reponses.filter(r => r.commentaire_id === c.id || r.commentaire === c.id)
+        }));
+
+        commentaires.value = commentairesAvecReponses;
 
         console.log("Commentaires chargés correctement", commentaires.value);
         

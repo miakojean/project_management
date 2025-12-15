@@ -12,7 +12,8 @@ from ..serializers import (
     CommentaireCreateSerializer,
     CommentaireMinimalSerializer,
     ReponseMinimalSerializer,
-    ReponseCreateSerializer
+    ReponseCreateSerializer,
+    ReponseSerializer
 )
 from account.models import Utilisateur
 import logging
@@ -443,9 +444,29 @@ class CommentaireListCreateAPIView(APIView):
             
             # Récupérer les commentaires du dossier
             commentaires = dossier.commentaires.all().order_by('-date_creation')
+            # Debug: lister quelques infos pour faciliter le debug si la sérialisation plante
+            try:
+                logger.debug(f"Récupération commentaires pour dossier {dossier_id}: count={commentaires.count()}")
+                # lister les ids et auteurs pour faciliter l'investigation
+                sample = list(commentaires.values_list('id', 'auteur_id')[:20])
+                logger.debug(f"Commentaires sample (id, auteur_id): {sample}")
+            except Exception as e:
+                logger.debug(f"Impossible d'inspecter les commentaires pour debug: {e}")
             
             # Sérialiser avec un serializer qui inclut les détails de l'auteur mais pas les réponses imbriquées
-            serializer = CommentaireMinimalSerializer(commentaires, many=True)
+            try:
+                serializer = CommentaireMinimalSerializer(commentaires, many=True)
+            except Exception as e:
+                # Enregistrer traceback complet côté serveur pour le debug
+                logger.exception(f"Erreur lors de la sérialisation des commentaires pour dossier {dossier_id}: {e}")
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Erreur lors de la sérialisation des commentaires',
+                        'details': str(e)
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             
             return Response({
                 'success': True,

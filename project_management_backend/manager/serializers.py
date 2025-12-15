@@ -478,7 +478,17 @@ class UtilisateurMinimalSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'first_name', 'last_name', 'nom_complet', 'email']
     
     def get_nom_complet(self, obj):
-        return obj.get_full_name()
+        try:
+            if not obj:
+                return ''
+
+            try:
+                return obj.get_full_name()
+            except Exception:
+                return getattr(obj, 'username', '') or ''
+        except Exception:
+            # Défensif: éviter une exception lors de la sérialisation d'un utilisateur mal formé
+            return getattr(obj, 'username', 'Utilisateur') if obj else 'Utilisateur'
 
 
 class ReponseSerializer(serializers.ModelSerializer):

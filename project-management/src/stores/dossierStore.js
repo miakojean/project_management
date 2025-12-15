@@ -107,22 +107,39 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`/manager/affairs/${dossierId}/commentaires/`);
             // Mettre à jour le store avec les nouveaux commentaires
-            const newCommentaires = response.data.commentaires || [];
-            
-            // Fusionner avec les commentaires existants (éviter les doublons)
-            newCommentaires.forEach(newComment => {
-                const existingIndex = commentaires.value.findIndex(c => c.id === newComment.id);
-                if (existingIndex === -1) {
-                    commentaires.value.push(newComment);
-                } else {
-                    commentaires.value[existingIndex] = newComment;
+            // Supporter plusieurs formes de réponse (objet {commentaires: [...] } ou directement un tableau)
+            const newCommentaires = response.data?.commentaires || response.data || [];
+
+            console.log('fetchCommentairesByDossier response:', {
+                url: `/manager/affairs/${dossierId}/commentaires/`,
+                status: response.status,
+                receivedCount: Array.isArray(newCommentaires) ? newCommentaires.length : 'N/A'
+            });
+
+            const normalized = Array.isArray(newCommentaires) ? newCommentaires : [];
+
+            // S'assurer que chaque commentaire a bien un champ dossier_id pour le getter
+            normalized.forEach(c => {
+                if (!('dossier_id' in c) && ('dossier' in c)) {
+                    c.dossier_id = c.dossier;
+                }
+                if (!('dossier_id' in c)) {
+                    c.dossier_id = dossierId;
                 }
             });
-            console.log(response)
+
+            // Remplacer les commentaires existants pour ce dossier afin d'éviter des états incohérents
+            commentaires.value = commentaires.value.filter(c => c.dossier_id !== dossierId).concat(normalized);
+
             return response.data;
         } catch (err) {
+            // Log détaillé pour faciliter le debug (status + payload)
             commentairesError.value = err.response?.data?.error || 'Erreur lors du chargement des commentaires';
-            console.error('Erreur fetchCommentaires:', err);
+            console.error('Erreur fetchCommentaires:', {
+                status: err.response?.status,
+                data: err.response?.data,
+                message: err.message
+            });
             throw err;
         } finally {
             commentairesLoading.value = false;
@@ -430,6 +447,34 @@ export const useDossierStore = defineStore('dossier', () => {
         }
     }
 
+    /**
+     * Recherche de dossiers (pour autocomplétion)
+     */
+    async function searchDossiers(query, searchParams = {}) {
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const params = {
+                search: query,
+                page_size: searchParams.page_size || 10,
+                ...searchParams
+            };
+
+            const response = await api.get('/manager/affairs', { params });
+
+            // Réponse shape: response.data.data.dossiers
+            const dossiersRes = response.data?.data?.dossiers || [];
+            return dossiersRes;
+        } catch (err) {
+            error.value = err.response?.data?.error || err.message || 'Erreur lors de la recherche de dossiers';
+            console.error('Erreur searchDossiers:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     async function fetchArchivesDossiers(){
         try {
             const response = await api.get(`/manager/affairs?est_archive=true`)
@@ -707,6 +752,8 @@ export const useDossierStore = defineStore('dossier', () => {
         clearCurrentCommentaire,
         resetCommentairesError,
         clearCommentairesStore,
+        // Recherche
+        searchDossiers,
 
         // Actions existantes pour dossiers
         fetchCategories,
