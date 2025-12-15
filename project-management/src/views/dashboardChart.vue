@@ -9,7 +9,7 @@
     </header>
 
     <main class="main-area">
-      <affairIndexSection/>
+      <chartSection/>
     </main>
 
     <footer class="footer-area">
@@ -22,18 +22,16 @@
 <script>
 import navbar from '@/components/navigation/navbar.vue';
 import sidebar from '@/components/navigation/sidebar.vue';
-import customerSectionFolder from '@/components/section/customerSectionFolder.vue';
-import affairIndexSection from '@/components/section/affairIndexSection.vue';
 import clientsMonthlyChart from '@/components/charts/ClientsMonthlyChart.vue';
+import chartSection from '@/components/section/chartSection.vue';
 
 export default {
     name: 'DashboardLayout',
     components: {
       navbar,
       sidebar,
-      customerSectionFolder,
-      affairIndexSection
-      , clientsMonthlyChart
+      clientsMonthlyChart,
+      chartSection
     }
 }
 </script>

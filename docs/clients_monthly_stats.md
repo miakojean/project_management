@@ -14,6 +14,22 @@ Endpoint backend:
 }
 ```
 
+## Statistiques mensuelles des dossiers ✅
+
+Endpoint backend:
+
+- URL: `GET /manager/affairs/stats/monthly/`
+- Auth: **Authentification requise** (utilisez la session ou un token selon votre configuration DRF)
+- Réponse JSON (200):
+
+```json
+{
+  "success": true,
+  "labels": ["2025-01","2025-02","2025-03"],
+  "data": [2,5,3]
+}
+```
+
 Notes d'intégration frontend:
 
 - Un nouveau store a été ajouté: `src/stores/custumerStore.js`

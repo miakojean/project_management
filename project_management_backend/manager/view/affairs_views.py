@@ -964,3 +964,44 @@ class ReponseDetailAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class DossierMonthlyStatsAPIView(APIView):
+    """
+    Vue pour récupérer les statistiques mensuelles des dossiers créés
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        """
+        Récupère le nombre de dossiers créés par mois
+        """
+        try:
+            # Agrégation par mois en utilisant TruncMonth sur date_ouverture
+            from django.db.models.functions import TruncMonth
+            from django.db.models import Count
+
+            qs = (
+                Dossier.objects
+                .annotate(month=TruncMonth('date_ouverture'))
+                .values('month')
+                .annotate(count=Count('id'))
+                .order_by('month')
+            )
+
+            labels = [item['month'].strftime('%Y-%m') if item['month'] else None for item in qs]
+            data = [item['count'] for item in qs]
+
+            return Response({
+                'success': True,
+                'labels': labels,
+                'data': data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des stats mensuelles des dossiers: {e}")
+            return Response({
+                'success': False,
+                'message': 'Erreur lors de la récupération des statistiques des dossiers',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

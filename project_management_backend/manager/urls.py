@@ -14,6 +14,7 @@ from .view.affairs_views import (
     DossierListCreateAPIView,
     DossierStatsAPIView,
     DossierDetailAPIView,
+    DossierMonthlyStatsAPIView,
     # ============ AJOUT DES IMPORTS POUR COMMENTAIRES ============
     CommentaireListCreateAPIView,
     CommentaireDetailAPIView,
@@ -52,6 +53,7 @@ urlpatterns = [
     path('affairs', DossierListCreateAPIView.as_view(), name="manage-affairs"),
     path('affairs/details/<int:pk>/', DossierDetailAPIView.as_view(), name='dossier-detail'),
     path('affairs/stats', DossierStatsAPIView.as_view(), name="affairs-stats"),
+    path('affairs/stats/monthly/', DossierMonthlyStatsAPIView.as_view(), name='dossier-monthly-stats'),
 
     # ============ ENDPOINTS POUR COMMENTAIRES ============
     

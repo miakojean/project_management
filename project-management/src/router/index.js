@@ -52,6 +52,12 @@ const router = createRouter({
       name:'archives',
       component: () => import('@/views/dashboardArchiveView.vue')
     },
+    {
+      path:'/dashboard/charts',
+      name:'charts',
+      component: () => import('@/views/dashboardChart.vue'),
+      meta: { requiresAuth: true }
+    },
 
     /* Register new customer, add folder affairs and add documents */
     {
