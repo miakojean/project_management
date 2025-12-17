@@ -131,6 +131,7 @@ import filterFamily from '../input/filterFamily.vue';
 import editModale from '../modales/editModale.vue';
 import deleteModale from '../modales/deleteModale.vue';
 import folderCard from '../cards/folderCard.vue';
+import newCardsAffairs from '../cards/newCardsAffairs.vue';
 
 export default {
     name: 'AffairIndexSection',
@@ -142,7 +143,8 @@ export default {
         filterFamily,
         editModale,
         deleteModale,
-        folderCard
+        folderCard,
+        newCardsAffairs
     },
 
     setup() {

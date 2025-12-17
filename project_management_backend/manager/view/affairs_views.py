@@ -121,6 +121,10 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                 else:
                     # Valeur invalide, on ignore le filtre
                     pass
+            else:
+                # Par défaut, exclure les dossiers archivés (pour ne pas casser l'UX)
+                dossiers = dossiers.filter(est_archive=False)
+                filters_applied['est_archive'] = False
             # ============ FIN DE L'AJOUT ============
 
             # Filtrage par client
@@ -414,7 +418,15 @@ class DossierByClientAPIView(APIView):
         Récupère tous les dossiers d'un client
         """
         try:
-            dossiers = Dossier.objects.filter(client_id=client_id).order_by('-date_creation')
+            # Par défaut, exclure les dossiers archivés si le param n'est pas fourni
+            est_archive = request.query_params.get('est_archive')
+            if est_archive is not None:
+                if est_archive.lower() in ['true', '1', 'yes', 'vrai', 'oui']:
+                    dossiers = Dossier.objects.filter(client_id=client_id, est_archive=True).order_by('-date_creation')
+                else:
+                    dossiers = Dossier.objects.filter(client_id=client_id, est_archive=False).order_by('-date_creation')
+            else:
+                dossiers = Dossier.objects.filter(client_id=client_id, est_archive=False).order_by('-date_creation')
             serializer = DossierListSerializer(dossiers, many=True)
             return Response(serializer.data)
             

@@ -2,7 +2,7 @@
     <nav>
         <div class="research__box">
             <researchfamily 
-                placeholder="Rechercher un dossier, document, client..."
+                placeholder="Rechercher un dossier, client..."
                 :searchFunction="customSearchFunction"
                 :maxResults="8"
                 @search="handleSearch"

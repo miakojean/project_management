@@ -86,7 +86,8 @@ const availableYears = ref([
 ]);
 
 const hasData = computed(() => {
-  return store.clientRegistrations.values.length > 0 || store.dossierStats.values.length > 0;
+  return (store.clientRegistrations.values.length > 0 || (store.clientRegistrations.rawLabels && store.clientRegistrations.rawLabels.length > 0)) ||
+         (store.dossierStats.values.length > 0 || (store.dossierStats.rawLabels && store.dossierStats.rawLabels.length > 0));
 });
 
 const loadData = async () => {
@@ -124,11 +125,23 @@ const renderChart = () => {
   
   const ctx = combinedChart.value.getContext('2d');
   
-  // Utiliser les labels communs (priorité aux clients, sinon dossiers)
-  const labels = store.clientRegistrations.labels.length > 0 
-    ? store.clientRegistrations.labels 
-    : store.dossierStats.labels;
-  
+  // Construire des labels communs à partir des rawLabels pour aligner datasets
+  const rawClient = store.clientRegistrations.rawLabels || [];
+  const rawDossier = store.dossierStats.rawLabels || [];
+
+  const commonRaw = Array.from(new Set([...rawClient, ...rawDossier])).sort();
+  const labels = commonRaw.map(l => store.formatMonthLabel(l));
+
+  const clientValues = commonRaw.map(l => {
+    const idx = rawClient.indexOf(l);
+    return idx >= 0 ? store.clientRegistrations.values[idx] || 0 : 0;
+  });
+
+  const dossierValues = commonRaw.map(l => {
+    const idx = rawDossier.indexOf(l);
+    return idx >= 0 ? store.dossierStats.values[idx] || 0 : 0;
+  });
+
   chartInstance.value = new Chart(ctx, {
     type: 'line',
     data: {
@@ -136,7 +149,7 @@ const renderChart = () => {
       datasets: [
         {
           label: 'Nouveaux Clients',
-          data: store.clientRegistrations.values,
+          data: clientValues,
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           borderColor: 'rgb(59, 130, 246)',
           borderWidth: 3,
@@ -150,7 +163,7 @@ const renderChart = () => {
         },
         {
           label: 'Dossiers',
-          data: store.dossierStats.values,
+          data: dossierValues,
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           borderColor: 'rgb(16, 185, 129)',
           borderWidth: 3,
@@ -255,13 +268,25 @@ const renderChart = () => {
 const updateChart = () => {
   if (!chartInstance.value) return;
   
-  const labels = store.clientRegistrations.labels.length > 0 
-    ? store.clientRegistrations.labels 
-    : store.dossierStats.labels;
-  
+  // Recalculer labels communs et datasets alignés
+  const rawClient = store.clientRegistrations.rawLabels || [];
+  const rawDossier = store.dossierStats.rawLabels || [];
+  const commonRaw = Array.from(new Set([...rawClient, ...rawDossier])).sort();
+  const labels = commonRaw.map(l => store.formatMonthLabel(l));
+
+  const clientValues = commonRaw.map(l => {
+    const idx = rawClient.indexOf(l);
+    return idx >= 0 ? store.clientRegistrations.values[idx] || 0 : 0;
+  });
+
+  const dossierValues = commonRaw.map(l => {
+    const idx = rawDossier.indexOf(l);
+    return idx >= 0 ? store.dossierStats.values[idx] || 0 : 0;
+  });
+
   chartInstance.value.data.labels = labels;
-  chartInstance.value.data.datasets[0].data = store.clientRegistrations.values;
-  chartInstance.value.data.datasets[1].data = store.dossierStats.values;
+  chartInstance.value.data.datasets[0].data = clientValues;
+  chartInstance.value.data.datasets[1].data = dossierValues;
   chartInstance.value.update();
 };
 </script>

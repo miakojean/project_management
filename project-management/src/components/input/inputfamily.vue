@@ -43,6 +43,10 @@ export default {
     type: {
       type: String,
       default: "text"
+    },
+    error: {
+      type: String,
+      default:""
     }
   },
   emits: ['update:modelValue'],

@@ -15,17 +15,19 @@
             <div class="form-row">
                 <inputfamily 
                     identifiant="Raison morale" 
-                    label="Raison morale" 
+                    label="Raison morale *" 
                     placeholder="Entrer le nom l'entreprise"
                     v-model="formData.raison_sociale"
                     :required="true"
+                    :error="fieldErrors.raison_sociale"
                 />
                 <inputfamily 
-                    identifiant="Forme juridique" 
-                    label="Forme juridique" 
+                    identifiant="Forme juridique " 
+                    label="Forme juridique *" 
                     placeholder="Entrer la forme juridique"
                     v-model="formData.forme_juridique"
                     :required="true"
+                    :error="fieldErrors.forme_juridique"
                 />
                 <inputfamily 
                     identifiant="Numéro RCCM" 
@@ -33,6 +35,7 @@
                     placeholder="Entrer votre uméro rccm"
                     type="texte"
                     v-model="formData.numero_rccm"
+                    :error="fieldErrors.numero_rccm"
                 />
             </div>
             
@@ -42,6 +45,7 @@
                     label="Numéro Compte Contribuable" 
                     placeholder="Numéro Compte Contribuable"
                     v-model="formData.numero_cc"
+                    :error="fieldErrors.adresse"
                 />
                 <inputfamily 
                     identifiant="Capitalsocial" 
@@ -51,7 +55,7 @@
                 />
                 <inputfamily 
                     identifiant="adresse" 
-                    label="Adresse" 
+                    label="Adresse *" 
                     placeholder="Entrer l'adresse"
                     type="text"
                     v-model="formData.adresse"
@@ -72,6 +76,7 @@
                     placeholder="Entrer le téléphone"
                     type="tel"
                     v-model="formData.telephone_1"
+                    :error="fieldErrors.telephone_1"
                 />
 
                 <inputfamily 
@@ -89,18 +94,21 @@
                     label="Email" 
                     placeholder="Entrer votre email"
                     v-model="formData.email"
+                    :error="fieldErrors.email"
                 />
                 <inputfamily 
                     identifiant="representantLegal" 
                     label="Nom du representant legal" 
                     placeholder="Entrer le pays"
                     v-model="formData.representant_legal_nom"
+                    :error="fieldErrors.representant_legal_nom"
                 />
                 <inputfamily 
                     identifiant="profession" 
                     label="Profession du représentant légal" 
                     placeholder="Entrer la profession"
                     v-model="formData.representant_legal_fonction"
+                    :error="fieldErrors.representant_legal_fonction"
                 />
             </div>
         </div>

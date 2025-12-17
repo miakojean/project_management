@@ -1,7 +1,7 @@
 <template>
     <div class="customer-container">
-        <!-- Loading State -->
-        <div v-if="store.loading" class="loading-container">
+        <!-- Loading State " -->
+        <div v-if="store.loading"  class="loading-container">
             <skeleton :isLoading="true"/>
         </div>
 
@@ -122,6 +122,8 @@ export default {
         skeleton
     },
     setup() {
+        const isLoading = ref(true);
+
         const store = useCustomerStore();
 
         // Données réactives
@@ -237,6 +239,7 @@ export default {
 
         return {
             // Gestion modale
+            isLoading,
             isOpen,
             selectedCustomer,
             openModal,

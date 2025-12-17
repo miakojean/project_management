@@ -435,6 +435,7 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
+             // If caller didn't specify est_archive, backend now defaults to est_archive=false
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
@@ -507,13 +508,14 @@ export const useDossierStore = defineStore('dossier', () => {
         }
     }
 
-    async function fetchDossiersByClient(clientId) {
+    async function fetchDossiersByClient(clientId, params = {}) {
         loading.value = true;
         error.value = null;
-        
+
         try {
-            const response = await api.get(`manager/affairs?client_id=${clientId}`);
-            customerDossier.value = response.data.data.dossiers
+            const query = { client_id: clientId, ...params };
+            const response = await api.get(`/manager/affairs`, { params: query });
+            customerDossier.value = response.data.data.dossiers;
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers du client';

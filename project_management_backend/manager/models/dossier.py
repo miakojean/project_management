@@ -331,7 +331,7 @@ class Dossier(models.Model):
         elif pourcentage <= 45:  # Identification
             nouveau_statut = 'EN_COURS'
         elif pourcentage <= 60:  # Constitutifs
-            nouveau_statut = 'DOCU_FONDA'
+            nouveau_statut = 'EN_COURS'
         elif pourcentage <= 75:  # Procédures
             nouveau_statut = 'EN_ATTENTE'
         elif pourcentage <= 95:  # Opérationnels

@@ -104,9 +104,9 @@ export default {
 
 <style scoped>
 .skeleton-container {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   padding: 20px;
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
 }
 

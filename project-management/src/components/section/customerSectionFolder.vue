@@ -501,8 +501,9 @@ const handleAction = (action) => {
 
 const handleDownload = async (docId, fileName) => {
     try {
-        await documentStore.downloadDocuments(docId, fileName);
-        showNotification('Téléchargement lancé', 'success');
+        // Passer le filename explicitement en troisième argument
+        const result = await documentStore.downloadDocuments(docId, {}, fileName);
+        showNotification(`Téléchargement lancé${result?.filename ? `: ${result.filename}` : ''}`, 'success');
     } catch (error) {
         showNotification('Erreur lors du téléchargement', 'error');
         console.error('Erreur handleDownload:', error);

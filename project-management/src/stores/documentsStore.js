@@ -37,6 +37,13 @@ export const useDocumentStore = defineStore('documents', ()=>{
 
     // Actions 
     async function downloadDocuments(documentIds, options = {}, fileName) {
+        // Backwards-compatible: allow passing filename as the second argument
+        // e.g. downloadDocuments(id, 'monfichier.pdf')
+        if (typeof options === 'string') {
+            fileName = options;
+            options = {};
+        }
+
         try {
             const config = {
                 method: 'GET',
@@ -79,6 +86,12 @@ export const useDocumentStore = defineStore('documents', ()=>{
                 });
 
                 filename = options.filename || `documents_${new Date().toISOString().slice(0,10)}.zip`;
+            }
+
+            // Fallback filename si aucune information n'est disponible
+            if (!filename) {
+                const ids = Array.isArray(documentIds) ? documentIds.join('_') : String(documentIds);
+                filename = options.filename || fileName || `document_${ids}`;
             }
 
             // Créer et télécharger le fichier

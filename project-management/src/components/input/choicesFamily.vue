@@ -207,13 +207,13 @@ export default {
 }
 
 .entity-option:hover:not(.entity-option--disabled) {
-    border-color: #3b82f6;
+    border-color: var(--primary-color);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 .entity-option--selected {
-    border-color: #3b82f6;
+    border-color: var(--primary-color);
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.02) 100%);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
@@ -261,7 +261,7 @@ export default {
 }
 
 .entity-option--selected .entity-option__title {
-    color: #1e40af;
+    color: var(--primary-color);
 }
 
 .entity-option__description {
@@ -289,8 +289,8 @@ export default {
 }
 
 .indicator--active {
-    border-color: #3b82f6;
-    background: #3b82f6;
+    border-color: var(--primary-color);
+    background: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 

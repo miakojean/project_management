@@ -15,6 +15,7 @@ export const useChartStore = defineStore("chartStore", () => {
     
     const clientRegistrations = ref({
         labels: [],
+        rawLabels: [], // Pour conserver les labels originaux si besoin
         values: []
     });
     
@@ -69,6 +70,7 @@ export const useChartStore = defineStore("chartStore", () => {
             if (response.data.success) {
                 clientRegistrations.value = {
                     labels: response.data.labels.map(label => formatMonthLabel(label)),
+                    rawLabels: response.data.labels, // Conservation des labels originaux
                     values: response.data.data
                 };
             } else {
@@ -104,6 +106,7 @@ export const useChartStore = defineStore("chartStore", () => {
             if (response.data.success) {
                 dossierStats.value = {
                     labels: response.data.labels.map(label => formatMonthLabel(label)),
+                    rawLabels: response.data.labels, // Conservation des labels originaux
                     values: response.data.data,
                     types: response.data.types || [] // Si l'API retourne des types
                 };
@@ -141,6 +144,7 @@ export const useChartStore = defineStore("chartStore", () => {
             if (response.data.success) {
                 salesData.value = {
                     labels: response.data.labels.map(label => formatMonthLabel(label)),
+                    rawLabels: response.data.labels, // Conservation des labels originaux
                     values: response.data.data
                 };
             } else {
@@ -183,51 +187,60 @@ export const useChartStore = defineStore("chartStore", () => {
     // Fonctions pour générer des données fictives (développement uniquement)
     function generateMockClientData() {
         const labels = [];
+        const rawLabels = [];
         const values = [];
-        const currentYear = new Date().getFullYear();
+        const currentYear = selectedYear.value || new Date().getFullYear();
         
         for (let i = 0; i < 12; i++) {
             const month = (i + 1).toString().padStart(2, '0');
-            labels.push(formatMonthLabel(`${currentYear}-${month}`));
+            const rawLabel = `${currentYear}-${month}`;
+            rawLabels.push(rawLabel);
+            labels.push(formatMonthLabel(rawLabel));
             values.push(Math.floor(Math.random() * 50) + 20); // Entre 20 et 70 clients
         }
         
-        return { labels, values };
+        return { labels, rawLabels, values };
     }
     
     function generateMockDossierData() {
         const labels = [];
+        const rawLabels = [];
         const values = [];
-        const currentYear = new Date().getFullYear();
+        const currentYear = selectedYear.value || new Date().getFullYear();
         
         for (let i = 0; i < 12; i++) {
             const month = (i + 1).toString().padStart(2, '0');
-            labels.push(formatMonthLabel(`${currentYear}-${month}`));
+            const rawLabel = `${currentYear}-${month}`;
+            rawLabels.push(rawLabel);
+            labels.push(formatMonthLabel(rawLabel));
             values.push(Math.floor(Math.random() * 100) + 50); // Entre 50 et 150 dossiers
         }
         
-        return { labels, values, types: [] };
+        return { labels, rawLabels, values, types: [] };
     }
     
     function generateMockSalesData() {
         const labels = [];
+        const rawLabels = [];
         const values = [];
-        const currentYear = new Date().getFullYear();
+        const currentYear = selectedYear.value || new Date().getFullYear();
         
         for (let i = 0; i < 12; i++) {
             const month = (i + 1).toString().padStart(2, '0');
-            labels.push(formatMonthLabel(`${currentYear}-${month}`));
+            const rawLabel = `${currentYear}-${month}`;
+            rawLabels.push(rawLabel);
+            labels.push(formatMonthLabel(rawLabel));
             values.push(Math.floor(Math.random() * 50000) + 20000); // Entre 20k et 70k
         }
         
-        return { labels, values };
+        return { labels, rawLabels, values };
     }
     
     // Réinitialiser les données
     function resetChartData() {
-        clientRegistrations.value = { labels: [], values: [] };
-        dossierStats.value = { labels: [], values: [], types: [] };
-        salesData.value = { labels: [], values: [] };
+        clientRegistrations.value = { labels: [], rawLabels: [], values: [] };
+        dossierStats.value = { labels: [], rawLabels: [], values: [], types: [] };
+        salesData.value = { labels: [], rawLabels: [], values: [] };
         loading.value = false;
         error.value = null;
     }
