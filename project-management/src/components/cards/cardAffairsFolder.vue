@@ -84,15 +84,35 @@
         <div class="card-essential-info">
             <div class="info-item">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="info-icon">
-                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" />
                 </svg>
                 <span>{{ clientNom }}</span>
             </div>
+        
             <div class="info-item">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="info-icon">
-                    <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 0 1 7.5 3v1.5h9V3A.75.75 0 0 1 18 3v1.5h.75a3 3 0 0 1 3 3v11.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V7.5a3 3 0 0 1 3-3H6V3a.75.75 0 0 1 .75-.75Zm13.5 9a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v7.5a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5v-7.5Z" clip-rule="evenodd" />
                 </svg>
                 <span>Ouvert le {{ dateOuverture }}</span>
+            </div>
+        
+            <div class="info-item countdown-container">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="info-icon">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
+                </svg>
+                
+                <!-- Affichage du compte à rebours -->
+                <span 
+                v-if="countdownData"
+                class="countdown-display"
+                :class="countdownData.class"
+                :title="countdownData.tooltip"
+                > A finir dans
+                {{ countdownData.text }}
+                </span>
+                <span v-else class="countdown-display countdown-loading">
+                Chargement...
+                </span>
             </div>
         </div>
 
@@ -113,6 +133,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useCountdownStore } from '@/stores/counter';
 
 export default {
     name: 'DossierCard',
@@ -157,6 +178,10 @@ export default {
         dateOuverture: {
             type: String,
             default: '01/01/2024'
+        },
+        datefin: {
+            type: String,
+            default: '31/12/2024'
         },
         avancement: {
             type: Number,
@@ -328,16 +353,42 @@ export default {
                 closeDropdown();
             }
         };
+
+        // Management du store countdown (non utilisé actuellement)
+        const countdownStore = useCountdownStore();
+        const countdownData = ref(null);
+
+        // Créer un ID unique pour ce compte à rebours
+        const countdownId = computed(() => `dossier-${props.dossierId}`)
+    
+        // Initialiser le compte à rebours
+        const initCountdown = () => {
+            if (props.datefin) {
+                // Utiliser la version statique pour un affichage immédiat
+                countdownData.value = countdownStore.getStaticCountdown(props.datefin)
+                
+                // Démarrer la mise à jour en temps réel
+                countdownStore.startCountdown(
+                countdownId.value,
+                props.datefin,
+                (updatedData) => {
+                    countdownData.value = updatedData
+                }
+                )
+            }
+        }
         
         onMounted(() => {
             document.addEventListener('keydown', handleEscapeKey);
+            initCountdown();
         });
         
         onUnmounted(() => {
             document.removeEventListener('keydown', handleEscapeKey);
             if (clickOutsideHandler) {
                 document.removeEventListener('mousedown', clickOutsideHandler);
-            }
+            };
+            countdownStore.stopCountdown(countdownId.value);
         });
         
         return {
@@ -349,6 +400,8 @@ export default {
             prioriteText,
             isUrgent,
             joursDepuisOuverture,
+            initCountdown,
+            countdownData,
             toggleDropdown,
             closeDropdown,
             handleCardClick,

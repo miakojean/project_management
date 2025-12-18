@@ -1,31 +1,53 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_DB=${DB_NAME:-project-management}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-123456}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   django:
     build:
       context: .
       dockerfile: Dockerfile.django
     container_name: django_app
     volumes:
-      - ./project_management_backend:/project_management_backend
+      - ./project_management_backend:/app
     ports:
       - "8000:8000"
     environment:
       - DEBUG=1
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-project-management}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-123456}
+    depends_on:
+      - db
     stdin_open: true
     tty: true
 
   vue:
     build:
-      context: .
-      dockerfile: Dockerfile.vue
+      context: ./project-management # Assure-toi que le contexte pointe au bon endroit
+      dockerfile: ../Dockerfile.vue
     container_name: vue_app
     volumes:
-      - ./project-management:/project-management
-      - /project-management/node_modules
+      - ./project-management:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - django
     stdin_open: true
     tty: true
 
-  # Optionnel pour l'instant : on vire nginx tant que le reste ne marche pas
+volumes:
+  postgres_data:
