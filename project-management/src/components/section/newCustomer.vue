@@ -162,8 +162,8 @@ export default {
 .layout__header {
     width: 100%;
     padding: 1rem 1.5rem;
-    background: #ffffff;
-    border-bottom: 1px solid #f3f4f6;
+    background: #006EA6;
+    border-bottom: 1px solid #006EA6;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     z-index: 10;
     flex-shrink: 0;

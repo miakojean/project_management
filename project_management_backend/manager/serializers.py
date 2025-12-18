@@ -14,6 +14,31 @@ from account.models import Utilisateur
 from django.utils import timezone
 from django.db import models
 
+# =========================================================
+# serializers for Commentaire & Reponse (MINIMALISTES)
+# =========================================================
+
+class UtilisateurMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les utilisateurs"""
+    nom_complet = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Utilisateur
+        fields = ['id', 'username', 'first_name', 'last_name', 'nom_complet', 'email']
+    
+    def get_nom_complet(self, obj):
+        try:
+            if not obj:
+                return ''
+
+            try:
+                return obj.get_full_name()
+            except Exception:
+                return getattr(obj, 'username', '') or ''
+        except Exception:
+            # Défensif: éviter une exception lors de la sérialisation d'un utilisateur mal formé
+            return getattr(obj, 'username', 'Utilisateur') if obj else 'Utilisateur'
+
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -351,6 +376,9 @@ class DossierSerializer(serializers.ModelSerializer):
     )
     date_cloture = serializers.DateField(read_only=True, format='%Y-%m-%d')
 
+    # Inclure les informations de l'utilisateur qui a créé le dossier
+    # en lecture seule pour pouvoir afficher son nom dans l'UI
+    cree_par = UtilisateurMinimalSerializer(read_only=True)
     class Meta:
         model = Dossier
         fields = [
@@ -465,31 +493,6 @@ class DossierListSerializer(serializers.ModelSerializer):
         # Si prefetch_related('documents') fait dans la vue → obj.documents.count() est déjà en cache
         return obj.documents.count()
 
-# =========================================================
-# serializers for Commentaire & Reponse (MINIMALISTES)
-# =========================================================
-
-class UtilisateurMinimalSerializer(serializers.ModelSerializer):
-    """Serializer minimal pour les utilisateurs"""
-    nom_complet = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Utilisateur
-        fields = ['id', 'username', 'first_name', 'last_name', 'nom_complet', 'email']
-    
-    def get_nom_complet(self, obj):
-        try:
-            if not obj:
-                return ''
-
-            try:
-                return obj.get_full_name()
-            except Exception:
-                return getattr(obj, 'username', '') or ''
-        except Exception:
-            # Défensif: éviter une exception lors de la sérialisation d'un utilisateur mal formé
-            return getattr(obj, 'username', 'Utilisateur') if obj else 'Utilisateur'
-
 
 class ReponseSerializer(serializers.ModelSerializer):
     """Serializer minimal pour les réponses aux commentaires"""
@@ -550,6 +553,7 @@ class ReponseMinimalSerializer(serializers.ModelSerializer):
 class CommentaireMinimalSerializer(serializers.ModelSerializer):
     """Serializer pour les commentaires avec détails de l'auteur"""
     auteur = UtilisateurMinimalSerializer(read_only=True)
+    reponses = ReponseMinimalSerializer(many=True, read_only=True)
     
     class Meta:
         model = Commentaire
@@ -559,6 +563,7 @@ class CommentaireMinimalSerializer(serializers.ModelSerializer):
             'auteur', 
             'auteur_id',  # Garder pour compatibilité
             'message',
+            'reponses',
             'date_creation'
         ]
         read_only_fields = ['id', 'auteur', 'auteur_id', 'date_creation']

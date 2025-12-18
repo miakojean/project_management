@@ -55,19 +55,6 @@
             </div>
         </div>
 
-        <!--
-            <div class="card-stats">
-                <div class="stat-item">
-                    <span class="stat-number">{{ documentsCount }}</span>
-                    <span class="stat-label">Documents</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">{{ joursDepuisOuverture }}</span>
-                    <span class="stat-label">Jours restants</span>
-                </div>
-            </div>
-        -->
-
         <div class="progress-section">
             <div class="progress-header">
                 <span>Progression</span>

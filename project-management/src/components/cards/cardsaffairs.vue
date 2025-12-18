@@ -45,6 +45,13 @@
                         </svg>
                         <span>{{ clientName }}</span>
                     </div>
+
+                    <div class="meta-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="meta-icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5c1.657 0 3 1.343 3 3S13.657 10.5 12 10.5 9 9.157 9 7.5s1.343-3 3-3zm0 9c4.418 0 8.25 1.79 8.25 4v1.5H3.75V17.5c0-2.21 3.832-4 8.25-4z" />
+                        </svg>
+                        <span> Créé par {{ creatorName }}</span>
+                    </div>
                 </div>
             </div>
 
@@ -84,6 +91,10 @@ export default {
         clientName: {
             type: String,
             default: "Client Name"
+        },
+        creatorName: {
+            type: String,
+            default: 'Utilisateur'
         },
         progress: {
             type: Number,
@@ -214,13 +225,13 @@ export default {
 }
 
 .badge--active {
-    background: #e6fffa;
-    color: #065f46;
+    background: #2ECC71;
+    color: #ffffff;
 }
 
 .badge--completed {
-    background: #f0fff4;
-    color: #22543d;
+    background: var(--primary-color);
+    color: #ffffff;
 }
 
 .badge--pending {

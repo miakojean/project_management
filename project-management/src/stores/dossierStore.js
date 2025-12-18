@@ -265,6 +265,14 @@ export const useDossierStore = defineStore('dossier', () => {
             const newReponses = response.data.reponses || [];
             
             newReponses.forEach(newReponse => {
+                // Normaliser les champs de relation pour faciliter le filtrage côté client
+                if (!('commentaire_id' in newReponse) && ('commentaire' in newReponse)) {
+                    newReponse.commentaire_id = newReponse.commentaire;
+                }
+                if (!('commentaire' in newReponse) && ('commentaire_id' in newReponse)) {
+                    newReponse.commentaire = newReponse.commentaire_id;
+                }
+
                 const existingIndex = reponses.value.findIndex(r => r.id === newReponse.id);
                 if (existingIndex === -1) {
                     reponses.value.push(newReponse);
@@ -291,8 +299,33 @@ export const useDossierStore = defineStore('dossier', () => {
                 message
             });
             
-            // Ajouter la nouvelle réponse au store
-            reponses.value.push(response.data);
+            // Normaliser la réponse: s'assurer qu'elle référence le commentaire parent
+            const reponseData = response.data || {};
+            if (!('commentaire_id' in reponseData) && !('commentaire' in reponseData)) {
+                reponseData.commentaire_id = commentaireId;
+                reponseData.commentaire = commentaireId;
+            } else {
+                // Compatibilité: garantir la présence des deux champs
+                if (!('commentaire_id' in reponseData) && ('commentaire' in reponseData)) {
+                    reponseData.commentaire_id = reponseData.commentaire;
+                }
+                if (!('commentaire' in reponseData) && ('commentaire_id' in reponseData)) {
+                    reponseData.commentaire = reponseData.commentaire_id;
+                }
+            }
+
+            // Ajouter la nouvelle réponse au store des réponses
+            reponses.value.push(reponseData);
+
+            // Attacher la réponse au commentaire parent si présent dans le cache
+            const commentaireIndex = commentaires.value.findIndex(c => c.id === commentaireId);
+            if (commentaireIndex !== -1) {
+                if (!commentaires.value[commentaireIndex].reponses) {
+                    commentaires.value[commentaireIndex].reponses = [];
+                }
+                commentaires.value[commentaireIndex].reponses.push(reponseData);
+            }
+            console.debug('createReponse: réponse créée et attachée', { commentaireId, reponseData });
             
             return response.data;
         } catch (err) {
@@ -355,17 +388,29 @@ export const useDossierStore = defineStore('dossier', () => {
             // Charger les commentaires du dossier
             await fetchCommentairesByDossier(dossierId);
             
-            // Pour chaque commentaire, charger ses réponses
+            // Pour chaque commentaire, charger ses réponses uniquement si elles ne sont pas déjà incluses
             const dossierCommentaires = getCommentairesByDossier.value(dossierId);
-            for (const commentaire of dossierCommentaires) {
-                await fetchReponsesByCommentaire(commentaire.id);
+
+            const needFetch = !dossierCommentaires.some(c => Array.isArray(c.reponses) && c.reponses.length > 0);
+            if (needFetch) {
+                for (const commentaire of dossierCommentaires) {
+                    await fetchReponsesByCommentaire(commentaire.id);
+                }
             }
-            
+
+            // Construire la liste des réponses soit depuis les commentaires inclus, soit depuis le cache `reponses`
+            let collectedReponses = [];
+            if (dossierCommentaires.some(c => Array.isArray(c.reponses) && c.reponses.length > 0)) {
+                collectedReponses = dossierCommentaires.flatMap(c => c.reponses.map(r => ({ ...r, commentaire: c.id, commentaire_id: c.id })));
+            } else {
+                collectedReponses = reponses.value.filter(r => 
+                    dossierCommentaires.some(c => c.id === (r.commentaire_id || r.commentaire))
+                );
+            }
+
             return {
                 commentaires: dossierCommentaires,
-                reponses: reponses.value.filter(r => 
-                    dossierCommentaires.some(c => c.id === (r.commentaire_id || r.commentaire))
-                )
+                reponses: collectedReponses
             };
         } catch (err) {
             console.error('Erreur lors du chargement complet des commentaires:', err);

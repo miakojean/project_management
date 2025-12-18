@@ -29,6 +29,7 @@
                 v-for="commentaire in commentaires" 
                 :key="commentaire.id"
                 class="comment-group"
+                :data-comment-id="commentaire.id"
             >
                 <div v-if="commentaire.reponses && commentaire.reponses.length > 0" 
                     class="reply-line"></div>
@@ -69,6 +70,18 @@
                             </div>
                         </div>
 
+                        <!-- Inline reply input for this commentaire -->
+                        <div v-if="replyingToId === commentaire.id" class="mt-3 ml-12 comment__section">
+                            <comment-input
+                                :placeholder="`Répondre à ${getAuthorName(commentaire)}...`"
+                                buttonText="Répondre"
+                                :required="true"
+                                @submit="(msg) => submitInlineReply(commentaire.id, msg)"
+                                @cancel="cancelInlineReply"
+                                :disabled="isSubmittingReply"
+                            />
+                        </div>
+
                         <div v-if="commentaire.reponses && commentaire.reponses.length > 0" class="reply-list">
                             <div 
                                 v-for="reponse in commentaire.reponses" 
@@ -106,7 +119,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import commentInput from '@/components/input/commentInput.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
@@ -136,7 +150,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['edit', 'delete', 'reply', 'editReponse', 'deleteReponse'])
+const emit = defineEmits(['edit', 'delete', 'reply', 'editReponse', 'deleteReponse', 'submitReply'])
 
 // Store d'authentification
 const authStore = useAuthStore()
@@ -162,7 +176,7 @@ const getAuthorName = (item) => {
     }
     
     // Sinon, utiliser les informations du commentaire/réponse
-    if (item.auteur?.nom_complet) return item.auteur.nom_complet;
+    if (item.auteur?.username) return item.auteur.username;
     if (item.auteur?.first_name || item.auteur?.last_name) {
         return `${item.auteur.first_name || ''} ${item.auteur.last_name || ''}`.trim();
     }
@@ -215,8 +229,64 @@ const canDeleteReponse = (reponse) => {
     return props.currentUserId && reponse.auteur_id === props.currentUserId
 }
 
+// Inline reply state
+const replyingToId = ref(null)
+const isSubmittingReply = ref(false)
+const prevReplyCounts = ref({})
+
+onMounted(() => {
+    // Initial snapshot of reply counts
+    prevReplyCounts.value = {};
+    props.commentaires.forEach(c => {
+        prevReplyCounts.value[c.id] = (c.reponses || []).length
+    })
+})
+
+// Watch for changes in commentaires: if a new reply was added to the currently replying comment, close the inline input
+watch(() => props.commentaires, (newComments) => {
+    if (!replyingToId.value) return;
+    const target = newComments.find(c => c.id === replyingToId.value);
+    const prev = prevReplyCounts.value[replyingToId.value] || 0;
+    const now = target ? (target.reponses || []).length : 0;
+    if (now > prev) {
+        // A reply was added — clear inline reply
+        replyingToId.value = null;
+    }
+    // Update snapshot
+    prevReplyCounts.value = {};
+    newComments.forEach(c => {
+        prevReplyCounts.value[c.id] = (c.reponses || []).length
+    })
+}, { deep: true })
+
 const handleReply = (commentaire) => {
+    // Open inline reply input for this commentaire and notify parent (backward compatibility)
+    replyingToId.value = commentaire.id
     emit('reply', commentaire)
+
+    // Focus the inline textarea once it is rendered
+    nextTick(() => {
+        const selector = `.comment-group[data-comment-id="${commentaire.id}"] .comment__section textarea`;
+        const el = document.querySelector(selector);
+        if (el) el.focus();
+    })
+}
+
+const submitInlineReply = async (commentaireId, message) => {
+    if (!message || !message.trim()) return;
+    isSubmittingReply.value = true;
+    try {
+        // Emit to parent to perform the creation
+        emit('submitReply', { commentaireId, message: message.trim() })
+    } catch (err) {
+        console.error('Erreur submitInlineReply emit:', err)
+    } finally {
+        isSubmittingReply.value = false;
+    }
+}
+
+const cancelInlineReply = () => {
+    replyingToId.value = null
 }
 
 const handleEdit = (commentaire) => {

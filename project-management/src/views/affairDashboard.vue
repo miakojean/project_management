@@ -51,8 +51,8 @@ export default {
 
 .sidebar-area {
   grid-area: sidebar;
-  background-color: #ffffff;
-  color: var(--primary-color);
+  background-color:#006EA6;
+  color: white;
   padding: 1rem;
   overflow-y: auto;
   border-right: 1px solid #e5e7eb; /* ✅ Bordure de séparation */

@@ -9,6 +9,7 @@
                     :status="getStatus(doc.statut)"
                     :date="formatDate(doc.date_creation || doc.created_at)"
                     :clientName="doc.client_details?.nom_complet || 'Client non spécifié'"
+                    :creatorName="doc.cree_par?.nom_complet || doc.cree_par?.username || 'Utilisateur'"
                     :progress="doc.taux_avancement"
                     @view="handleView"
                     @edit="handleEdit"
@@ -66,17 +67,8 @@
                 @edit="handleEditComment"
                 @delete="handleDeleteComment"
                 @reply="handleReplyToComment"
+                @submitReply="handleCreateReponseFromChild"
             />
-            
-            <div v-if="isReplyingTo" class="mt-4 ml-12 comment__section">
-                <commentInput
-                    :placeholder="`Répondre à ${replyingToAuthor}...`"
-                    buttonText="Répondre"
-                    @submit="handleCreateReponse"
-                    @cancel="cancelReply"
-                    :disabled="isSubmittingReponse"
-                />
-            </div>
         </div>
         
         <deleteModale
@@ -136,10 +128,7 @@ const commentairesLoading = ref(false);
 const isSubmittingComment = ref(false);
 const isSubmittingReponse = ref(false);
 
-// Gestion de la réponse à un commentaire
-const isReplyingTo = ref(false);
-const replyingToCommentId = ref(null);
-const replyingToAuthor = ref('');
+// Gestion de la réponse à un commentaire (désormais gérée inline dans le composant enfant)
 
 // Gestion de la suppression de commentaire
 const isDeleteCommentModalOpen = ref(false);
@@ -267,46 +256,40 @@ const handleCreateComment = async (message) => {
 };
 
 const handleReplyToComment = (comment) => {
-    isReplyingTo.value = true;
-    replyingToCommentId.value = comment.id;
-    replyingToAuthor.value = comment.auteur_nom || comment.auteur?.nom_complet || 'l\'utilisateur';
-    
-    // Scroller vers la zone de réponse
-    nextTick(() => {
-        // Ciblage plus précis basé sur la classe ajoutée dans le template
-        document.querySelector('.comment__section textarea')?.focus();
-    });
+    // Backward-compatible handler called when user clicks 'Répondre' —
+    // the child component now opens the inline reply input itself and focuses it.
+    console.debug('handleReplyToComment called for comment', comment?.id);
 };
 
-const handleCreateReponse = async (message) => {
-    if (!replyingToCommentId.value || !message.trim()) return;
-    
+// Handler for inline reply submission from the child component
+const handleCreateReponseFromChild = async ({commentaireId, message}) => {
+    if (!commentaireId || !message || !message.trim()) return;
     isSubmittingReponse.value = true;
     try {
-        const newReponse = await dossierStore.createReponse(replyingToCommentId.value, message);
-        
-        // Trouver le commentaire et ajouter la réponse
-        const commentaireIndex = commentaires.value.findIndex(c => c.id === replyingToCommentId.value);
+        const newReponse = await dossierStore.createReponse(commentaireId, message);
+
+        // Trouver le commentaire et ajouter la réponse localement
+        const commentaireIndex = commentaires.value.findIndex(c => c.id === commentaireId);
         if (commentaireIndex !== -1) {
-            // Assurez-vous que l'objet a la propriété 'reponses' pour la réactivité
             if (!commentaires.value[commentaireIndex].reponses) {
                 commentaires.value[commentaireIndex].reponses = [];
             }
             commentaires.value[commentaireIndex].reponses.push(newReponse);
         } else {
-            console.warn(`Commentaire parent avec l'ID ${replyingToCommentId.value} non trouvé pour ajouter la réponse.`);
+            console.warn(`Commentaire parent avec l'ID ${commentaireId} non trouvé pour ajouter la réponse.`);
         }
-        
+
         showNotification('Réponse ajoutée avec succès', 'success');
-        cancelReply();
-        
     } catch (error) {
-        showNotification('Erreur lors de l\'ajout de la réponse', 'error');
-        console.error('Erreur handleCreateReponse:', error);
+        const serverMsg = error?.response?.data?.error || error?.message || 'Erreur lors de l\'ajout de la réponse';
+        showNotification(serverMsg, 'error');
+        console.error('Erreur handleCreateReponseFromChild:', { error, serverMsg });
     } finally {
         isSubmittingReponse.value = false;
     }
 };
+
+// Old bottom reply handler removed; inline replies are handled by `handleCreateReponseFromChild` above.
 
 const handleEditComment = async (comment) => {
     const newMessage = prompt('Modifier le commentaire:', comment.message);
@@ -394,11 +377,7 @@ const confirmDeleteComment = async () => {
     }
 };
 
-const cancelReply = () => {
-    isReplyingTo.value = false;
-    replyingToCommentId.value = null;
-    replyingToAuthor.value = '';
-};
+// cancelReply removed — inline reply UI is handled by the child component
 
 // Méthodes pour les documents
 const showDeleteDocumentModal = (document) => {

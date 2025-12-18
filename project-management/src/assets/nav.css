@@ -62,7 +62,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    color: #6b7280;
+    color: var(--adn-white-color);
     font-size: 0.875rem;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -72,6 +72,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--adn-white-color);
     width: 20px;
     height: 20px;
     flex-shrink: 0;
@@ -80,10 +81,12 @@
 .nav-icon svg {
     width: 20px;
     height: 20px;
+    color: var(--adn-white-color);
 }
 
 .nav-text {
     flex: 1;
+    color: var(--adn-white-color);
 }
 
 .nav-badge {
@@ -101,14 +104,14 @@
 }
 
 .nav-count {
-    color: #9ca3af;
+    color: var(--adn-white-color);
     font-size: 0.75rem;
     font-weight: 500;
 }
 
 /* État actif */
 .nav-item.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+    background: #37cd7f;
 }
 
 .nav-item.active .nav-link {
@@ -121,7 +124,7 @@
 
 /* Hover */
 .nav-item:not(.active):hover {
-    background: #f9fafb;
+    background: #37cd7f;
 }
 
 .nav-item:not(.active):hover .nav-link {
@@ -141,7 +144,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.05em;
-    color: #9ca3af;
+    color: #ffffff;
 }
 
 /* Footer de la sidebar */
@@ -151,6 +154,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+
 }
 
 /* Profil utilisateur */
@@ -165,7 +169,7 @@
 }
 
 .user-profile:hover {
-    background: #f9fafb;
+    background: none;
 }
 
 .user-avatar {
@@ -190,7 +194,7 @@
 .user-name {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--adn-white-color);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;

@@ -378,13 +378,25 @@ const updateChart = () => {
 
 .stat-group h4 {
   margin: 0 0 12px 0;
-  color: #1f2937;
+  color: white;
   font-size: 16px;
   font-weight: 600;
+  background: #4791b9;
+  padding: 12px;
+  border-radius: 16px;
 }
 
 .stat-item {
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-item svg{
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 4px;
 }
 
 .stat-item:last-child {
@@ -394,10 +406,14 @@ const updateChart = () => {
 .stat-label {
   display: block;
   font-size: 12px;
-  color: #6b7280;
+  color: black;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
+  background: #baf3c8;
+  padding: 6px;
+  max-width: 30%;
+  border-radius: 0.5rem;
 }
 
 .stat-value {
