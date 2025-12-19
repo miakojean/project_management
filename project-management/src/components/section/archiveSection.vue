@@ -70,7 +70,7 @@
 
         <notificationPopup 
             :visible="notificationPopup.isVisible"
-            :duration="5000"
+            :duration="3000"
             :message="notificationPopup.message"
         />
     </section>
@@ -117,7 +117,7 @@ export default {
             type: "success",
             isVisible: false,
             message:"",
-            duration:5000
+            duration:3000
         });
 
         const goToFolderDetail = async (dossier) => { //View

@@ -27,6 +27,12 @@
             </svg>
             <span class="info-text">{{ location }}</span>
           </div>
+          <div class="info-item" v-if="email">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
+              <path d="M1.5 6.75A2.25 2.25 0 013.75 4.5h16.5A2.25 2.25 0 0122.5 6.75v10.5A2.25 2.25 0 0120.25 19.5H3.75A2.25 2.25 0 011.5 17.25V6.75zM3.75 6.75v.638l8.25 5.063 8.25-5.063V6.75H3.75z" />
+            </svg>
+            <span class="info-text">{{ email }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -59,6 +65,10 @@ export default {
       type: String,
       default: 'Paris, France'
     },
+    email: {
+      type: String,
+      default: ''
+    },
     typeClient: {
       type: String,
       default: 'Entreprise'
@@ -78,7 +88,7 @@ export default {
         .toUpperCase();
     },
     badgeClass() {
-      return this.typeClient.toLowerCase() === 'particulier' ? 'badge-purple' : 'badge-blue';
+      return this.typeClient.toLowerCase() === 'particulier' ? 'badge-green' : 'badge-blue';
     }
   },
 
@@ -147,9 +157,9 @@ export default {
   background: #e0f2fe;
   color: #0369a1;
 }
-.badge-purple {
-  background: #f3e8ff;
-  color: #7e22ce;
+.badge-green {
+  background: #ecfdf5; /* light green */
+  color: #065f46; /* green-800 */
 }
 
 /* BODY */

@@ -216,10 +216,10 @@ export default {
       this.errorMessage = message;
       this.$emit('error', message);
       
-      // Auto-clear après 5 secondes
+      // Auto-clear après 3 secondes (aligné avec la durée maximale des notifications)
       setTimeout(() => {
         this.errorMessage = '';
-      }, 5000);
+      }, 3000);
     },
 
     formatFileSize(bytes) {

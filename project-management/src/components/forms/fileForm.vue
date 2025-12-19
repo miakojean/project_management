@@ -124,7 +124,7 @@ const selectedFiles = ref([])
 const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref('success')
-const notificationDuration = ref(5000)
+const notificationDuration = ref(3000)
 
 // Options pour le select des catégories
 const categoryOptions = ref([])
@@ -145,10 +145,11 @@ const clearError = () => {
 }
 
 // Fonction pour afficher une notification
-const showNotificationPopup = (type, message, duration = 5000) => {
+const showNotificationPopup = (type, message, duration = 3000) => {
   notificationType.value = type
   notificationMessage.value = message
-  notificationDuration.value = duration
+  // Clamp to max 3000ms
+  notificationDuration.value = Math.min(duration || 3000, 3000)
   showNotification.value = true
 }
 
@@ -259,14 +260,14 @@ const handleSubmit = async () => {
 
     console.log('Formulaire à envoyer',formData)
     
-    // Afficher la notification de succès
-    showNotificationPopup('success', `${count} document(s) ajouté(s) avec succès`, 4000)
+    // Afficher la notification de succès (max 3000ms)
+    showNotificationPopup('success', `${count} document(s) ajouté(s) avec succès`, 3000)
 
     // Émettre également l'événement au parent (si nécessaire)
     emit('notification', {
       type: 'success',
       message: `${count} document(s) ajouté(s) avec succès`,
-      duration: 5000,
+      duration: 3000,
     })
 
     // Rediriger après la notification
@@ -282,14 +283,14 @@ const handleSubmit = async () => {
 
     errorMessage.value = msg
     
-    // Afficher la notification d'erreur
-    showNotificationPopup('error', msg, 8000)
+    // Afficher la notification d'erreur (max 3000ms)
+    showNotificationPopup('error', msg, 3000)
     
     // Émettre également l'événement au parent (si nécessaire)
     emit('notification', { 
       type: 'error', 
       message: msg, 
-      duration: 8000 
+      duration: 3000 
     })
   } finally {
     isLoading.value = false

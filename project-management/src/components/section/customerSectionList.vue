@@ -31,8 +31,9 @@
                     :customer="customer"
                     :customerName="customer.nom_complet"
                     :description="customer.reference_client"
-                    :typeClient="customer.type_client"
+                    :typeClient="mapType(customer.type_client)"
                     :location="customer.ville"
+                    :email="customer.email"
                     @handle-customer="openModal(customer)"
                 />
             </div>
@@ -221,6 +222,14 @@ export default {
             console.log('Client selectionné',customer)
         };
 
+        // Mappe les types internes en labels lisibles
+        const mapType = (type) => {
+            if (!type) return '';
+            if (type === 'PERSONNE_MORALE') return 'entreprise';
+            if (type === 'PERSONNE_PHYSIQUE') return 'particulier';
+            return type;
+        };
+
         const closeModal = () => {
             isOpen.value = false;
             selectedCustomer.value = null;
@@ -261,6 +270,8 @@ export default {
             prevPage,
             onPageSizeChange,
             refreshData
+            ,
+            mapType
         };
     }
 }

@@ -265,7 +265,7 @@ export default {
                 emit('notification', {
                     type: 'success',
                     message: 'Client de type firme ajouté avec succès',
-                    duration: 5000
+                    duration: 3000
                 });
 
                 emit('submit', {
@@ -273,9 +273,10 @@ export default {
                     type_client: 'PERSONNE_MORALE'
                 });
 
+                // Rediriger légèrement après la fin de la notification
                 setTimeout(()=> {
                     router.push('/dashboard')
-                }, 6000)
+                }, 3500)
 
                 return response;
 
@@ -308,7 +309,7 @@ export default {
                 emit('notification', {
                     type: 'error',
                     message: errorMsg,
-                    duration: 8000
+                    duration: 3000
                 });
 
             } finally {

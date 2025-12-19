@@ -216,8 +216,14 @@ class ClientCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
+            # Champs de base
             'type_client', 'nom', 'prenoms', 'raison_sociale',
-            'telephone_1', 'email', 'charge_de_clientele', 'date_premier_contact'
+            # Coordonnées et informations complémentaires
+            'date_naissance', 'lieu_naissance', 'adresse', 'ville', 'commune',
+            'telephone_1', 'telephone_2', 'email',
+            'representant_legal_nom', 'representant_legal_fonction',
+            # Gestion
+            'charge_de_clientele', 'date_premier_contact'
         ]
     
     def to_internal_value(self, data):
@@ -231,6 +237,12 @@ class ClientCreateSerializer(serializers.ModelSerializer):
             date_str = str(data['date_premier_contact'])
             if 'T' in date_str:
                 data['date_premier_contact'] = date_str.split('T')[0]
+
+        # Gérer date_naissance (format iso venant du front ou datetime)
+        if 'date_naissance' in data and data['date_naissance']:
+            date_str = str(data['date_naissance'])
+            if 'T' in date_str:
+                data['date_naissance'] = date_str.split('T')[0]
         
         return super().to_internal_value(data)
         

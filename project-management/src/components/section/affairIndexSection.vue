@@ -180,7 +180,7 @@ export default {
             type: "success",
             isVisible: false,
             message: "",
-            duration: 5000
+            duration: 3000
         });
 
         // Gestion des filtres
@@ -252,7 +252,7 @@ export default {
                 
                 setTimeout(() => {
                     notificationPopup.value.isVisible = false;
-                }, 5000);
+                }, 3000);
                 
                 await refreshData();
             } catch (error) {

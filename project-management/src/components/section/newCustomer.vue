@@ -97,7 +97,7 @@ export default {
         const showNotification = ref(false);
         const notificationMessage = ref('');
         const notificationType = ref('success');
-        const notificationDuration = ref(5000);
+        const notificationDuration = ref(3000);
 
         const goToNextStep = (selectedType) => {
             console.log('Type sélectionné:', selectedType);
@@ -118,7 +118,8 @@ export default {
             showNotification.value = true;
             notificationMessage.value = notification.message;
             notificationType.value = notification.type;
-            notificationDuration.value = notification.duration || 5000;
+            // Clamp to maximum 3000ms
+            notificationDuration.value = Math.min(notification.duration || 3000, 3000);
 
             setTimeout(() => {
                 showNotification.value = false;

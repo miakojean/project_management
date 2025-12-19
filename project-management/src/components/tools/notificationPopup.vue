@@ -42,7 +42,7 @@ export default {
     },
     duration: {
       type: Number,
-      default: 5000
+      default: 3000
     },
     visible: {
       type: Boolean,
@@ -54,7 +54,8 @@ export default {
     const progress = ref(100)
     let progressInterval = null
     let startTime = null
-    const totalDuration = props.duration
+    // Clamp total duration to a maximum of 3000ms
+    const totalDuration = Math.min(props.duration || 3000, 3000)
 
     const close = () => {
       if (progressInterval) {

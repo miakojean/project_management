@@ -234,12 +234,13 @@ export default {
                 emit('notification', {
                     type: 'success',
                     message: 'Dossier ajouté avec succès',
-                    duration: 4000
+                    duration: 3000
                 });
 
+                // Rediriger peu après la fin de la notification
                 setTimeout(()=> {
                     router.push('/dashboard')
-                }, 5000);
+                }, 3500);
 
                 return nouveauDossier;
 
@@ -261,11 +262,11 @@ export default {
                 } else {
                     errorMessage.value = error.response?.data?.message || error.message || 'Erreur lors de la création du dossier';
                 }
-                // Émettre une notification d'erreur
+                // Émettre une notification d'erreur (max 3000ms)
                 emit('notification', {
                     type: 'error',
                     message: errorMsg,
-                    duration: 8000
+                    duration: 3000
                 });
             } finally {
                 isLoading.value = false;

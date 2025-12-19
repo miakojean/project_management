@@ -1,7 +1,7 @@
 <template>
     <div class="logo" @click="goToDashboard">
         <img src="../../../public/LOGO_ROND.png" alt="logo de Adn consulting">
-        <h4><span>adn</span> consulting</h4>
+        <h4><span>ADN</span> consulting</h4>
     </div>
 </template>
 
@@ -39,11 +39,12 @@ img{
 
 .logo h4{
     font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--adn-white-color);
+    font-weight: 400;
+    color: #fff;
 }
 
 .logo h4 span{
-    color: var(--adn-white-color);
+    font-weight: 600;
+    color: #7ac17a;
 }
 </style>

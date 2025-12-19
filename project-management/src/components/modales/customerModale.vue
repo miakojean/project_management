@@ -35,7 +35,7 @@
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Type de client :</span>
-                            <span class="detail-value">{{ customer.type_client }}</span>
+                            <span class="detail-value">{{ displayType }}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Nombre de dossiers :</span>
@@ -135,6 +135,15 @@ const customerDossiers = ref([])
 
 // Computed
 const hasDossiers = computed(() => customerDossiers.value.length > 0)
+
+// Format lisible du type de client
+const displayType = computed(() => {
+    const t = props.customer?.type_client || '';
+    if (!t) return '';
+    if (t === 'PERSONNE_MORALE') return 'entreprise';
+    if (t === 'PERSONNE_PHYSIQUE') return 'particulier';
+    return t;
+})
 
 // Méthodes
 const closeModal = () => {

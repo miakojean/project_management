@@ -1,7 +1,7 @@
 <template>
-  <!-- From Uiverse.io by satyamchaudharydev --> 
+<!-- From Uiverse.io by satyamchaudharydev --> 
 
-<div class="loader"></div>
+  <div class="loader"></div>
 </template>
 
 <script>
@@ -15,7 +15,7 @@ export default {
 .loader {
   display: block;
   --height-of-loader: 4px;
-  --loader-color: #0071e2;
+  --loader-color: #1edb70;
   width: 130px;
   height: var(--height-of-loader);
   border-radius: 30px;

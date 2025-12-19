@@ -142,7 +142,7 @@ const notificationPopupObject = ref({
     isVisible: false,
     message: '',
     type: 'success',
-    duration: 5000
+    duration: 3000
 });
 
 // Computed
@@ -435,10 +435,10 @@ const showNotification = (message, type = 'success') => {
         type
     };
     
-    // Correction: utilise notificationPopupObject.value
+    // Correction: utilise notificationPopupObject.value (max 3000ms)
     setTimeout(() => {
         notificationPopupObject.value.isVisible = false;
-    }, 5000);
+    }, 3000);
 };
 
 // Watcher pour recharger les commentaires quand le dossier change

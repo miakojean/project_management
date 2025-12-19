@@ -2,7 +2,6 @@
     <div class="search-container">
         <div class="search-input-wrapper">
             <input 
-                type="search" 
                 :placeholder="placeholder"
                 v-model="searchQuery"
                 @input="handleSearch"
@@ -28,12 +27,7 @@
             <div v-if="showResults && searchQuery" class="search-results">
                 <!-- Loading state -->
                 <div v-if="loading" class="loading-results">
-                    <div class="loading-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                    <span>Recherche en cours...</span>
+                    <loader/>
                 </div>
 
                 <!-- No results -->
@@ -152,6 +146,7 @@ import { useCustomerStore } from '@/stores/custumerStore';
 import { useDossierStore } from '@/stores/dossierStore';
 import { useRouter } from 'vue-router';
 import customerModale from '../modales/customerModale.vue';
+import loader from '../tools/loader.vue';
 
 export default {
     name: 'SearchInput',
@@ -169,6 +164,7 @@ export default {
 
     components:{
         customerModale,
+        loader
     },
     
     emits: ['select', 'search'],

@@ -252,7 +252,7 @@ export default {
                 emit('notification', {
                     type: 'success',
                     message: 'Client ajouté avec succès',
-                    duration: 5000
+                    duration: 3000
                 });
 
                 emit('submit', {
@@ -260,9 +260,10 @@ export default {
                     type_client: 'PERSONNE_PHYSIQUE'
                 });
 
+                // Rediriger peu après la fin de la notification
                 setTimeout(()=> {
                     router.push('/dashboard')
-                }, 4000);
+                }, 3500);
 
                 // Reset intelligent
                 const currentAgent = formData.charge_de_clientele;
@@ -300,7 +301,7 @@ export default {
                 emit('notification', {
                     type: 'error',
                     message: errorMsg,
-                    duration: 8000
+                    duration: 3000
                 });
 
             } finally {
