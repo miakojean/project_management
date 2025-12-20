@@ -81,25 +81,8 @@
                     v-model="formData.email"
                     :error="fieldErrors.email"
                 />
-                <inputfamily 
-                    identifiant="representantLegal" 
-                    label="Nom du representant legal" 
-                    placeholder="Entrer le nom du representant legal"
-                    v-model="formData.representant_legal_nom"
-                    :error="fieldErrors.representant_legal_nom"
-                />
             </div>
 
-            <div class="form-row">
-                
-                <inputfamily 
-                    identifiant="representantLegalRole" 
-                    label="Représentant légal fonction" 
-                    placeholder="Entrer la fonction"
-                    v-model="formData.representant_legal_fonction"
-                    :error="fieldErrors.representant_legal_fonction"
-                />
-            </div>
         </div>
 
         <div class="form-actions">
@@ -152,8 +135,6 @@ export default {
             telephone_1: '',
             telephone_2: '',
             email: '',
-            representant_legal_nom: '',
-            representant_legal_fonction: '',
             charge_de_clientele: '',
         });
 

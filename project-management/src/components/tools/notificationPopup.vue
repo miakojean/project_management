@@ -1,28 +1,31 @@
 <template>
-    <transition name="notification-slide">
-        <div v-if="visible" class="notification-popup" :class="type">
-            <div class="notification-content">
-                <div class="notification-icon">
-                    <span v-if="type === 'success'">✅</span>
-                    <span v-else-if="type === 'error'">❌</span>
-                    <span v-else>ℹ️</span>
-                </div>
-                <div class="notification-text">
-                    <p class="notification-message">{{ message }}</p>
-                </div>
-                <button class="notification-close" @click="close" aria-label="Fermer la notification">
-                  x
-                </button>
-            </div>
-            <div class="progress-bar">
-                <div 
-                    class="progress-fill" 
-                    :class="type"
-                    :style="{ width: progress + '%' }"
-                ></div>
-            </div>
+  <!-- Overlay: capture clicks outside the popup to close it -->
+  <transition name="notification-slide">
+    <div v-if="visible" class="notification-overlay" @click="close">
+      <div class="notification-popup" :class="type" @click.stop>
+        <div class="notification-content">
+          <div class="notification-icon">
+            <span v-if="type === 'success'">✅</span>
+            <span v-else-if="type === 'error'">❌</span>
+            <span v-else>ℹ️</span>
+          </div>
+          <div class="notification-text">
+            <p class="notification-message">{{ message }}</p>
+          </div>
+          <button class="notification-close" @click="close" aria-label="Fermer la notification">
+            x
+          </button>
         </div>
-    </transition>
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            :class="type"
+            :style="{ width: progress + '%' }"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script>
@@ -122,6 +125,16 @@ export default {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   overflow: hidden;
+}
+
+/* Full-screen overlay to detect outside clicks */
+.notification-overlay {
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  background: transparent;
+  z-index: 999; /* below the popup but above page content */
+  display: flex;
+  align-items: flex-end; /* keep popup at bottom */
 }
 
 .notification-popup.success {

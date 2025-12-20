@@ -4,6 +4,7 @@ import { ref, computed } from 'vue';
 import { authService} from '@/_services/api'; // Importez aussi api si besoin
 import { useRouter } from 'vue-router';
 import api from '@/_services/api';
+import { useDossierStore } from '@/stores/dossierStore';
 
 export const useAuthStore = defineStore('auth', () => {
     // --- ROUTER ---
@@ -217,6 +218,16 @@ export const useAuthStore = defineStore('auth', () => {
             // ✅ 3. Nettoyage complet LOCAL (toujours exécuté)
             clearUserCache();
             clearAuthTokens();
+            // Reset other stores that may hold cached data
+            try {
+                const dossierStore = useDossierStore();
+                if (dossierStore && typeof dossierStore.reset === 'function') {
+                    dossierStore.reset();
+                    console.log('🗑️ Cache dossier nettoyé via auth.logout');
+                }
+            } catch (e) {
+                console.warn('⚠️ Impossible de réinitialiser dossierStore pendant la déconnexion:', e);
+            }
             
             // ✅ 4. Réinitialiser l'état
             isInitialized.value = false;

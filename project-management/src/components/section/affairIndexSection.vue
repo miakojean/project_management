@@ -132,6 +132,7 @@ import editModale from '../modales/editModale.vue';
 import deleteModale from '../modales/deleteModale.vue';
 import folderCard from '../cards/folderCard.vue';
 import newCardsAffairs from '../cards/newCardsAffairs.vue';
+import { useSearchStore } from '@/stores/searchStore';
 
 export default {
     name: 'AffairIndexSection',
@@ -369,6 +370,30 @@ export default {
             
             console.log('✅ Dossiers disponibles:', dossierStore.dossiers.length);
         });
+
+        // React to global search changes (from navbar search)
+        const searchStore = useSearchStore();
+
+        watch(
+            () => searchStore.query,
+            async (newQuery) => {
+                try {
+                    if (!newQuery) {
+                        // If search cleared, reload with current filters
+                        await dossierStore.fetchDossiers(activeFilters.value);
+                        currentPage.value = 1;
+                        return;
+                    }
+
+                    // Combine search with active filters
+                    const params = { ...activeFilters.value, search: newQuery };
+                    await dossierStore.fetchDossiers(params);
+                    currentPage.value = 1;
+                } catch (err) {
+                    console.error('Erreur lors de l\'application du filtre de recherche:', err);
+                }
+            }
+        );
 
         return {
 

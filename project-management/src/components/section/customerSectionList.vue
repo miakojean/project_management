@@ -115,6 +115,7 @@ import customerCards from '../cards/customerCards.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 import customerModale from '../modales/customerModale.vue';
 import skeleton from '../tools/skeleton.vue';
+import { useSearchStore } from '@/stores/searchStore';
 
 export default {
     components: {
@@ -213,6 +214,31 @@ export default {
                 console.error('Erreur lors du rafraîchissement:', error);
             }
         };
+
+        // React to global search queries
+        const searchStore = useSearchStore();
+
+        watch(
+            () => searchStore.query,
+            async (newQuery) => {
+                try {
+                    if (!newQuery) {
+                        // Clear search filter
+                        store.setFilters({ search: '' });
+                        await store.fetchCustomers();
+                        currentPage.value = 1;
+                        return;
+                    }
+
+                    // Apply search filter and reload customers
+                    store.setFilters({ search: newQuery });
+                    await store.fetchCustomers();
+                    currentPage.value = 1;
+                } catch (err) {
+                    console.error('Erreur lors de l\'application du filtre de recherche clients:', err);
+                }
+            }
+        );
 
         // Méthodes pour la modale
         const openModal = (customer) => {

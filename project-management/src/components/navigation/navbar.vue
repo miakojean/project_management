@@ -209,6 +209,13 @@ export default {
             });
         });
 
+        // Handle search event from the search component (optional: here we just log)
+        const handleSearch = (payload) => {
+            // payload: { query, results }
+            console.log('Navigation bar search event:', payload);
+            // In the future we could navigate or focus a specific section
+        };
+
         // Retour des éléments exposés
         return {
             // Réactives/Store
@@ -229,6 +236,8 @@ export default {
             
             // Anciennes méthodes à garder si elles sont appelées de l'extérieur
             refreshNotifications: refreshData,
+            // Search handler (exposed so template @search can call it)
+            handleSearch,
         };
     }
 }

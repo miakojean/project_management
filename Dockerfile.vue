@@ -1,14 +1,18 @@
-# Dockerfile.vue → à mettre à la racine du projet
+# Dockerfile.vue → meant to be at repo root; docker-compose builds with context ./project-management
 FROM node:20-alpine
 
-WORKDIR /project-management
+# Use /app as the working directory to match docker-compose mounts
+WORKDIR /app
 
-COPY project-management/package*.json ./
-RUN npm ci   # plus propre que npm install
+# Copy only package files first for better caching (context is the frontend folder)
+COPY package*.json ./
+# Use npm install because there's no package-lock.json in the repo
+RUN npm install --silent
 
-COPY project-management/ .
+# Copy the rest of the frontend source from the build context
+COPY . ./
 
 EXPOSE 5173
 
-# Très important : Vite doit écouter sur toutes les interfaces
+# Vite needs to listen on all interfaces when running inside Docker
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

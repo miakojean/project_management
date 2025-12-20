@@ -144,6 +144,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 import { useDossierStore } from '@/stores/dossierStore';
+import { useSearchStore } from '@/stores/searchStore';
 import { useRouter } from 'vue-router';
 import customerModale from '../modales/customerModale.vue';
 import loader from '../tools/loader.vue';
@@ -223,6 +224,10 @@ export default {
 
                     searchResults.value = [...normalizedDossiers, ...normalizedClients];
 
+                    // Publish globally so sections can react and filter their tables
+                    const searchStore = useSearchStore();
+                    searchStore.setSearch(q, searchResults.value);
+
                     emit('search', {
                         query: q,
                         results: searchResults.value
@@ -274,6 +279,9 @@ export default {
             searchQuery.value = '';
             searchResults.value = [];
             showResults.value = false;
+            // clear global search state
+            const searchStore = useSearchStore();
+            searchStore.clearSearch();
             emit('clear');
             searchInput.value?.focus();
         };

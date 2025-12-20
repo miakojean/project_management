@@ -3,9 +3,10 @@
         <div class="card-header">
             <div class="header-left">
                 <div class="client-avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" v-if="!clientImage">
-                        <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" clip-rule="evenodd" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" v-if="!clientImage">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                     </svg>
+
                     <img v-else :src="clientImage" :alt="clientNom" />
                 </div>
                 <div class="dossier-info">
@@ -38,9 +39,6 @@
                         <ul class="dropdown-list">
                             <li class="dropdown-item" @mousedown="handleDropdownAction('view')">
                                 <span>Voir le dossier</span>
-                            </li>
-                            <li class="dropdown-item" @mousedown="handleDropdownAction('edit')">
-                                <span>Modifier</span>
                             </li>
                             <li class="dropdown-item" @mousedown="handleDropdownAction('mark-as-done')">
                                 <span>Marquer comme clôturé</span>
@@ -317,9 +315,6 @@ export default {
             switch(action) {
                 case 'view':
                     emit('view', dossierData);
-                    break;
-                case 'edit':
-                    emit('edit', dossierData);
                     break;
                 case 'mark-as-done':
                     emit('mark-as-done', dossierData);
