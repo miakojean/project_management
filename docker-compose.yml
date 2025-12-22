@@ -4,51 +4,43 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      - POSTGRES_DB=${DB_NAME:-project-management}
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-123456}
-    ports:
-      - "5432:5432"
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # On ne publie plus le port 5432 sur l'hôte en production pour la sécurité
 
   django:
     build:
       context: .
       dockerfile: Dockerfile.django
     container_name: django_app
-    volumes:
-      - ./project_management_backend:/app
-    ports:
-      - "8000:8000"
+    restart: always
     environment:
-      - DEBUG=1
+      - DEBUG=0  # Désactiver le debug en production
       - DB_HOST=db
-      - DB_NAME=${DB_NAME:-project-management}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-123456}
-      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - db
-    stdin_open: true
-    tty: true
+    volumes:
+      - static_volume:/app/static
 
   vue:
     build:
-      context: ./project-management # Assure-toi que le contexte pointe au bon endroit
+      context: ./project-management
       dockerfile: ../Dockerfile.vue
-    container_name: vue_app
-    volumes:
-      - ./project-management:/app
-      - /app/node_modules
+    container_name: nginx_vue
+    restart: always
     ports:
-      - "5173:5173"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+      - "80:80"
     depends_on:
       - django
-    stdin_open: true
-    tty: true
+    volumes:
+      - static_volume:/app/static # Pour que Nginx serve les fichiers de Django
 
 volumes:
   postgres_data:
+  static_volume:
