@@ -1,5 +1,5 @@
 # Dockerfile.vue → meant to be at repo root; docker-compose builds with context ./project-management
-FROM node:20-alpine
+FROM node:20-bullseye-slim
 
 # Use /app as the working directory to match docker-compose mounts
 WORKDIR /app
@@ -8,6 +8,11 @@ WORKDIR /app
 COPY package*.json ./
 # Use npm install because there's no package-lock.json in the repo
 RUN npm install --silent
+
+# Some Rollup builds use optional native packages; ensure a compatible binary is present
+# Install the GNU variant (Debian-based image) explicitly and rebuild native modules
+RUN npm install @rollup/rollup-linux-x64-gnu --no-save || true
+RUN npm rebuild --silent || true
 
 # Copy the rest of the frontend source from the build context
 COPY . ./

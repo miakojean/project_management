@@ -63,6 +63,10 @@
                 />
             </div>
 
+            <div class="form-row">
+                <span class="required-field">* champs obligatoires</span>
+            </div>
+
             <div class="form-actions">
                 <prevButton @click="handlePrev"/>
                 <mainButton
@@ -386,7 +390,14 @@ export default {
 }
 
 .error-close:hover {
-    background-color: #fecaca;
+    background-color: #dc2626;
+    font-size: 0.8rem;
+}
+
+.required-field{
+    font-size: 0.875rem;
+    color: #dc2626;
+    font-style: italic;
 }
 
 /* Responsive */
