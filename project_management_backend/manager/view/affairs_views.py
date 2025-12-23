@@ -531,7 +531,7 @@ class CommentaireListCreateAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='COMMENTAIRE_AJOUTE',
-                            message=f"Un nouveau commentaire a été ajouté au dossier '{dossier.reference_dossier}' par {actor_user.get_full_name()}.",
+                            message=f"Un nouveau commentaire a été ajouté au dossier '{dossier.reference_dossier}'",
                             content_object=commentaire,
                             actor=actor_user
                         )
