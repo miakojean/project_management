@@ -108,7 +108,7 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                 dossiers = dossiers.filter(priorite=priorite)
                 filters_applied['priorite'] = priorite
             
-            # Filtrage par statut d'archive
+            # Filtrage par statut d'archive - MODIFICATION IMPORTANTE
             est_archive = request.query_params.get('est_archive')
             if est_archive is not None:
                 # Convertir la chaîne en booléen
@@ -120,12 +120,15 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                     filters_applied['est_archive'] = False
                 else:
                     # Valeur invalide, on ignore le filtre
-                    pass
+                    filters_applied['est_archive'] = 'all'
             else:
-                # Par défaut, exclure les dossiers archivés (pour ne pas casser l'UX)
-                dossiers = dossiers.filter(est_archive=False)
-                filters_applied['est_archive'] = False
-            # ============ FIN DE L'AJOUT ============
+                # MODIFICATION : Par défaut, afficher TOUS les dossiers (non archivés ET archivés)
+                # ou vous pouvez choisir d'afficher seulement les non archivés si c'est votre préférence
+                filters_applied['est_archive'] = 'all'  # Indique que tous les dossiers sont inclus
+                # Si vous voulez garder le comportement précédent (uniquement non archivés), décommentez cette ligne :
+                # dossiers = dossiers.filter(est_archive=False)
+                # filters_applied['est_archive'] = False
+            # ============ FIN DE LA MODIFICATION ============
 
             # Filtrage par client
             client_id = request.query_params.get('client_id')

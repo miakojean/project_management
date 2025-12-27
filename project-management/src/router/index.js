@@ -48,6 +48,12 @@ const router = createRouter({
       component: () => import('@/views/dashboardChart.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path:'/dashboard/customer-info',
+      name:'customer-info',
+      component: () => import('@/views/dashboardCustomerInfo.vue'),
+      meta: { requiresAuth: true }
+    },
 
     /* Register new customer, add folder affairs and add documents */
     {

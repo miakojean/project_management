@@ -38,6 +38,7 @@
     </div>
 
     <div class="card__footer">
+      <ActionButton/>
       
       <button class="btn-primary" @click="emitClick">
         Ouvrir le dossier
@@ -50,6 +51,8 @@
 </template>
 
 <script>
+import ActionButton from '../button/actionButton.vue';
+
 export default {
   name: 'LegalEntityCard',
   props: {
@@ -77,6 +80,10 @@ export default {
 
   // Déclaration de l'événement
   emits: ['handleCustomer'],
+
+  components:{
+    ActionButton
+  },
 
   computed: {
     initiales() {
