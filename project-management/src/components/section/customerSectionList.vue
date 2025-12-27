@@ -35,6 +35,7 @@
                     :location="customer.ville"
                     :email="customer.email"
                     @handle-customer="openModal(customer)"
+                    @handle-edit="goToCustomerDetails(customer)"
                 />
             </div>
             
@@ -116,6 +117,7 @@ import { useCustomerStore } from '@/stores/custumerStore';
 import customerModale from '../modales/customerModale.vue';
 import skeleton from '../tools/skeleton.vue';
 import { useSearchStore } from '@/stores/searchStore';
+import { useRouter } from 'vue-router';
 
 export default {
     components: {
@@ -124,6 +126,9 @@ export default {
         skeleton
     },
     setup() {
+
+        const router = useRouter();
+
         const isLoading = ref(true);
 
         const store = useCustomerStore();
@@ -182,6 +187,17 @@ export default {
                 currentPage.value = page;
                 scrollToTop();
             }
+        };
+
+        const goToCustomerDetails = (customer) => {
+            // Logique pour naviguer vers les détails du client
+
+            // Attacher le client selectionné au store avant la navigation
+            store.attachCustomer(customer);
+
+            // Debug log
+            console.log('Naviguer vers les détails du client:', customer);
+            router.push('/dashboard/customer-info')
         };
         
         const nextPage = () => {
@@ -273,6 +289,9 @@ export default {
         );
 
         return {
+            // Router
+            router,
+
             // Gestion modale
             isLoading,
             isOpen,
@@ -292,6 +311,7 @@ export default {
             visiblePages,
             showEllipsis,
             goToPage,
+            goToCustomerDetails,
             nextPage,
             prevPage,
             onPageSizeChange,

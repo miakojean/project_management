@@ -280,7 +280,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import inputfamily from '../input/inputfamily.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 
@@ -300,13 +300,12 @@ export default {
     const isSaving = ref(false);
     const editNotes = ref(false);
     const showConfirmModal = ref(false);
+    const isLoading = ref(false);
     
-    // Options pour le chargé de clientèle
     const chargeDeClienteleOptions = ref([]);
 
-    // Modèle de données aligné avec Django
+    // Modèle de données
     const form = reactive({
-      // Informations générales
       type_client: 'PERSONNE_PHYSIQUE',
       statut: 'ACTIF',
       reference_client: '',
@@ -322,7 +321,7 @@ export default {
       forme_juridique: '',
       numero_rccm: '',
       numero_cc: '',
-      capital_social: null,
+      capital_social: '',
       representant_legal_nom: '',
       representant_legal_fonction: '',
       
@@ -337,37 +336,53 @@ export default {
       // Gestion
       date_premier_contact: new Date().toISOString().split('T')[0],
       notes: '',
-      charge_de_clientele: null,
-      
-      // Métadonnées
-      date_creation: '',
-      date_modification: ''
+      charge_de_clientele: '',
     });
 
     // Méthodes
     const loadClientData = async () => {
-      if (props.clientId) {
-        try {
-          const clientData = await clientStore.fetchClient(props.clientId);
-          Object.assign(form, clientData);
-          
-          // Formater les dates pour les champs date
-          if (form.date_naissance) {
-            form.date_naissance = form.date_naissance.split('T')[0];
+      if (!props.clientId) {
+        console.log('Pas d\'ID client, mode création');
+        return;
+      }
+      
+      isLoading.value = true;
+      
+      try {
+        console.log(`Chargement du client ${props.clientId} depuis l'API...`);
+        
+        // 1. LANCER LA REQUÊTE API via le store
+        const clientData = await clientStore.fetchCustomerById(props.clientId);
+        
+        console.log('Données reçues de l\'API:', clientData);
+        
+        // 2. Copier les données dans le formulaire
+        Object.keys(form).forEach(key => {
+          if (clientData[key] !== undefined && clientData[key] !== null) {
+            // Traitement spécial pour les dates
+            if (key.includes('date') && clientData[key]) {
+              form[key] = clientData[key].split('T')[0];
+            } else if (key === 'capital_social' && clientData[key] !== null) {
+              form[key] = clientData[key].toString();
+            } else {
+              form[key] = clientData[key];
+            }
           }
-          if (form.date_premier_contact) {
-            form.date_premier_contact = form.date_premier_contact.split('T')[0];
-          }
-        } catch (error) {
-          console.error('Erreur lors du chargement du client:', error);
-        }
+        });
+        
+        console.log('Formulaire rempli:', form);
+        
+      } catch (error) {
+        console.error('Erreur lors du chargement du client depuis l\'API:', error);
+        alert(`Impossible de charger les données du client: ${error.message}`);
+      } finally {
+        isLoading.value = false;
       }
     };
 
     const loadChargeDeClienteleOptions = async () => {
       try {
-        // Appeler une API pour récupérer les utilisateurs
-        // Pour l'exemple, on simule des données
+        // Simulation - remplacer par votre appel API
         chargeDeClienteleOptions.value = [
           { id: 1, nom_complet: 'Jean Dupont' },
           { id: 2, nom_complet: 'Marie Curie' },
@@ -379,14 +394,17 @@ export default {
     };
 
     const handleClientTypeChange = () => {
-      // Réinitialiser les champs spécifiques au type
       if (form.type_client === 'PERSONNE_PHYSIQUE') {
+        // Réinitialiser les champs personne morale
         form.raison_sociale = '';
         form.forme_juridique = '';
         form.numero_rccm = '';
         form.numero_cc = '';
-        form.capital_social = null;
+        form.capital_social = '';
+        form.representant_legal_nom = '';
+        form.representant_legal_fonction = '';
       } else {
+        // Réinitialiser les champs personne physique
         form.nom = '';
         form.prenoms = '';
         form.date_naissance = '';
@@ -395,8 +413,8 @@ export default {
     };
 
     const handleAvatarChange = () => {
-      // TODO: Implémenter le changement d'avatar
       console.log('Changer l\'avatar');
+      // TODO: Implémenter le changement d'avatar
     };
 
     const validateForm = () => {
@@ -411,13 +429,13 @@ export default {
       }
       
       if (form.type_client === 'PERSONNE_PHYSIQUE') {
-        if (!form.nom) errors.push('Le nom est requis pour une personne physique');
-        if (!form.prenoms) errors.push('Les prénoms sont requis pour une personne physique');
+        if (!form.nom.trim()) errors.push('Le nom est requis pour une personne physique');
+        if (!form.prenoms.trim()) errors.push('Les prénoms sont requis pour une personne physique');
       } else {
-        if (!form.raison_sociale) errors.push('La raison sociale est requise pour une personne morale');
+        if (!form.raison_sociale.trim()) errors.push('La raison sociale est requise pour une personne morale');
       }
       
-      if (!form.telephone_1) {
+      if (!form.telephone_1.trim()) {
         errors.push('Le téléphone 1 est requis');
       }
       
@@ -438,18 +456,42 @@ export default {
       showConfirmModal.value = false;
       
       try {
+        // Préparer les données
+        const dataToSave = { ...form };
+        
+        // Nettoyer les données pour l'API
+        Object.keys(dataToSave).forEach(key => {
+          if (dataToSave[key] === '' || dataToSave[key] === null) {
+            dataToSave[key] = null;
+          }
+          if (key === 'capital_social' && dataToSave[key]) {
+            dataToSave[key] = parseFloat(dataToSave[key]);
+          }
+        });
+        
+        console.log('Données à sauvegarder:', dataToSave);
+        
         if (props.clientId) {
-          // Mise à jour
-          await clientStore.updateClient(props.clientId, form);
+          // 3. MISE À JOUR via le store
+          await clientStore.updateCustomer(props.clientId, dataToSave);
+          alert('Client mis à jour avec succès!');
+          
+          // Recharger les données après mise à jour
+          await loadClientData();
         } else {
-          // Création
-          await clientStore.createClient(form);
+          // 4. CRÉATION via le store
+          await clientStore.createCustomer(dataToSave);
+          alert('Client créé avec succès!');
+          
+          // Optionnel: rediriger vers la page d'édition
+          // ou réinitialiser le formulaire
+          handleCancel();
         }
         
-        alert('Client enregistré avec succès!');
       } catch (error) {
         console.error('Erreur lors de l\'enregistrement:', error);
-        alert('Erreur lors de l\'enregistrement: ' + error.message);
+        const errorMsg = clientStore.error || error.message || 'Erreur inconnue';
+        alert('Erreur lors de l\'enregistrement: ' + errorMsg);
       } finally {
         isSaving.value = false;
       }
@@ -457,9 +499,10 @@ export default {
 
     const handleCancel = () => {
       if (props.clientId) {
+        // Recharger les données originales depuis l'API
         loadClientData();
       } else {
-        // Réinitialiser le formulaire
+        // Réinitialiser le formulaire pour nouvelle création
         Object.keys(form).forEach(key => {
           if (key !== 'type_client' && key !== 'statut') {
             form[key] = '';
@@ -482,24 +525,40 @@ export default {
     };
 
     const isEmailVerified = (email) => {
-      // Logique de vérification d'email
-      return email && email.includes('@');
+      return email && email.includes('@') && email.includes('.');
     };
 
     const isPhoneVerified = (phone) => {
-      // Logique de vérification de téléphone
       return phone && phone.length >= 8;
     };
 
+    // Watcher pour recharger les données si clientId change
+    watch(() => props.clientId, (newId) => {
+      console.log(`ID client changé: ${newId}`);
+      if (newId) {
+        loadClientData();
+      } else {
+        handleCancel(); // Réinitialiser pour nouvelle création
+      }
+    }, { immediate: true });
+
     // Cycle de vie
-    onMounted(() => {
-      loadClientData();
-      loadChargeDeClienteleOptions();
+    onMounted(async () => {
+      console.log('Component mounted, clientId:', props.clientId);
+      
+      // Charger les données du client si ID présent
+      if (props.clientId) {
+        await loadClientData();
+      }
+      
+      // Charger les options de chargé de clientèle
+      await loadChargeDeClienteleOptions();
     });
 
     return {
       form,
       isSaving,
+      isLoading,
       editNotes,
       showConfirmModal,
       chargeDeClienteleOptions,
@@ -517,8 +576,6 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
 .account-section {
   max-width: 1000px;
   margin: 0 auto;

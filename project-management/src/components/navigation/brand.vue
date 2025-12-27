@@ -1,6 +1,6 @@
 <template>
     <div class="logo" @click="goToDashboard">
-        <img src="../../../public/LOGO_ROND.png" alt="logo de Adn consulting">
+        <img src="../../../public/LOGO.png" alt="logo de Adn consulting">
         <h4><span>ADN</span> consulting</h4>
     </div>
 </template>

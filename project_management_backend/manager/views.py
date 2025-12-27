@@ -397,3 +397,25 @@ class ClientMonthlyRegistrationStatsAPIView(APIView):
         except Exception as e:
             logger.error(f"Erreur lors de la génération des stats clients mensuelles: {e}")
             return Response({'success': False, 'message': 'Erreur lors de la récupération des statistiques', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ClientDetailView(APIView):
+    """
+    Docstring for ClientDetailView
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, client_id, *args, **kwargs):
+        try:
+            client = Client.objects.get(id=client_id)
+            serializer = ClientSerializer(client)
+            return Response({
+                'message': 'Détails du client récupérés avec succès',
+                'success': True,
+                'client': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Client.DoesNotExist:
+            return Response({
+                'message': 'Client non trouvé',
+                'success': False
+            }, status=status.HTTP_404_NOT_FOUND)

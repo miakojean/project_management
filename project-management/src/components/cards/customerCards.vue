@@ -38,7 +38,7 @@
     </div>
 
     <div class="card__footer">
-      <ActionButton/>
+      <ActionButton @click="emitEdit"/>
       
       <button class="btn-primary" @click="emitClick">
         Ouvrir le dossier
@@ -79,7 +79,7 @@ export default {
   },
 
   // Déclaration de l'événement
-  emits: ['handleCustomer'],
+  emits: ['handleCustomer', 'handleEdit'],
 
   components:{
     ActionButton
@@ -103,6 +103,10 @@ export default {
     // 3. La méthode qui envoie le signal au parent
     emitClick() {
       this.$emit('handleCustomer');
+    },
+    // Methode pour voir les details du client
+    emitEdit() {
+      this.$emit('handleEdit');
     },
     openFolder() {
       // Logique future pour ouvrir le dossier directement
