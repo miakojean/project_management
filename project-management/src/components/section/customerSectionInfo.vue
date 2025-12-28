@@ -74,7 +74,7 @@
         <template v-else>
           <div class="form-group full-width">
             <div class="label-row">
-              <label>Raison sociale *</label>
+              <label>Dénomination sociale *</label>
             </div>
             <div class="input-wrapper">
               <input type="text" v-model="form.raison_sociale" placeholder="Nom de l'entreprise" />
@@ -280,7 +280,8 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
+import { useRouter } from 'vue-router'; // Import du router pour la redirection si nécessaire
 import inputfamily from '../input/inputfamily.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 
@@ -296,16 +297,18 @@ export default {
     }
   },
   setup(props) {
+    const router = useRouter();
     const clientStore = useCustomerStore();
+    
     const isSaving = ref(false);
     const editNotes = ref(false);
     const showConfirmModal = ref(false);
     const isLoading = ref(false);
-    
     const chargeDeClienteleOptions = ref([]);
 
     // Modèle de données
     const form = reactive({
+      id: null, // Ajout de l'ID pour le suivi
       type_client: 'PERSONNE_PHYSIQUE',
       statut: 'ACTIF',
       reference_client: '',
@@ -339,63 +342,77 @@ export default {
       charge_de_clientele: '',
     });
 
-    // Méthodes
-    const loadClientData = async () => {
-      if (!props.clientId) {
-        console.log('Pas d\'ID client, mode création');
-        return;
-      }
-      
-      isLoading.value = true;
-      
-      try {
-        console.log(`Chargement du client ${props.clientId} depuis l'API...`);
-        
-        // 1. LANCER LA REQUÊTE API via le store
-        const clientData = await clientStore.fetchCustomerById(props.clientId);
-        
-        console.log('Données reçues de l\'API:', clientData);
-        
-        // 2. Copier les données dans le formulaire
+    /**
+     * Fonction utilitaire pour remplir le formulaire avec un objet données
+     */
+    const populateForm = (data) => {
         Object.keys(form).forEach(key => {
-          if (clientData[key] !== undefined && clientData[key] !== null) {
+          if (data[key] !== undefined && data[key] !== null) {
             // Traitement spécial pour les dates
-            if (key.includes('date') && clientData[key]) {
-              form[key] = clientData[key].split('T')[0];
-            } else if (key === 'capital_social' && clientData[key] !== null) {
-              form[key] = clientData[key].toString();
-            } else {
-              form[key] = clientData[key];
+            if (key.includes('date') && data[key]) {
+              form[key] = data[key].split('T')[0];
+            } 
+            // Traitement spécial pour le capital social (conversion en string pour l'input)
+            else if (key === 'capital_social' && data[key] !== null) {
+              form[key] = data[key].toString();
+            } 
+            // Cas général
+            else {
+              form[key] = data[key];
             }
           }
         });
+    };
+
+    /**
+     * Charge les données du client
+     */
+    const loadClientData = async () => {
+      isLoading.value = true;
+      
+      try {
+        // 1. Déterminer quel ID utiliser
+        // On regarde d'abord les props, sinon on regarde le store (cas navigation depuis la liste)
+        let targetId = props.clientId;
         
-        console.log('Formulaire rempli:', form);
+        if (!targetId && clientStore.currentCustomer) {
+            targetId = clientStore.currentCustomer.id;
+        }
+
+        // Si aucun ID trouvé (ex: refresh page sans ID dans l'URL), on redirige ou on reset
+        if (!targetId) {
+            console.warn("Aucun client sélectionné, retour à la liste ou mode création.");
+            // Optionnel : router.push('/dashboard/customer-list');
+            return; 
+        }
+
+        console.log(`Chargement du client ID: ${targetId} depuis l'API...`);
+        
+        // 2. Appel API pour avoir les infos fraîches
+        const clientData = await clientStore.fetchCustomerById(targetId);
+        
+        // 3. Remplir le formulaire
+        populateForm(clientData);
+        
+        console.log('Formulaire synchronisé avec succès');
         
       } catch (error) {
-        console.error('Erreur lors du chargement du client depuis l\'API:', error);
-        alert(`Impossible de charger les données du client: ${error.message}`);
+        console.error('Erreur lors du chargement du client:', error);
       } finally {
         isLoading.value = false;
       }
     };
 
     const loadChargeDeClienteleOptions = async () => {
-      try {
-        // Simulation - remplacer par votre appel API
-        chargeDeClienteleOptions.value = [
+      // Simulation ou appel API réel ici
+      chargeDeClienteleOptions.value = [
           { id: 1, nom_complet: 'Jean Dupont' },
-          { id: 2, nom_complet: 'Marie Curie' },
-          { id: 3, nom_complet: 'Paul Martin' }
-        ];
-      } catch (error) {
-        console.error('Erreur lors du chargement des chargés de clientèle:', error);
-      }
+          { id: 2, nom_complet: 'Marie Curie' }
+      ];
     };
 
     const handleClientTypeChange = () => {
       if (form.type_client === 'PERSONNE_PHYSIQUE') {
-        // Réinitialiser les champs personne morale
         form.raison_sociale = '';
         form.forme_juridique = '';
         form.numero_rccm = '';
@@ -404,7 +421,6 @@ export default {
         form.representant_legal_nom = '';
         form.representant_legal_fonction = '';
       } else {
-        // Réinitialiser les champs personne physique
         form.nom = '';
         form.prenoms = '';
         form.date_naissance = '';
@@ -413,31 +429,22 @@ export default {
     };
 
     const handleAvatarChange = () => {
-      console.log('Changer l\'avatar');
-      // TODO: Implémenter le changement d'avatar
+      // TODO: Implémenter upload avatar
     };
 
     const validateForm = () => {
       const errors = [];
-      
-      if (!form.type_client) {
-        errors.push('Le type de client est requis');
-      }
-      
-      if (!form.statut) {
-        errors.push('Le statut est requis');
-      }
+      if (!form.type_client) errors.push('Le type de client est requis');
+      if (!form.statut) errors.push('Le statut est requis');
       
       if (form.type_client === 'PERSONNE_PHYSIQUE') {
-        if (!form.nom.trim()) errors.push('Le nom est requis pour une personne physique');
-        if (!form.prenoms.trim()) errors.push('Les prénoms sont requis pour une personne physique');
+        if (!form.nom.trim()) errors.push('Le nom est requis');
+        if (!form.prenoms.trim()) errors.push('Les prénoms sont requis');
       } else {
-        if (!form.raison_sociale.trim()) errors.push('La raison sociale est requise pour une personne morale');
+        if (!form.raison_sociale.trim()) errors.push('La raison sociale est requise');
       }
       
-      if (!form.telephone_1.trim()) {
-        errors.push('Le téléphone 1 est requis');
-      }
+      if (!form.telephone_1.trim()) errors.push('Le téléphone 1 est requis');
       
       return errors;
     };
@@ -445,7 +452,7 @@ export default {
     const handleSubmit = () => {
       const errors = validateForm();
       if (errors.length > 0) {
-        alert('Veuillez corriger les erreurs suivantes:\n' + errors.join('\n'));
+        alert('Erreurs :\n' + errors.join('\n'));
         return;
       }
       showConfirmModal.value = true;
@@ -456,10 +463,9 @@ export default {
       showConfirmModal.value = false;
       
       try {
-        // Préparer les données
         const dataToSave = { ...form };
         
-        // Nettoyer les données pour l'API
+        // Nettoyage des données
         Object.keys(dataToSave).forEach(key => {
           if (dataToSave[key] === '' || dataToSave[key] === null) {
             dataToSave[key] = null;
@@ -469,90 +475,64 @@ export default {
           }
         });
         
-        console.log('Données à sauvegarder:', dataToSave);
-        
-        if (props.clientId) {
-          // 3. MISE À JOUR via le store
-          await clientStore.updateCustomer(props.clientId, dataToSave);
+        // On utilise l'ID du formulaire (récupéré au chargement) ou l'ID des props
+        const idToUpdate = form.id || props.clientId || (clientStore.currentCustomer ? clientStore.currentCustomer.id : null);
+
+        if (idToUpdate) {
+          // UPDATE
+          await clientStore.updateCustomer(idToUpdate, dataToSave);
           alert('Client mis à jour avec succès!');
-          
-          // Recharger les données après mise à jour
-          await loadClientData();
+          await loadClientData(); // Recharger pour être sûr
         } else {
-          // 4. CRÉATION via le store
-          await clientStore.createCustomer(dataToSave);
+          // CREATE
+          const newClient = await clientStore.createCustomer(dataToSave);
           alert('Client créé avec succès!');
-          
-          // Optionnel: rediriger vers la page d'édition
-          // ou réinitialiser le formulaire
-          handleCancel();
+          // Mise à jour de l'ID local pour passer en mode édition
+          form.id = newClient.id;
+          clientStore.attachCustomer(newClient);
         }
         
       } catch (error) {
-        console.error('Erreur lors de l\'enregistrement:', error);
-        const errorMsg = clientStore.error || error.message || 'Erreur inconnue';
-        alert('Erreur lors de l\'enregistrement: ' + errorMsg);
+        console.error('Erreur save:', error);
+        alert('Erreur: ' + (clientStore.error || error.message));
       } finally {
         isSaving.value = false;
       }
     };
 
     const handleCancel = () => {
-      if (props.clientId) {
-        // Recharger les données originales depuis l'API
-        loadClientData();
-      } else {
-        // Réinitialiser le formulaire pour nouvelle création
-        Object.keys(form).forEach(key => {
-          if (key !== 'type_client' && key !== 'statut') {
-            form[key] = '';
-          }
-        });
-        form.type_client = 'PERSONNE_PHYSIQUE';
-        form.statut = 'ACTIF';
-        form.date_premier_contact = new Date().toISOString().split('T')[0];
-      }
+        // Si on a un ID, on recharge les données originales
+        if (form.id || props.clientId || clientStore.currentCustomer) {
+            loadClientData();
+        } else {
+            // Sinon on vide tout (mode création)
+            Object.keys(form).forEach(key => {
+                if (key !== 'type_client' && key !== 'statut') form[key] = '';
+            });
+            form.type_client = 'PERSONNE_PHYSIQUE';
+            form.statut = 'ACTIF';
+        }
     };
 
     const getStatusLabel = (status) => {
-      const labels = {
-        'ACTIF': 'Actif',
-        'INACTIF': 'Inactif',
-        'PROSPECT': 'Prospect',
-        'ARCHIVE': 'Archivé'
-      };
+      const labels = { 'ACTIF': 'Actif', 'INACTIF': 'Inactif', 'PROSPECT': 'Prospect', 'ARCHIVE': 'Archivé' };
       return labels[status] || status;
     };
 
-    const isEmailVerified = (email) => {
-      return email && email.includes('@') && email.includes('.');
-    };
+    const isEmailVerified = (email) => email && email.includes('@') && email.includes('.');
+    const isPhoneVerified = (phone) => phone && phone.length >= 8;
 
-    const isPhoneVerified = (phone) => {
-      return phone && phone.length >= 8;
-    };
-
-    // Watcher pour recharger les données si clientId change
-    watch(() => props.clientId, (newId) => {
-      console.log(`ID client changé: ${newId}`);
-      if (newId) {
-        loadClientData();
-      } else {
-        handleCancel(); // Réinitialiser pour nouvelle création
-      }
-    }, { immediate: true });
-
-    // Cycle de vie
+    // --- CYCLE DE VIE ---
     onMounted(async () => {
-      console.log('Component mounted, clientId:', props.clientId);
-      
-      // Charger les données du client si ID présent
-      if (props.clientId) {
-        await loadClientData();
-      }
-      
-      // Charger les options de chargé de clientèle
-      await loadChargeDeClienteleOptions();
+      await Promise.all([
+          loadClientData(),
+          loadChargeDeClienteleOptions()
+      ]);
+    });
+
+    // Si l'ID change via les props (cas rare si pas dans l'URL, mais bonne pratique)
+    watch(() => props.clientId, (newVal) => {
+        if(newVal) loadClientData();
     });
 
     return {
