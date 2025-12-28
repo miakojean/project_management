@@ -81,7 +81,7 @@ export default {
   select {
     padding: 0.9rem;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 0.6rem;
     font-size: 0.9rem;
     width: 100%;
     box-sizing: border-box;

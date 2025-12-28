@@ -112,11 +112,7 @@ export default {
 </script>
 
 <style scoped>
-/* Import de la police pour matcher le design (optionnel si déjà dans le projet) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
 .input__family {
-  font-family: 'Inter', sans-serif;
   width: 100%;
   display: flex;
   flex-direction: column;
