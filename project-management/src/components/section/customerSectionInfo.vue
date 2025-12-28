@@ -13,7 +13,7 @@
 
       <div class="profile-header">
         <div class="avatar-wrapper">
-          <img src="https://i.pravatar.cc/150?img=1" alt="Avatar" class="avatar" />
+          <div class="avatar">{{ clientInitials }}</div>
           <button class="camera-btn" @click="handleAvatarChange">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -499,6 +499,19 @@ export default {
     const isEmailVerified = (email) => email && email.includes('@') && email.includes('.');
     const isPhoneVerified = (phone) => phone && phone.length >= 8;
 
+    // Computed pour les initiales
+    const clientInitials = computed(() => {
+      if (form.type_client === 'PERSONNE_PHYSIQUE') {
+        const nom = form.nom?.trim() || '';
+        const prenoms = form.prenoms?.trim() || '';
+        return (nom[0] || '') + (prenoms[0] || '');
+      } else {
+        const raison = form.raison_sociale?.trim() || '';
+        const words = raison.split(' ');
+        return words.slice(0, 2).map(w => w[0] || '').join('');
+      }
+    });
+
     // --- CYCLE DE VIE ---
     onMounted(async () => {
       await Promise.all([
@@ -519,6 +532,7 @@ export default {
       editNotes,
       showConfirmModal,
       chargeDeClienteleOptions,
+      clientInitials,
       handleClientTypeChange,
       handleAvatarChange,
       handleSubmit,
@@ -590,7 +604,7 @@ export default {
 /* Profile Avatar */
 .profile-header {
   margin-bottom: 2.5rem;
-  text-align: center;
+  text-align: left;
 }
 
 .avatar-wrapper {
@@ -603,10 +617,17 @@ export default {
 .avatar {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 12px;
   border: 4px solid white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
 }
 
 .camera-btn {
