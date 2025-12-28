@@ -21,8 +21,8 @@
 
 <style>
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: white;
@@ -41,7 +41,7 @@
 }
 
 .action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
 }
 </style>

@@ -58,9 +58,8 @@
         </div>
 
         <inputfamily label="Ville" identifiant="ville" v-model="form.ville" />
-        <inputfamily label="Commune" identifiant="commune" v-model="form.commune" />
         <inputfamily label="Téléphone" identifiant="telephone" type="tel" v-model="form.telephone_1" />
-        <inputfamily label="Téléphone" identifiant="telephone" type="tel" v-model="form.telephone_2" />
+        <inputfamily label="Téléphone 2" identifiant="telephone2" type="tel" v-model="form.telephone_2" />
         <inputfamily label="Email" identifiant="email" type="email" v-model="form.email" />
         <inputfamily label="Chargé de clientèle" identifiant="charge_de_clientele" v-model="form.charge_de_clientele" />
 
@@ -85,6 +84,14 @@
       @close="showConfirmModal = false"
     ></confirm-modale>
 
+    <notification-popup
+      :message="notificationSettings.message"
+      :type="notificationSettings.type"
+      :duration="notificationSettings.duration"
+      :visible="notificationSettings.visible"
+      @close="notificationSettings.visible = false"
+    />
+
   </div>
 </template>
 
@@ -98,6 +105,7 @@ import confirmModale from '../modales/confirmModale.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
 import mainButton from '../button/mainButton.vue';
 import prevButton from '../button/prevButton.vue';
+import notificationPopup from '../tools/notificationPopup.vue';
 
 export default {
   name: 'CustomerSectionInfo',
@@ -107,7 +115,8 @@ export default {
     mainButton,
     prevButton,
     selectfamily,
-    inputArea
+    inputArea,
+    notificationPopup
   },
   props: {
     clientId: {
@@ -140,7 +149,6 @@ export default {
 
     // Modèle de données
     const form = reactive({
-      id: null, // Ajout de l'ID pour le suivi
       type_client: 'PERSONNE_PHYSIQUE',
       statut: 'ACTIF',
       reference_client: '',
@@ -163,7 +171,6 @@ export default {
       // Coordonnées
       adresse: '',
       ville: '',
-      commune: '',
       telephone_1: '',
       telephone_2: '',
       email: '',
@@ -290,43 +297,83 @@ export default {
       showConfirmModal.value = true;
     };
 
+    const notificationSettings = ref({
+      message: '',
+      type: 'success',
+      duration: 3000,
+      visible: false
+    });
+
     const confirmSave = async () => {
       isSaving.value = true;
       showConfirmModal.value = false;
       
       try {
+        // 1. On copie TOUT le formulaire (votre logique est respectée)
         const dataToSave = { ...form };
         
-        // Nettoyage des données
-        Object.keys(dataToSave).forEach(key => {
-          if (dataToSave[key] === '' || dataToSave[key] === null) {
-            dataToSave[key] = null;
-          }
-          if (key === 'capital_social' && dataToSave[key]) {
-            dataToSave[key] = parseFloat(dataToSave[key]);
-          }
-        });
-        
-        // On utilise l'ID du formulaire (récupéré au chargement) ou l'ID des props
-        const idToUpdate = form.id || props.clientId || (clientStore.currentCustomer ? clientStore.currentCustomer.id : null);
+        // 2. IDENTIFICATION DU CLIENT
+        // On s'assure d'avoir un ID. Priorité : Formulaire > Props > Store
+        const idToUpdate = form.id || props.clientId || clientStore.currentCustomer?.id;
 
-        if (idToUpdate) {
-          // UPDATE
-          await clientStore.updateCustomer(idToUpdate, dataToSave);
-          alert('Client mis à jour avec succès!');
-          await loadClientData(); // Recharger pour être sûr
-        } else {
-          // CREATE
-          const newClient = await clientStore.createCustomer(dataToSave);
-          alert('Client créé avec succès!');
-          // Mise à jour de l'ID local pour passer en mode édition
-          form.id = newClient.id;
-          clientStore.attachCustomer(newClient);
+        if (!idToUpdate) {
+            throw new Error("Impossible de trouver l'ID du client à mettre à jour.");
         }
+
+        // 3. NETTOYAGE TECHNIQUE (Indispensable pour Django)
+        
+        // -> Gestion des DATES : Convertir "" en null
+        // Sinon Django renvoie : "Date has wrong format"
+        ['date_naissance', 'date_premier_contact'].forEach(field => {
+            if (dataToSave[field] === '') {
+                dataToSave[field] = null; 
+            }
+        });
+
+        // -> Gestion des NOMBRES : Convertir "" en null et string en float
+        // Sinon Django renvoie : "A valid number is required"
+        if (dataToSave.capital_social === '' || dataToSave.capital_social === null) {
+            dataToSave.capital_social = null;
+        } else {
+            // S'assurer que c'est bien un nombre pour l'API
+            dataToSave.capital_social = parseFloat(dataToSave.capital_social);
+        }
+
+        // -> RETRAIT DES CHAMPS LECTURE SEULE
+        // On évite d'envoyer ces champs pour ne pas polluer la requête ou trigger des erreurs
+        delete dataToSave.reference_client; // Souvent généré auto
+        delete dataToSave.date_creation;
+
+        // 4. ENVOI
+        console.log("Envoi des données pour mise à jour :", dataToSave);
+        await clientStore.updateCustomer(idToUpdate, dataToSave);
+        
+        // 5. SUCCÈS
+        notificationSettings.value = {
+          message: 'Client mis à jour avec succès !',
+          type: 'success',
+          duration: 3000,
+          visible: true
+        };        
+        // On recharge pour être sûr d'avoir les données confirmées par le serveur
+        await loadClientData(); 
         
       } catch (error) {
         console.error('Erreur save:', error);
-        alert('Erreur: ' + (clientStore.error || error.message));
+        
+        // Affichage intelligent de l'erreur pour comprendre ce qui bloque
+        let errorMsg = error.message || 'Erreur inconnue';
+        
+        if (error.response && error.response.data) {
+            // Si le backend renvoie des détails (ex: "Ce champ est obligatoire")
+            if (error.response.data.errors) {
+                errorMsg = "Erreur de validation :\n" + JSON.stringify(error.response.data.errors, null, 2);
+            } else if (error.response.data.message) {
+                errorMsg = error.response.data.message;
+            }
+        }
+        
+        alert(errorMsg);
       } finally {
         isSaving.value = false;
       }
@@ -395,6 +442,8 @@ export default {
       chargeDeClienteleOptions,
       typeClientOptions,
       statutOptions,
+      notificationSettings,
+      clientInitials,
       handleClientTypeChange,
       handleAvatarChange,
       handleSubmit,
@@ -482,7 +531,7 @@ export default {
   border-radius: 12px;
   border: 4px solid white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;

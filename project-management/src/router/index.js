@@ -23,6 +23,12 @@ const router = createRouter({
     {
       path:'/dashboard',
       name:'dashboard',
+      component: () => import('@/views/mainDashboardIndex.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path:'/dashboard/affairs',
+      name:'dashboard-affairs',
       component: () => import('@/views/dashboarIndexView.vue'),
       meta: { requiresAuth: true }
     },
