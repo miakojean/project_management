@@ -419,3 +419,53 @@ class ClientDetailView(APIView):
                 'message': 'Client non trouvé',
                 'success': False
             }, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, client_id, *args, **kwargs):
+        try:
+            client = Client.objects.get(id=client_id)
+            serializer = ClientCreateSerializer(client, data=request.data, partial=True, context={'request': request})
+            
+            if serializer.is_valid():
+                with transaction.atomic():
+                    updated_client = serializer.save()
+                    
+                    # Log de la modification
+                    actor_user = request.user
+                    logger.info(f"Le client '{updated_client.nom_complet}' a été mis à jour par {actor_user.get_full_name()}.")
+                    
+                    # Création d'une notification
+                    recipients = Utilisateur.objects.filter(is_active=True).exclude(pk=actor_user.pk)
+                    notify_users(
+                        recipients=list(recipients),
+                        verb='CLIENT_MODIFIE',
+                        message=f"Le client '{updated_client.nom_complet}' a été mis à jour par {actor_user.get_full_name()}.",
+                        content_object=updated_client,
+                        actor=actor_user,
+                    )
+                    
+                client_serializer = ClientSerializer(updated_client)
+                return Response({
+                    'success': True,
+                    'message': 'Client mis à jour avec succès',
+                    'client': client_serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Erreur de validation',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Client.DoesNotExist:
+            return Response({
+                'message': 'Client non trouvé',
+                'success': False
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la mise à jour du client {client_id}: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Erreur interne du serveur',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

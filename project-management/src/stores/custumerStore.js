@@ -231,7 +231,7 @@ export const useCustomerStore = defineStore('customer', () => {
         error.value = null;
 
         try {
-            const response = await api.put(`/manager/clients/${customerId}/update/`, customerData);
+            const response = await api.put(`/manager/clients/${customerId}/`, customerData);
             
             if (response.data.success) {
                 // Mettre à jour le client dans la liste
