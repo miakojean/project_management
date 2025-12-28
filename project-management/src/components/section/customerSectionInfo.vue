@@ -72,23 +72,7 @@
 
         <!-- Personne Morale -->
         <template v-else>
-          <div class="form-group full-width">
-            <div class="label-row">
-              <label>Dénomination sociale *</label>
-            </div>
-            <div class="input-wrapper">
-              <input type="text" v-model="form.raison_sociale" placeholder="Nom de l'entreprise" />
-              <span class="input-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </span>
-            </div>
-          </div>
-
+          <inputfamily label="Dénomination sociale" identifiant="raison_sociale" v-model="form.raison_sociale" />
           <inputfamily label="Forme juridique" identifiant="forme_juridique" v-model="form.forme_juridique" />
           <inputfamily label="Numéro RCCM" identifiant="numero_rccm" v-model="form.numero_rccm" />
           <inputfamily label="Numéro Compte Contribuable" identifiant="numero_cc" v-model="form.numero_cc" />
@@ -246,21 +230,10 @@
 
         <!-- Boutons d'action -->
         <div class="form-actions full-width">
-          <button type="button" class="btn btn-secondary" @click="handleCancel">
-            Annuler
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="isSaving">
-            <span v-if="isSaving">
-              <svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" stroke-opacity="0.3"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10"></path>
-              </svg>
-              Enregistrement...
-            </span>
-            <span v-else>
-              Enregistrer les modifications
-            </span>
-          </button>
+          <secondButton @click="handleCancel" label="Annuler"></secondButton>
+          <mainButton @click="handleSubmit" :disabled="isSaving" :isLoading="isSaving" label="Enregistrer">
+            Enregistrer les modifications
+          </mainButton>
         </div>
       </form>
     </div>
@@ -271,8 +244,8 @@
         <h3>Confirmer l'enregistrement</h3>
         <p>Êtes-vous sûr de vouloir enregistrer les modifications ?</p>
         <div class="modal-actions">
-          <button @click="showConfirmModal = false" class="btn btn-secondary">Annuler</button>
-          <button @click="confirmSave" class="btn btn-primary">Confirmer</button>
+          <prevButton @click="showConfirmModal = false" label='Annuler'/>
+          <mainButton @click="confirmSave" label='Confirmer'/>
         </div>
       </div>
     </div>
@@ -284,11 +257,15 @@ import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router'; // Import du router pour la redirection si nécessaire
 import inputfamily from '../input/inputfamily.vue';
 import { useCustomerStore } from '@/stores/custumerStore';
+import mainButton from '../button/mainButton.vue';
+import prevButton from '../button/prevButton.vue';
 
 export default {
   name: 'CustomerSectionInfo',
   components: {
-    inputfamily
+    inputfamily,
+    mainButton,
+    prevButton
   },
   props: {
     clientId: {
