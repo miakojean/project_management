@@ -99,7 +99,7 @@
                 <inputfamily 
                     identifiant="representantLegal" 
                     label="Nom du representant legal" 
-                    placeholder="Entrer le pays"
+                    placeholder="Entrer le nom du représentant légal"
                     v-model="formData.representant_legal_nom"
                     :error="fieldErrors.representant_legal_nom"
                 />
@@ -262,7 +262,7 @@ export default {
 
                 // Rediriger légèrement après la fin de la notification
                 setTimeout(()=> {
-                    router.push('/dashboard')
+                    router.push('/customer-list')
                 }, 3500)
 
                 return response;

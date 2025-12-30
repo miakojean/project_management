@@ -13,11 +13,6 @@ const router = createRouter({
       name:'login',
       component: () =>import('../views/LoginView.vue')
     },
-    {
-      path:'/registration',
-      name:'registration',
-      component: () => import('../views/RegistrationView.vue')
-    },
 
     // About the dashboard
     {

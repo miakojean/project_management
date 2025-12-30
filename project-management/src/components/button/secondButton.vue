@@ -2,9 +2,6 @@
     <button 
         class="main-button"
     >   
-        <svg v-if="isloading === false" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
-        </svg>
         <span v-if="isloading === false">{{ label }}</span>
 
         <span v-else class="loading loading-spinner loading-md"></span>
@@ -36,10 +33,10 @@ export default defineComponent({
 
 <style scoped>
 .main-button {
-    background: #eeeeee;
+    background: var(--adn-gray-color);
     padding: 0.8rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 1rem;
     font-size: 1rem;
     font-weight: 500;
     width: 100%;
@@ -57,7 +54,6 @@ export default defineComponent({
 }
 
 .main-button:hover {
-    border-radius: 0.2rem;
     background: var(--adn-gray-color);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px #dfdfdf;

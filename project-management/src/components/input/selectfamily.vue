@@ -67,13 +67,13 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: start;
-    gap: 0.5rem;
+    gap: 0.5rem; 
     width: 100%;
     max-width: 600px;
   }
 
   label {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: #535353;
   }

@@ -43,9 +43,7 @@
             <emptyCards />
         </div>
 
-        <div class="w-full">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Commentaires</h3>
-            
+        <div class="w-full">            
             <commentInput
                 v-if="doc.id"
                 :placeholder="`Ajouter un commentaire sur le dossier`"
