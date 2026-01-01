@@ -423,7 +423,7 @@ class ClientDetailView(APIView):
     def put(self, request, client_id, *args, **kwargs):
         try:
             client = Client.objects.get(id=client_id)
-            serializer = ClientCreateSerializer(client, data=request.data, partial=True, context={'request': request})
+            serializer = ClientSerializer(client, data=request.data, partial=True, context={'request': request})
             
             if serializer.is_valid():
                 with transaction.atomic():

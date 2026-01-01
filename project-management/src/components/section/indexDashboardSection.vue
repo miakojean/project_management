@@ -32,10 +32,12 @@
                         </template>
                     </FeaturesCards>
                 </div>
-                <div class="cta-actions w-1/2 flex gap-4">
-                    <secondButton @click="goToClients" label="voir les dossiers"></secondButton>
-                    <mainButton @click="goToNewCustomer" label="Ajouter un client"></mainButton>
-                </div>
+                <!-- 
+                    <div class="cta-actions w-1/2 flex gap-4">
+                        <secondButton @click="goToClients" label="voir les dossiers"></secondButton>
+                        <mainButton @click="goToNewCustomer" label="Ajouter un client"></mainButton>
+                    </div>
+                -->
             </div>
         </div>
         <div class="section-cards">

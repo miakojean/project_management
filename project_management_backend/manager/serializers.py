@@ -217,7 +217,8 @@ class ClientCreateSerializer(serializers.ModelSerializer):
         model = Client
         fields = [
             # Champs de base
-            'type_client', 'nom', 'prenoms', 'raison_sociale',
+            'type_client', 'nom', 'prenoms', 'raison_sociale', 'forme_juridique',
+            'numero_rccm', 'numero_cc', 'capital_social',
             # Coordonnées et informations complémentaires
             'date_naissance', 'lieu_naissance', 'adresse', 'ville', 'commune',
             'telephone_1', 'telephone_2', 'email',
