@@ -61,8 +61,9 @@
         <inputfamily label="Téléphone" identifiant="telephone" type="tel" v-model="form.telephone_1" />
         <inputfamily label="Téléphone 2" identifiant="telephone2" type="tel" v-model="form.telephone_2" />
         <inputfamily label="Email" identifiant="email" type="email" v-model="form.email" />
-        <inputfamily label="Chargé de clientèle" identifiant="charge_de_clientele" v-model="form.charge_de_clientele" />
-
+        <!--
+          <inputfamily label="Chargé de clientèle" identifiant="charge_de_clientele" v-model="form.charge_de_clientele" />
+        -->
         <!-- Date premier contact -->
         <inputfamily label="Date de premier contact" identifiant="date_premier_contact" type="date" v-model="form.date_premier_contact" />
 

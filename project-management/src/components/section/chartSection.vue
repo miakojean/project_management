@@ -40,7 +40,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">Moyenne</span>
-          <span class="stat-value">{{ Math.round(store.totalClients / 12) }} clients/mois</span>
+          <span class="stat-value">{{ averageClients }} clients/mois</span>
         </div>
       </div>
       
@@ -58,7 +58,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">Moyenne</span>
-          <span class="stat-value">{{ Math.round(store.totalDossiers / 12) }} dossiers/mois</span>
+          <span class="stat-value">{{ averageDossiers }} dossiers/mois</span>
         </div>
       </div>
     </div>
@@ -89,6 +89,12 @@ const hasData = computed(() => {
   return (store.clientRegistrations.values.length > 0 || (store.clientRegistrations.rawLabels && store.clientRegistrations.rawLabels.length > 0)) ||
          (store.dossierStats.values.length > 0 || (store.dossierStats.rawLabels && store.dossierStats.rawLabels.length > 0));
 });
+
+const monthCountClients = computed(() => store.clientRegistrations.values?.length || store.clientRegistrations.rawLabels?.length || 0);
+const monthCountDossiers = computed(() => store.dossierStats.values?.length || store.dossierStats.rawLabels?.length || 0);
+
+const averageClients = computed(() => monthCountClients.value ? Math.round(store.totalClients / monthCountClients.value) : 0);
+const averageDossiers = computed(() => monthCountDossiers.value ? Math.round(store.totalDossiers / monthCountDossiers.value) : 0);
 
 const loadData = async () => {
   await Promise.all([

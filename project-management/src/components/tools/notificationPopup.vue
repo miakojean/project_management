@@ -4,11 +4,6 @@
     <div v-if="visible" class="notification-overlay" @click="close">
       <div class="notification-popup" :class="type" @click.stop>
         <div class="notification-content">
-          <div class="notification-icon">
-            <span v-if="type === 'success'">✅</span>
-            <span v-else-if="type === 'error'">❌</span>
-            <span v-else>ℹ️</span>
-          </div>
           <div class="notification-text">
             <p class="notification-message">{{ message }}</p>
           </div>

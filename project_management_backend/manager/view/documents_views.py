@@ -61,7 +61,7 @@ class DocumentsAPIView(APIView):
                             notify_users(
                                 recipients=list(recipients),
                                 verb='DOCUMENT_TELEVERSE',
-                                message=f"Le document '{doc.titre}' (ID: {doc.id}) a été téléversé par {actor_user.get_full_name()}.",
+                                message=f"Le document '{doc.titre}' a été téléversé.",
                                 content_object=doc,
                                 actor=actor_user
                             )
@@ -111,7 +111,7 @@ class DocumentsAPIView(APIView):
                     notify_users(
                         recipients=list(recipients),
                         verb='DOCUMENT_SUPPRIME',
-                        message=f"Le document '{document_name}' a été supprimé par {actor_user.get_full_name()}.",
+                        message=f"Le document '{document_name}' a été supprimé.",
                         # content_object est facultatif ici ou sera un lien brisé
                         actor=actor_user
                     )

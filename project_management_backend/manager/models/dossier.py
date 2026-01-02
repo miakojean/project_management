@@ -325,18 +325,12 @@ class Dossier(models.Model):
         pourcentage = self.taux_avancement
         nouveau_statut = self.statut
         
-        # Seuils fixes basés sur vos catégories (corrigés)
+        # Seuils fixes basés sur le taux d'avancement
         if pourcentage <= 10:
             nouveau_statut = 'NOUVEAU'
-        elif pourcentage <= 45:  # Identification
+        elif pourcentage < 100:
             nouveau_statut = 'EN_COURS'
-        elif pourcentage <= 60:  # Constitutifs
-            nouveau_statut = 'EN_COURS'
-        elif pourcentage <= 75:  # Procédures
-            nouveau_statut = 'EN_ATTENTE'
-        elif pourcentage <= 95:  # Opérationnels
-            nouveau_statut = 'EN_ATTENTE_VALIDATION'
-        else:  # 96-100% = Livrables
+        else:  # 100%
             nouveau_statut = 'TERMINE'
         
         if nouveau_statut != self.statut:

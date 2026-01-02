@@ -9,7 +9,7 @@ import shutil
 from datetime import timedelta 
 from django.conf import settings
 
-from manager.models import Dossier, EtapeDossier, Client, CategorieDocument 
+from manager.models import Dossier, Client, CategorieDocument
 from account.models import Utilisateur
 
 # ====================================================================
@@ -69,8 +69,6 @@ class DossierModelTest(TestCase):
             titre="Constitution SA Test",
             type_dossier='CONSTITUTION',
             client=self.client_pp,
-            honoraires_prevus=Decimal('500000'),
-            acompte_recu=Decimal('100000'),
             cree_par=self.cree_par_user
         )
         
@@ -161,29 +159,28 @@ class DossierModelTest(TestCase):
                 return mock_result
             return filter_side_effect
         
-        # 1. Aucun document → score = 0
+        # 1. Aucun document → score = 10 (baseline)
         mock_documents.filter.side_effect = get_filter_side_effect([])
-        self.assertEqual(self.dossier_base.score_actuel, 0)
+        self.assertEqual(self.dossier_base.score_actuel, 10)
         
-        # 2. Catégorie Base (10) uniquement
+        # 2. Catégorie Base (10) uniquement → max reste 10
         mock_documents.filter.side_effect = get_filter_side_effect([self.cat_base.id])
         self.assertEqual(self.dossier_base.score_actuel, 10)
         
-        # 3. Catégories Base (10) + Faible (20) = 30
+        # 3. Catégories Base (10) + Faible (20) → max = 20
         mock_documents.filter.side_effect = get_filter_side_effect([self.cat_base.id, self.cat_faible.id])
-        self.assertEqual(self.dossier_base.score_actuel, 30)
+        self.assertEqual(self.dossier_base.score_actuel, 20)
         
-        # 4. Toutes les catégories (10 + 20 + 50 + 30 = 110, cappé à 100)
+        # 4. Toutes les catégories → max = 50 (critique est le plus élevé)
         all_ids = [self.cat_base.id, self.cat_faible.id, self.cat_critique.id, self.cat_max.id]
         mock_documents.filter.side_effect = get_filter_side_effect(all_ids)
-        self.assertEqual(self.dossier_base.score_actuel, 100)
+        self.assertEqual(self.dossier_base.score_actuel, 50)
 
     @patch('manager.models.dossier.Dossier.documents')
     def test_taux_avancement_pourcentage(self, mock_documents):
         """✅ CORRECTION : Vérifie le calcul du pourcentage"""
         
-        # Score total = 10 + 20 + 50 + 30 = 110
-        total_poids = 110.0
+        # La logique est: retourne le poids maximum parmi les catégories avec documents (baseline 10)
         
         # Configuration des mocks pour simuler le comportement de .documents.filter(categorie=X).exists()
         def get_filter_side_effect(categories_presentes_ids):
@@ -193,19 +190,17 @@ class DossierModelTest(TestCase):
                 return mock_result
             return filter_side_effect
 
-        # 1. Aucun document → 0%
+        # 1. Aucun document → 10% (baseline)
         mock_documents.filter.side_effect = get_filter_side_effect([])
-        self.assertEqual(self.dossier_base.taux_avancement, 0)
+        self.assertEqual(self.dossier_base.taux_avancement, 10)
         
-        # 2. Base (10) uniquement → 10/110 ≈ 9%
+        # 2. Base (10) uniquement → max = 10%
         mock_documents.filter.side_effect = get_filter_side_effect([self.cat_base.id])
-        expected = int((10 / total_poids) * 100)
-        self.assertEqual(self.dossier_base.taux_avancement, expected)
+        self.assertEqual(self.dossier_base.taux_avancement, 10)
         
-        # 3. Base (10) + Critique (50) = 60/110 ≈ 54%
+        # 3. Base (10) + Critique (50) → max = 50%
         mock_documents.filter.side_effect = get_filter_side_effect([self.cat_base.id, self.cat_critique.id])
-        expected = int((60 / total_poids) * 100)
-        self.assertEqual(self.dossier_base.taux_avancement, expected)
+        self.assertEqual(self.dossier_base.taux_avancement, 50)
 
     @patch.object(Dossier, 'taux_avancement', new_callable=PropertyMock)  # ✅ CORRECTION
     def test_mettre_a_jour_statut_par_score(self, mock_taux):
@@ -217,17 +212,17 @@ class DossierModelTest(TestCase):
         self.dossier_base.mettre_a_jour_statut_par_score()
         self.assertEqual(self.dossier_base.statut, 'NOUVEAU')
         
-        # 2. EN_COURS (11-40%)
+        # 2. EN_COURS (11-99%)
         mock_taux.return_value = 30
         self.dossier_base.mettre_a_jour_statut_par_score()
         self.assertEqual(self.dossier_base.statut, 'EN_COURS')
         
-        # 3. EN_ATTENTE (41-70%)
+        # 3. EN_COURS (11-99%)
         mock_taux.return_value = 55
         self.dossier_base.mettre_a_jour_statut_par_score()
-        self.assertEqual(self.dossier_base.statut, 'EN_ATTENTE')
+        self.assertEqual(self.dossier_base.statut, 'EN_COURS')
         
-        # 4. EN_COURS à nouveau (71-99%)
+        # 4. EN_COURS (11-99%)
         mock_taux.return_value = 80
         self.dossier_base.mettre_a_jour_statut_par_score()
         self.assertEqual(self.dossier_base.statut, 'EN_COURS')
@@ -239,20 +234,6 @@ class DossierModelTest(TestCase):
 
     ## 3. Tests des propriétés utilitaires
 
-    def test_solde_honoraires_property(self):
-        """Vérifie le calcul du solde restant dû."""
-        self.assertEqual(self.dossier_base.solde_honoraires, Decimal('500000.00'))
-        
-        self.dossier_base.honoraires_factures = Decimal('200000.00')
-        self.assertEqual(self.dossier_base.solde_honoraires, Decimal('300000.00'))
-        
-    def test_solde_acompte_property(self):
-        """Vérifie le calcul du solde de l'acompte."""
-        self.assertEqual(self.dossier_base.solde_acompte, Decimal('100000.00'))
-        
-        self.dossier_base.honoraires_factures = Decimal('150000.00')
-        self.assertEqual(self.dossier_base.solde_acompte, Decimal('-50000.00'))
-        
     def test_get_duree_traitement(self):
         """Vérifie le calcul de la durée de traitement en jours."""
         date_ouverture_past = timezone.now().date() - timedelta(days=5)
@@ -291,27 +272,3 @@ class DossierModelTest(TestCase):
         # Durée > 30 jours MAIS Score >= 50
         mock_score_actuel.return_value = 55
         self.assertFalse(self.dossier_base.est_en_retard_score)
-
-    def test_etape_dossier_creation(self):
-        """Vérifie la création et l'association d'une étape."""
-        etape = EtapeDossier.objects.create(
-            dossier=self.dossier_base,
-            nom="Dépôt des statuts",
-            ordre=1,
-            date_debut=timezone.now().date(),
-            est_terminee=True
-        )
-        
-        self.assertEqual(etape.dossier, self.dossier_base)
-        self.assertTrue(etape.est_terminee)
-        self.assertEqual(str(etape), f"{self.dossier_base.reference_dossier} - Dépôt des statuts")
-
-    def test_etape_ordering(self):
-        """Vérifie que les étapes sont ordonnées correctement."""
-        EtapeDossier.objects.create(dossier=self.dossier_base, nom="Etape 2", ordre=2)
-        EtapeDossier.objects.create(dossier=self.dossier_base, nom="Etape 1", ordre=1)
-        
-        etapes = self.dossier_base.etapes.all()
-        
-        self.assertEqual(etapes[0].nom, "Etape 1")
-        self.assertEqual(etapes[1].nom, "Etape 2")

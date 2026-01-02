@@ -50,7 +50,7 @@ class DossierCreateAPIView(APIView):
                         
                         notify_users(
                             recipients=list(recipients),
-                            verb='DOSSIER_AJOUTE', # Utilisé par vous dans l'autre POST
+                            verb='DOSSIER_AJOUTE',
                             message=f"Le dossier '{dossier.reference_dossier}' du client {dossier.client} a été ajouté.",
                             content_object=dossier,
                             actor=actor_user
@@ -291,7 +291,7 @@ class DossierDetailAPIView(APIView):
                 with transaction.atomic():
                     updated_dossier = serializer.save()
 
-                    # 🚀 2. LOGIQUE DE NOTIFICATION - MISE À JOUR (PUT)
+                    # 🚀 2. LOGIQUE DE NOTIFICATION - MISE À JOUR (PATCH)
                     actor_user = request.user
                     try:
                         # Notifier tout le monde sauf l'acteur
@@ -300,7 +300,7 @@ class DossierDetailAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='DOSSIER_MISE_A_JOUR',
-                            message=f"Le dossier '{updated_dossier.reference_dossier}' a été mis à jour par {actor_user.get_full_name()}.",
+                            message=f"Le dossier '{updated_dossier.reference_dossier}' a été mis à jour.",
                             content_object=updated_dossier,
                             actor=actor_user
                         )
@@ -332,7 +332,7 @@ class DossierDetailAPIView(APIView):
                 notify_users(
                     recipients=list(recipients),
                     verb='DOSSIER_SUPPRIME',
-                    message=f"Le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    message=f"Le dossier '{dossier.reference_dossier}' a été supprimé.",
                     content_object=dossier,
                     actor=actor_user
                 )
@@ -640,7 +640,7 @@ class CommentaireDetailAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='COMMENTAIRE_MODIFIE',
-                            message=f"Un commentaire sur le dossier '{commentaire.dossier.reference_dossier}' a été modifié par {actor_user.get_full_name()}.",
+                            message=f"Un commentaire sur le dossier '{commentaire.dossier.reference_dossier}' a été modifié.",
                             content_object=updated_commentaire,
                             actor=actor_user
                         )
@@ -694,7 +694,7 @@ class CommentaireDetailAPIView(APIView):
                 notify_users(
                     recipients=list(recipients),
                     verb='COMMENTAIRE_SUPPRIME',
-                    message=f"Un commentaire sur le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    message=f"Un commentaire sur le dossier '{dossier.reference_dossier}' a été supprimé.",
                     content_object=commentaire,
                     actor=actor_user
                 )
