@@ -24,17 +24,11 @@
           ✓ {{ selectedFiles.length }} fichier{{ selectedFiles.length > 1 ? 's' : '' }} sélectionné{{ selectedFiles.length > 1 ? 's' : '' }}
         </p>
 
-        <!--
-          <h3 class="mt-6 text-lg font-semibold">
-            Documents de {{ dossierStore.currentDossier.client_details.nom_complet }}
-          </h3>
-        -->
-
         <isImportantCard v-if="showImportantDocument === true"/>
       </div>
 
       <!-- === FORMULAIRE === -->
-      <div class="form-row flex flex-col w-full">
+      <div class="form-row flex flex-col w-full gap-2">
         <inputfamily 
           identifiant="Titre" 
           label="Nom du document *" 
@@ -272,7 +266,7 @@ const handleSubmit = async () => {
 
     // Rediriger après la notification
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push('/dashboard/affairs')
     }, 3500)
 
   } catch (error) {

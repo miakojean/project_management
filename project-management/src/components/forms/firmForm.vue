@@ -14,8 +14,8 @@
             
             <div class="form-row">
                 <inputfamily 
-                    identifiant="Raison morale" 
-                    label="Raison morale *" 
+                    identifiant="Dénomination sociale" 
+                    label="Dénomination sociale *" 
                     placeholder="Entrer le nom l'entreprise"
                     v-model="formData.raison_sociale"
                     :required="true"
@@ -99,16 +99,9 @@
                 <inputfamily 
                     identifiant="representantLegal" 
                     label="Nom du representant legal" 
-                    placeholder="Entrer le pays"
+                    placeholder="Entrer le nom du représentant légal"
                     v-model="formData.representant_legal_nom"
                     :error="fieldErrors.representant_legal_nom"
-                />
-                <inputfamily 
-                    identifiant="profession" 
-                    label="Profession du représentant légal" 
-                    placeholder="Entrer la profession"
-                    v-model="formData.representant_legal_fonction"
-                    :error="fieldErrors.representant_legal_fonction"
                 />
             </div>
         </div>
@@ -167,7 +160,6 @@ export default {
             telephone_2: '',
             email: '',
             representant_legal_nom: '',
-            representant_legal_fonction: '',
             charge_de_clientele: '',
         });
 
@@ -199,11 +191,6 @@ export default {
 
             if (!formData.adresse.trim()) {
                 fieldErrors.adresse = 'L\'adresse est obligatoire';
-                isValid = false;
-            }
-
-            if (!formData.representant_legal_fonction.trim()) {
-                fieldErrors.representant_legal_fonction = 'La fonction du représentant légal ne peut être vide';
                 isValid = false;
             }
 
@@ -275,7 +262,7 @@ export default {
 
                 // Rediriger légèrement après la fin de la notification
                 setTimeout(()=> {
-                    router.push('/dashboard')
+                    router.push('/customer-list')
                 }, 3500)
 
                 return response;

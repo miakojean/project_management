@@ -7,7 +7,7 @@ from .serializers import UtilisateurCreateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Utilisateur, PasswordResetToken
 from django.contrib.auth import authenticate
-from .utils import generate_password_reset_token
+from .utils import generate_password_reset_token, send_password_reset_email
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
@@ -219,10 +219,15 @@ class PasswordResetRequestView(APIView): # First step
                 
             # Générer le token de réinitialisation
             token = generate_password_reset_token(user)
-            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token.token}'  # CORRECTION: token.token
-            
-            # TODO: Ajouter l'envoi d'email de réinitialisation ici
-            print(f"Lien de réinitialisation pour {user.email}: {reset_link}")
+            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
+
+            try:
+                # Envoi d'email réel
+                send_password_reset_email(user, reset_link)
+            except Exception as mail_err:
+                # Log interne et retour générique (ne pas exposer l'erreur SMTP au client)
+                print(f"Erreur d'envoi email reset pour {user.email}: {mail_err}")
+                # On continue à répondre 200 pour ne pas divulguer l'existence du compte
 
         except Utilisateur.DoesNotExist:
             # On ne dit pas si l'email existe pour des raisons de sécurité

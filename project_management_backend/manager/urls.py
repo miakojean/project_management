@@ -5,8 +5,9 @@ from .views import (
     ClientBulkCreateAPIView,
     ClientWithDossierCreateAPIView,
     ClientListAPIView,
-    ClientSearchAPIView
-    , ClientMonthlyRegistrationStatsAPIView
+    ClientSearchAPIView,
+    ClientDetailView,
+    ClientMonthlyRegistrationStatsAPIView
 )
 
 from .view.affairs_views import (
@@ -38,7 +39,7 @@ router.register(r'dossiers', DossierCreateAPIView, basename='dossier')
 
 urlpatterns = [
     # Listes des clients
-    path('clients/', ClientListAPIView.as_view(), name="clients-list"),
+    path('clients/<int:client_id>/', ClientDetailView.as_view(), name="client-detail"),    path('clients/', ClientListAPIView.as_view(), name="clients-list"),
     path('clients/search/', ClientSearchAPIView.as_view(), name='client-search'),
 
     # Ajouter des clients

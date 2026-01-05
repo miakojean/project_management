@@ -243,7 +243,7 @@ export default {
 
                 // Rediriger peu après la fin de la notification
                 setTimeout(()=> {
-                    router.push('/dashboard')
+                    router.push('/customer-list')
                 }, 3500);
 
                 // Reset intelligent

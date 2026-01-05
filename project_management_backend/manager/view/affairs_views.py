@@ -50,7 +50,7 @@ class DossierCreateAPIView(APIView):
                         
                         notify_users(
                             recipients=list(recipients),
-                            verb='DOSSIER_AJOUTE', # Utilisé par vous dans l'autre POST
+                            verb='DOSSIER_AJOUTE',
                             message=f"Le dossier '{dossier.reference_dossier}' du client {dossier.client} a été ajouté.",
                             content_object=dossier,
                             actor=actor_user
@@ -108,7 +108,7 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                 dossiers = dossiers.filter(priorite=priorite)
                 filters_applied['priorite'] = priorite
             
-            # Filtrage par statut d'archive
+            # Filtrage par statut d'archive - MODIFICATION IMPORTANTE
             est_archive = request.query_params.get('est_archive')
             if est_archive is not None:
                 # Convertir la chaîne en booléen
@@ -120,12 +120,15 @@ class DossierListCreateAPIView(APIView): # Is about creation and reading
                     filters_applied['est_archive'] = False
                 else:
                     # Valeur invalide, on ignore le filtre
-                    pass
+                    filters_applied['est_archive'] = 'all'
             else:
-                # Par défaut, exclure les dossiers archivés (pour ne pas casser l'UX)
-                dossiers = dossiers.filter(est_archive=False)
-                filters_applied['est_archive'] = False
-            # ============ FIN DE L'AJOUT ============
+                # MODIFICATION : Par défaut, afficher TOUS les dossiers (non archivés ET archivés)
+                # ou vous pouvez choisir d'afficher seulement les non archivés si c'est votre préférence
+                filters_applied['est_archive'] = 'all'  # Indique que tous les dossiers sont inclus
+                # Si vous voulez garder le comportement précédent (uniquement non archivés), décommentez cette ligne :
+                # dossiers = dossiers.filter(est_archive=False)
+                # filters_applied['est_archive'] = False
+            # ============ FIN DE LA MODIFICATION ============
 
             # Filtrage par client
             client_id = request.query_params.get('client_id')
@@ -288,7 +291,7 @@ class DossierDetailAPIView(APIView):
                 with transaction.atomic():
                     updated_dossier = serializer.save()
 
-                    # 🚀 2. LOGIQUE DE NOTIFICATION - MISE À JOUR (PUT)
+                    # 🚀 2. LOGIQUE DE NOTIFICATION - MISE À JOUR (PATCH)
                     actor_user = request.user
                     try:
                         # Notifier tout le monde sauf l'acteur
@@ -297,7 +300,7 @@ class DossierDetailAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='DOSSIER_MISE_A_JOUR',
-                            message=f"Le dossier '{updated_dossier.reference_dossier}' a été mis à jour par {actor_user.get_full_name()}.",
+                            message=f"Le dossier '{updated_dossier.reference_dossier}' a été mis à jour.",
                             content_object=updated_dossier,
                             actor=actor_user
                         )
@@ -329,7 +332,7 @@ class DossierDetailAPIView(APIView):
                 notify_users(
                     recipients=list(recipients),
                     verb='DOSSIER_SUPPRIME',
-                    message=f"Le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    message=f"Le dossier '{dossier.reference_dossier}' a été supprimé.",
                     content_object=dossier,
                     actor=actor_user
                 )
@@ -358,7 +361,7 @@ class DossierStatsAPIView(APIView):
 
     def get(self, request, format=None):
         """
-        Récupère les statistiques globales des dossiers
+        Récupère les statistiques globales des dossiers 
         """
         try:
             total_dossiers = Dossier.objects.count()
@@ -369,7 +372,7 @@ class DossierStatsAPIView(APIView):
                 statut__in=['TERMINE', 'CLOTURE']
             ).count()
             dossiers_annules = Dossier.objects.filter(statut='ANNULE').count()
-            dossiers_en_retard = Dossier.objects.filter(est_en_retard=True).count()
+            #dossiers_en_retard = Dossier.objects.filter(est_en_retard=True).count()
             
             # Statistiques par type
             types_stats = {}
@@ -394,7 +397,7 @@ class DossierStatsAPIView(APIView):
                 'dossiers_actifs': dossiers_actifs,
                 'dossiers_termines': dossiers_termines,
                 'dossiers_annules': dossiers_annules,
-                'dossiers_en_retard': dossiers_en_retard,
+                #'dossiers_en_retard': dossiers_en_retard,
                 'par_type': types_stats,
                 'par_statut': statuts_stats,
             }
@@ -531,7 +534,7 @@ class CommentaireListCreateAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='COMMENTAIRE_AJOUTE',
-                            message=f"Un nouveau commentaire a été ajouté au dossier '{dossier.reference_dossier}' par {actor_user.get_full_name()}.",
+                            message=f"Un nouveau commentaire a été ajouté au dossier '{dossier.reference_dossier}'",
                             content_object=commentaire,
                             actor=actor_user
                         )
@@ -637,7 +640,7 @@ class CommentaireDetailAPIView(APIView):
                         notify_users(
                             recipients=list(recipients),
                             verb='COMMENTAIRE_MODIFIE',
-                            message=f"Un commentaire sur le dossier '{commentaire.dossier.reference_dossier}' a été modifié par {actor_user.get_full_name()}.",
+                            message=f"Un commentaire sur le dossier '{commentaire.dossier.reference_dossier}' a été modifié.",
                             content_object=updated_commentaire,
                             actor=actor_user
                         )
@@ -691,7 +694,7 @@ class CommentaireDetailAPIView(APIView):
                 notify_users(
                     recipients=list(recipients),
                     verb='COMMENTAIRE_SUPPRIME',
-                    message=f"Un commentaire sur le dossier '{dossier.reference_dossier}' a été supprimé par {actor_user.get_full_name()}.",
+                    message=f"Un commentaire sur le dossier '{dossier.reference_dossier}' a été supprimé.",
                     content_object=commentaire,
                     actor=actor_user
                 )

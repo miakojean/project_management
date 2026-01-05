@@ -149,6 +149,7 @@ export const useCustomerStore = defineStore('customer', () => {
             
             if (response.data.success) {
                 currentCustomer.value = response.data.client;
+                console.log('Détails du client:', response.data.client);
                 return response.data.client;
             } else {
                 throw new Error(response.data.message || 'Client non trouvé');
@@ -230,7 +231,7 @@ export const useCustomerStore = defineStore('customer', () => {
         error.value = null;
 
         try {
-            const response = await api.put(`/manager/clients/${customerId}/update/`, customerData);
+            const response = await api.put(`/manager/clients/${customerId}/`, customerData);
             
             if (response.data.success) {
                 // Mettre à jour le client dans la liste

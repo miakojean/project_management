@@ -41,7 +41,7 @@ export default defineComponent({
     background: var(--primary-color);
     padding: 0.8rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 16px;
     color: white;
     font-size: 1rem;
     font-weight: 500;
@@ -58,7 +58,6 @@ export default defineComponent({
 }
 
 .main-button:hover {
-    border-radius: 0.2rem;
     background: var(--primary-color-dark);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px #dfdfdf;

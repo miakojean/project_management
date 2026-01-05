@@ -67,13 +67,13 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: start;
-    gap: 0.5rem;
+    gap: 0.5rem; 
     width: 100%;
     max-width: 600px;
   }
 
   label {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: #535353;
   }
@@ -81,7 +81,7 @@ export default {
   select {
     padding: 0.9rem;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 0.6rem;
     font-size: 0.9rem;
     width: 100%;
     box-sizing: border-box;

@@ -421,7 +421,8 @@ export default {
     justify-content: space-between;
     align-items: flex-start;
     padding: 1.25rem 1.25rem 1rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #67acf1 0%, #f1f5f9 100%);
+    /*background: #82d3fc;*/
 }
 
 .header-left {

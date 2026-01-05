@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import { authGuard } from '@/guards/authGards'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,28 +9,21 @@ const router = createRouter({
       component: () => import('@/views/dashboarIndexView.vue'),
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
       path:'/login',
       name:'login',
       component: () =>import('../views/LoginView.vue')
-    },
-    {
-      path:'/registration',
-      name:'registration',
-      component: () => import('../views/RegistrationView.vue')
     },
 
     // About the dashboard
     {
       path:'/dashboard',
       name:'dashboard',
+      component: () => import('@/views/mainDashboardIndex.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path:'/dashboard/affairs',
+      name:'dashboard-affairs',
       component: () => import('@/views/dashboarIndexView.vue'),
       meta: { requiresAuth: true }
     },
@@ -56,6 +47,12 @@ const router = createRouter({
       path:'/dashboard/charts',
       name:'charts',
       component: () => import('@/views/dashboardChart.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path:'/dashboard/customer-info',
+      name:'customer-info',
+      component: () => import('@/views/dashboardCustomerInfo.vue'),
       meta: { requiresAuth: true }
     },
 

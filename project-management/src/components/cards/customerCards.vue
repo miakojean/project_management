@@ -38,6 +38,7 @@
     </div>
 
     <div class="card__footer">
+      <ActionButton @click="emitEdit"/>
       
       <button class="btn-primary" @click="emitClick">
         Ouvrir le dossier
@@ -50,6 +51,8 @@
 </template>
 
 <script>
+import ActionButton from '../button/actionButton.vue';
+
 export default {
   name: 'LegalEntityCard',
   props: {
@@ -76,7 +79,11 @@ export default {
   },
 
   // Déclaration de l'événement
-  emits: ['handleCustomer'],
+  emits: ['handleCustomer', 'handleEdit'],
+
+  components:{
+    ActionButton
+  },
 
   computed: {
     initiales() {
@@ -96,6 +103,10 @@ export default {
     // 3. La méthode qui envoie le signal au parent
     emitClick() {
       this.$emit('handleCustomer');
+    },
+    // Methode pour voir les details du client
+    emitEdit() {
+      this.$emit('handleEdit');
     },
     openFolder() {
       // Logique future pour ouvrir le dossier directement
@@ -267,7 +278,7 @@ button {
 }
 
 .btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 </style>

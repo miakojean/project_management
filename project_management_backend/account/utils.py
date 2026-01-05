@@ -17,12 +17,12 @@ def generate_password_reset_token(user):
     # Supprime les anciens token et crée le nouveau
 
     PasswordResetToken.objects.filter(user=user).delete()
-    PasswordResetToken.objects.create(
+    token_obj = PasswordResetToken.objects.create(
         user=user,
         token=token,
         expires_at=expires_at
     )
-    return token
+    return str(token_obj.token)
 
 def send_password_reset_email(user, reset_link):
     """Envoie un email avec token visile et boutton cliquable"""

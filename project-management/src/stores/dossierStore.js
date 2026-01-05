@@ -503,7 +503,7 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const params = {
                 search: query,
-                page_size: searchParams.page_size || 10,
+                page_size: searchParams.page_size || 10, 
                 ...searchParams
             };
 

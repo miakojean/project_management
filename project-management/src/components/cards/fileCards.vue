@@ -161,9 +161,9 @@ export default {
       if (this.color) return this.color
       
       const colorMap = {
-        pdf: '#3b82f6',      // Bleu
+        pdf: '#ef4444',      // Rouge
         word: '#10b981',     // Vert
-        excel: '#f59e0b',    // Jaune
+        xlsx: '#10b981',    // Vert
         powerpoint: '#ef4444', // Rouge
         image: '#8b5cf6',    // Violet
         webd: '#06b6d4',     // Cyan
