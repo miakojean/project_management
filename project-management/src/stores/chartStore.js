@@ -34,16 +34,29 @@ export const useChartStore = defineStore("chartStore", () => {
         return dossierStats.value.values.reduce((sum, value) => sum + value, 0);
     });
     
+    const currentMonthKey = computed(() => {
+        const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
+        return `${selectedYear.value}-${month}`;
+    });
+
+    const getValueForMonth = (statsRef) => {
+        const raw = statsRef.rawLabels || [];
+        const idx = raw.indexOf(currentMonthKey.value);
+        if (idx >= 0) return statsRef.values[idx] || 0;
+
+        // Fallback: if dataset contient 12 mois ordonnés par index
+        const monthIdx = new Date().getMonth();
+        return statsRef.values[monthIdx] || 0;
+    };
+    
     const currentMonthClients = computed(() => {
         if (clientRegistrations.value.values.length === 0) return 0;
-        const currentMonth = new Date().getMonth(); // 0-indexed
-        return clientRegistrations.value.values[currentMonth] || 0;
+        return getValueForMonth(clientRegistrations.value);
     });
     
     const currentMonthDossiers = computed(() => {
         if (dossierStats.value.values.length === 0) return 0;
-        const currentMonth = new Date().getMonth();
-        return dossierStats.value.values[currentMonth] || 0;
+        return getValueForMonth(dossierStats.value);
     });
     
     // Fonction utilitaire pour formater les mois

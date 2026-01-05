@@ -361,7 +361,7 @@ class DossierStatsAPIView(APIView):
 
     def get(self, request, format=None):
         """
-        Récupère les statistiques globales des dossiers
+        Récupère les statistiques globales des dossiers 
         """
         try:
             total_dossiers = Dossier.objects.count()
@@ -372,7 +372,7 @@ class DossierStatsAPIView(APIView):
                 statut__in=['TERMINE', 'CLOTURE']
             ).count()
             dossiers_annules = Dossier.objects.filter(statut='ANNULE').count()
-            dossiers_en_retard = Dossier.objects.filter(est_en_retard=True).count()
+            #dossiers_en_retard = Dossier.objects.filter(est_en_retard=True).count()
             
             # Statistiques par type
             types_stats = {}
@@ -397,7 +397,7 @@ class DossierStatsAPIView(APIView):
                 'dossiers_actifs': dossiers_actifs,
                 'dossiers_termines': dossiers_termines,
                 'dossiers_annules': dossiers_annules,
-                'dossiers_en_retard': dossiers_en_retard,
+                #'dossiers_en_retard': dossiers_en_retard,
                 'par_type': types_stats,
                 'par_statut': statuts_stats,
             }
