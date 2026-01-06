@@ -51,4 +51,4 @@ services:
     tty: true
 
 volumes:
-  postgres_data:
+postgres_data:
