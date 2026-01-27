@@ -193,7 +193,6 @@ class UserLogoutView(APIView):
             )
 
 # About password reseting
-
 class PasswordResetRequestView(APIView): # First step
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -207,32 +206,30 @@ class PasswordResetRequestView(APIView): # First step
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Vérifier d'abord si l'email existe dans la base
         try:
             user = Utilisateur.objects.get(email=email)
             
-            # Vérifier si l'utilisateur est actif
-            if not user.is_active:
-                return Response(
-                    {'message': 'Si un compte existe, un email a été envoyé'},
-                    status=status.HTTP_200_OK
-                )
-                
-            # Générer le token de réinitialisation
-            token = generate_password_reset_token(user)
-            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
+            # Si l'utilisateur existe et est actif, générer et envoyer le token
+            if user.is_active:
+                # Générer le token de réinitialisation
+                token = generate_password_reset_token(user)
+                reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
 
-            try:
-                # Envoi d'email réel
-                send_password_reset_email(user, reset_link)
-            except Exception as mail_err:
-                # Log interne et retour générique (ne pas exposer l'erreur SMTP au client)
-                print(f"Erreur d'envoi email reset pour {user.email}: {mail_err}")
-                # On continue à répondre 200 pour ne pas divulguer l'existence du compte
-
+                # Envoyer l'email uniquement si l'utilisateur existe
+                try:
+                    send_password_reset_email(user, reset_link)
+                except Exception as mail_err:
+                    # Log interne seulement
+                    print(f"Erreur d'envoi email reset pour {user.email}: {mail_err}")
+                    # Ne pas exposer l'erreur à l'utilisateur
+        
         except Utilisateur.DoesNotExist:
-            # On ne dit pas si l'email existe pour des raisons de sécurité
+            # Email n'existe pas dans la base, on ne fait rien (pas d'email envoyé)
+            # Mais on ne le révèle pas à l'utilisateur
             pass
         
+        # Toujours retourner le même message, que l'email existe ou non
         return Response(
             {'message': 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'},
             status=status.HTTP_200_OK
