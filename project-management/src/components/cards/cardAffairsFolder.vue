@@ -86,17 +86,17 @@
                 <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
                 </svg>
                 
-                <!-- Affichage du compte à rebours -->
                 <span 
-                v-if="countdownData"
-                class="countdown-display"
-                :class="countdownData.class"
-                :title="countdownData.tooltip"
-                > A finir dans
-                {{ countdownData.text }}
+                    v-if="countdownData"
+                    class="countdown-display"
+                    :class="countdownData.class"
+                    :title="countdownData.tooltip"
+                > 
+                    <span class="countdown-label">{{ countdownData.label }}</span>
+                    {{ countdownData.text }}
                 </span>
                 <span v-else class="countdown-display countdown-loading">
-                Chargement...
+                    Chargement...
                 </span>
             </div>
         </div>
@@ -108,7 +108,6 @@
                 </svg>
                 {{ documentsCount }} document(s)
             </div>
-            <!-- Badge de statut dans le footer -->
             <div class="status-badge" :class="statusClass">
                 {{ statusText }}
             </div>
@@ -177,19 +176,11 @@ export default {
             type: Number,
             default: 0
         },
-        interlocuteursCount: {
-            type: Number,
-            default: 0
-        },
         priorite: {
             type: String,
             default: 'NORMALE',
             validator: (value) => ['BASSE', 'NORMALE', 'HAUTE', 'URGENTE'].includes(value)
         },
-        description: {
-            type: String,
-            default: 'Description du dossier juridique. Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
-        }
     },
     emits: ['dossier-action', 'view', 'edit', 'mark-as-done', 'archive', 'delete', 'card-click'],
     
@@ -246,17 +237,8 @@ export default {
             return props.priorite === 'URGENTE';
         });
         
-        const joursDepuisOuverture = computed(() => {
-            const dateParts = props.dateOuverture.split('/');
-            const ouvertureDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-            const today = new Date();
-            const diffTime = Math.abs(today - ouvertureDate);
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        });
-        
         const toggleDropdown = () => {
             showDropdown.value = !showDropdown.value;
-            
             if (showDropdown.value) {
                 setTimeout(() => {
                     clickOutsideHandler = (event) => {
@@ -276,7 +258,6 @@ export default {
         
         const closeDropdown = () => {
             showDropdown.value = false;
-            
             if (clickOutsideHandler) {
                 document.removeEventListener('mousedown', clickOutsideHandler);
                 clickOutsideHandler = null;
@@ -284,17 +265,13 @@ export default {
         };
         
         const handleCardClick = (event) => {
-            if (event.target.closest('.options-container') || 
-                event.target.closest('.card-actions')) {
-                return;
-            }
+            if (event.target.closest('.options-container') || event.target.closest('.card-actions')) return;
             
             emit('card-click', {
                 dossierId: props.dossierId,
                 reference: props.reference,
                 titre: props.titre
             });
-            
             emit('view', {
                 dossierId: props.dossierId,
                 reference: props.reference,
@@ -309,56 +286,70 @@ export default {
                 titre: props.titre,
                 action: action
             };
-            
             emit('dossier-action', dossierData);
-            
             switch(action) {
-                case 'view':
-                    emit('view', dossierData);
-                    break;
-                case 'mark-as-done':
-                    emit('mark-as-done', dossierData);
-                    break;
-                case 'archive':
-                    emit('archive', dossierData);
-                    break;
-                case 'delete':
-                    emit('delete', dossierData);
-                    break;
+                case 'view': emit('view', dossierData); break;
+                case 'mark-as-done': emit('mark-as-done', dossierData); break;
+                case 'archive': emit('archive', dossierData); break;
+                case 'delete': emit('delete', dossierData); break;
             }
-            
             closeDropdown();
         };
         
         const handleEscapeKey = (event) => {
-            if (event.key === 'Escape' && showDropdown.value) {
-                closeDropdown();
-            }
+            if (event.key === 'Escape' && showDropdown.value) closeDropdown();
         };
 
-        // Management du store countdown (non utilisé actuellement)
+        // --- GESTION COMPTE A REBOURS & RETARD ---
         const countdownStore = useCountdownStore();
         const countdownData = ref(null);
+        const countdownId = computed(() => `dossier-${props.dossierId}`);
 
-        // Créer un ID unique pour ce compte à rebours
-        const countdownId = computed(() => `dossier-${props.dossierId}`)
-    
-        // Initialiser le compte à rebours
+        // Fonction pour analyser la date et surcharger les données si en retard
+        const processCountdownData = (storeData) => {
+            if (!props.datefin) return storeData;
+
+            // Parsing de la date (format DD/MM/YYYY)
+            const [day, month, year] = props.datefin.split('/');
+            // Date de fin fixée à la toute fin de la journée (23:59:59)
+            const endDate = new Date(year, month - 1, day, 23, 59, 59);
+            const now = new Date();
+
+            if (now > endDate) {
+                // Calcul des jours de retard
+                const diffTime = Math.abs(now - endDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                return {
+                    ...storeData,
+                    label: 'Retard :',
+                    text: `${diffDays} jour${diffDays > 1 ? 's' : ''}`,
+                    class: 'countdown-overdue',
+                    tooltip: `Dossier en retard de ${diffDays} jours`
+                };
+            }
+            
+            // Pas de retard : on ajoute juste le label par défaut
+            return {
+                ...storeData,
+                label: 'A finir dans'
+            };
+        };
+
         const initCountdown = () => {
             if (props.datefin) {
-                // Utiliser la version statique pour un affichage immédiat
-                countdownData.value = countdownStore.getStaticCountdown(props.datefin)
+                const staticData = countdownStore.getStaticCountdown(props.datefin);
+                countdownData.value = processCountdownData(staticData);
                 
-                // Démarrer la mise à jour en temps réel
                 countdownStore.startCountdown(
-                countdownId.value,
-                props.datefin,
-                (updatedData) => {
-                    countdownData.value = updatedData
-                }
-                )
+                    countdownId.value,
+                    props.datefin,
+                    (updatedData) => {
+                        countdownData.value = processCountdownData(updatedData);
+                    }
+                );
             }
-        }
+        };
         
         onMounted(() => {
             document.addEventListener('keydown', handleEscapeKey);
@@ -367,9 +358,7 @@ export default {
         
         onUnmounted(() => {
             document.removeEventListener('keydown', handleEscapeKey);
-            if (clickOutsideHandler) {
-                document.removeEventListener('mousedown', clickOutsideHandler);
-            };
+            if (clickOutsideHandler) document.removeEventListener('mousedown', clickOutsideHandler);
             countdownStore.stopCountdown(countdownId.value);
         });
         
@@ -381,8 +370,6 @@ export default {
             typeText,
             prioriteText,
             isUrgent,
-            joursDepuisOuverture,
-            initCountdown,
             countdownData,
             toggleDropdown,
             closeDropdown,
@@ -422,7 +409,6 @@ export default {
     align-items: flex-start;
     padding: 1.25rem 1.25rem 1rem;
     background: linear-gradient(135deg, #67acf1 0%, #f1f5f9 100%);
-    /*background: #82d3fc;*/
 }
 
 .header-left {
@@ -562,34 +548,6 @@ export default {
     background-color: #fed7d7;
 }
 
-.card-stats {
-    display: flex;
-    justify-content: space-around;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #eaeaea;
-    border-bottom: 1px solid #eaeaea;
-    margin: 0 1.5rem;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.stat-number {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #005380;
-}
-
-.stat-label {
-    font-size: 0.8rem;
-    color: #777;
-    font-weight: 500;
-}
-
 .progress-section {
     padding: 1.2rem 1.5rem 0.8rem;
 }
@@ -657,6 +615,46 @@ export default {
     height: 18px;
     color: #005380;
     flex-shrink: 0;
+}
+
+/* Styles spécifiques pour le compte à rebours */
+.countdown-container {
+    margin-top: 2px;
+}
+
+.countdown-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.countdown-label {
+    opacity: 0.9;
+}
+
+.countdown-loading {
+    color: #999;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+/* Style pour le RETARD */
+.countdown-overdue {
+    background-color: #ffeaea;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-left: -8px; /* Compenser le padding pour l'alignement visuel */
+    animation: pulse-red 2s infinite ease-in-out;
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
 }
 
 .card-footer {

@@ -4,6 +4,11 @@ from account.models import Utilisateur # Votre modèle utilisateur
 from django.contrib.contenttypes.models import ContentType
 from typing import List, Optional, Union, Iterable
 from django.db.models.query import QuerySet
+from typing import List, Optional, Union, Iterable
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.conf import settings
+
 
 def notify_users(
     recipients: Union[Utilisateur, List[Utilisateur]], 
@@ -110,3 +115,36 @@ def notify_users(
     created_recipients = NotificationRecipient.objects.bulk_create(recipients_to_create)
     
     return created_recipients
+
+def notify_email(
+        recipients: Union[Utilisateur, List[Utilisateur]],
+        ref_of_affairs: str,
+        client_type: str,
+        name: str,
+        phone_number: str,
+        email: str,
+        date: str,
+    ):
+
+    subject = "Ajout de nouveau dossier dans la base de données"
+
+    context = {
+        'ref_of_affairs': ref_of_affairs,
+        'client_type': client_type,
+        'name': name,
+        'phone_number': phone_number,
+        'date': date
+    }
+    
+    html_content = render_to_string('notifications/affairsTemplate.html', context)
+
+    email = EmailMessage(
+        subject,
+        html_content,
+        settings.EMAIL_HOST_USER,
+        to=recipients
+    )
+    email.content_subtype = "html"
+    email.send()
+
+    return True

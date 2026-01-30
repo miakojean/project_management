@@ -155,7 +155,7 @@ label {
   color: #1F2937; /* Texte presque noir */
   background-color: #ffffff;
   border: 1px solid #E5E7EB; /* Gris très clair */
-  border-radius: 12px; /* Arrondi prononcé comme sur l'image */
+  border-radius: 4px; /* Arrondi prononcé comme sur l'image */
   outline: none;
   transition: all 0.2s ease-in-out;
 }
