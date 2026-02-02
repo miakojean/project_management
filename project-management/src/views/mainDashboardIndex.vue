@@ -71,7 +71,7 @@ export default {
   grid-area: main;
   background-color: #f9fafb; /* Légère différence de fond pour mieux voir la séparation */
   overflow-y: auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .footer-area {
@@ -96,6 +96,10 @@ export default {
 
   .sidebar-area {
     display: none; /* À remplacer par un menu hamburger mobile */
+  }
+
+  .header-area{
+    display: none;
   }
 }
 </style>

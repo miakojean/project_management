@@ -106,7 +106,6 @@ export default {
   flex-direction: column;
   justify-content: start;
   gap: 24px;
-  max-width: 320px;
   width: 100%;
   border: 1px solid rgba(99, 102, 241, 0.1);
   overflow: hidden;
@@ -241,7 +240,9 @@ export default {
 
 @media (max-width: 480px) {
   .feature-card {
-    max-width: 100%;
+    display: flex;
+    justify-content: start;
+    max-width: 380px;
   }
 }
 

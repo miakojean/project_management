@@ -478,7 +478,7 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
+    padding: 1rem;
     text-align: center;
     background: #f8fafc;
     width: 100%;

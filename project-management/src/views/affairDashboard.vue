@@ -98,4 +98,18 @@ export default {
     display: none; /* À remplacer par un menu hamburger mobile */
   }
 }
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "header"
+      "main"
+      "footer";
+  }
+
+  .sidebar-area {
+    display: none; /* À remplacer par un menu hamburger mobile */
+  }
+}
 </style>
