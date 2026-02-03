@@ -111,5 +111,9 @@ export default {
   .sidebar-area {
     display: none; /* À remplacer par un menu hamburger mobile */
   }
+
+  .header-area{
+    display: none;
+  }
 }
 </style>

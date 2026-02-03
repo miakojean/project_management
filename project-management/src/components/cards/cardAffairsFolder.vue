@@ -81,9 +81,9 @@
                 <span>Ouvert le {{ dateOuverture }}</span>
             </div>
         
-            <div class="info-item countdown-container">
+            <div class="info-item countdown-container" v-if="!is_archived">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="info-icon">
-                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
                 </svg>
                 
                 <span 
@@ -116,7 +116,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useCountdownStore } from '@/stores/counter';
 
 export default {
@@ -181,6 +181,14 @@ export default {
             default: 'NORMALE',
             validator: (value) => ['BASSE', 'NORMALE', 'HAUTE', 'URGENTE'].includes(value)
         },
+        es_en_retard:{
+            type:Boolean,
+            default: false
+        },
+        is_archived:{
+            type:Boolean,
+            default: false,
+        }
     },
     emits: ['dossier-action', 'view', 'edit', 'mark-as-done', 'archive', 'delete', 'card-click'],
     
@@ -307,49 +315,71 @@ export default {
 
         // Fonction pour analyser la date et surcharger les données si en retard
         const processCountdownData = (storeData) => {
-            if (!props.datefin) return storeData;
+            // SI LE DOSSIER EST ARCHIVÉ, NE PAS AFFICHER LE COMPTE À REBOURS
+            if (props.estArchive) {
+                return {
+                    label: 'Archivé',
+                    text: '',
+                    class: 'countdown-archived',
+                    tooltip: 'Dossier archivé'
+                };
+            }
 
-            // Parsing de la date (format DD/MM/YYYY)
-            const [day, month, year] = props.datefin.split('/');
-            // Date de fin fixée à la toute fin de la journée (23:59:59)
-            const endDate = new Date(year, month - 1, day, 23, 59, 59);
-            const now = new Date();
+            if (!storeData) return null;
 
-            if (now > endDate) {
-                // Calcul des jours de retard
-                const diffTime = Math.abs(now - endDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+            // Si le store indique que c'est expiré (retard)
+            if (storeData.urgency === 'expired' || storeData.raw?.expired) {
+                const days = storeData.raw?.overdue || 0;
                 return {
                     ...storeData,
                     label: 'Retard :',
-                    text: `${diffDays} jour${diffDays > 1 ? 's' : ''}`,
+                    text: `${days} jour${days > 1 ? 's' : ''}`, 
                     class: 'countdown-overdue',
-                    tooltip: `Dossier en retard de ${diffDays} jours`
+                    tooltip: `Dossier en retard de ${days} jours`
                 };
             }
             
-            // Pas de retard : on ajoute juste le label par défaut
+            // Si ce n'est pas en retard
             return {
                 ...storeData,
-                label: 'A finir dans'
+                label: 'Échéance :'
             };
         };
 
         const initCountdown = () => {
-            if (props.datefin) {
-                const staticData = countdownStore.getStaticCountdown(props.datefin);
-                countdownData.value = processCountdownData(staticData);
+            // MODIFICATION ICI : On ajoute !props.is_archived dans la condition
+            if (props.datefin && !props.is_archived) {
                 
+                // 1. Récupération initiale immédiate (pour ne pas attendre 1 seconde)
+                const staticData = countdownStore.getStaticCountdown(props.datefin);
+                // Utilisation directe des données du store (formatées par counter.js)
+                countdownData.value = staticData; 
+                
+                // 2. Lancement du monitoring temps réel
                 countdownStore.startCountdown(
                     countdownId.value,
                     props.datefin,
                     (updatedData) => {
-                        countdownData.value = processCountdownData(updatedData);
+                        countdownData.value = updatedData;
                     }
                 );
+            } else {
+                // Si pas de date ou si archivé, on s'assure que c'est vide
+                countdownData.value = null;
             }
         };
+
+        watch(() => props.is_archived, (newVal) => {
+            if (newVal) {
+                // Si le dossier devient archivé, on coupe le compteur
+                countdownStore.stopCountdown(countdownId.value);
+                countdownData.value = null;
+            } else {
+                // S'il est désarchivé, on relance
+                initCountdown();
+            }
+        });
+
         
         onMounted(() => {
             document.addEventListener('keydown', handleEscapeKey);

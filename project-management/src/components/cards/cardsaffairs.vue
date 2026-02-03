@@ -93,7 +93,8 @@ export default {
                 active: "En cours",
                 completed: "Terminé",
                 pending: "En attente",
-                cancelled: "Annulé"
+                cancelled: "Annulé",
+                completed:"CLOTURE"
             }
             return statusMap[this.status] || this.status
         },

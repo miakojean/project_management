@@ -1,7 +1,8 @@
 <template>
     <section class="flex flex-col min-h-screen gap-8">
+        
         <div class="grid grid-cols-2 gap-6 flex-1">
-            <div class="sticky top-4 self-start">
+            <div class="top-4 self-start">
                 <cardsaffairs
                     v-if="doc && doc.titre"
                     :title="doc.titre"
@@ -26,7 +27,7 @@
             </div>
         </div>
         
-        <div v-if="hasDocuments" class="grid grid-cols-3 w-full gap-2">
+        <div v-if="hasDocuments" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full gap-2">
             <fileCards v-for="document in doc.documents"
                 :key="document.id"
                 :title="document.titre"
@@ -106,6 +107,7 @@ import deleteModale from '../modales/deleteModale.vue';
 import notificationPopup from '../tools/notificationPopup.vue';
 import commentInput from '../input/commentInput.vue';
 import commentSection from './commentSection.vue';
+
 
 // Store 
 import { useDossierStore } from '@/stores/dossierStore';
