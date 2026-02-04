@@ -22,165 +22,141 @@
         
         <mainButton type="submit" label="Se connecter" :isloading="isloading"></mainButton>
 
-        <div v-if="message.errorMessage" class="error__message center__flex">
-            <p>{{ message.errorMessage }}</p>
+        <!-- Message d'erreur -->
+        <div v-if="errorMessage" class="error__message center__flex">
+            <p>{{ errorMessage }}</p>
+        </div>
+
+        <!-- Message de succès -->
+        <div v-if="successMessage" class="success__message center__flex">
+            <p>{{ successMessage }}</p>
         </div>
 
         <divider />
         
-         
-        <div class="w-full flex justify-items-start gap-2">
+        <div class="w-full flex justify-items-start gap-2 cursor-pointer" @click="goToPasswordReset">
             <p>Signaler l'oubli du mot de passe</p>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
         </div>
         
-    
     </form>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'; // ✅ IMPORT DU STORE
 import inputfamily from '../input/inputfamily.vue';
 import mainButton from '../button/mainButton.vue';
 import divider from '../tools/divider.vue';
-import { useRouter } from 'vue-router';
-import { reactive, ref } from 'vue';
-import api from '@/_services/api';
 
-export default {
-    components: {
-        inputfamily,
-        mainButton,
-        divider
-    },
-    setup() {
-        const router = useRouter();
-        const isloading = ref(false);
+const router = useRouter();
+const authStore = useAuthStore();
 
-        const message = ref({
-            errorMessage: "",
-            succesMessage: "",
+// Refs
+const isloading = ref(false);
+const errorMessage = ref('');
+const successMessage = ref('');
+const emailInput = ref(null);
+const passwordInput = ref(null);
+
+// Form data
+const formData = reactive({
+    email: "",
+    password: ""
+});
+
+// Validation
+const validateData = () => {
+    const isEmailValid = emailInput.value?.validate();
+    const isPasswordValid = passwordInput.value?.validate();
+
+    if (isEmailValid && isPasswordValid) {
+        console.log("✅ Données valides, soumission du formulaire...");
+        return true;
+    }
+    
+    errorMessage.value = "Veuillez remplir tous les champs correctement";
+    return false;
+};
+
+// Redirection pour mot de passe oublié
+const goToPasswordReset = () => {
+    router.push('/password-reset');
+};
+
+// Soumission
+const handleSubmit = async () => {
+    // Réinitialiser les messages
+    errorMessage.value = '';
+    successMessage.value = '';
+    isloading.value = true;
+
+    try {
+        // Validation
+        if (!validateData()) {
+            isloading.value = false;
+            return;
+        }
+
+        console.log("🔐 Tentative de connexion...");
+
+        // ✅ UTILISER LE STORE POUR LE LOGIN
+        // Le store gère automatiquement les cookies
+        await authStore.login({
+            email: formData.email,
+            password: formData.password
         });
 
-        const formData = reactive({
-            email: "",
-            password: ""
-        });
+        console.log("✅ Connexion réussie via le store");
+        successMessage.value = "Connexion réussie ! Redirection en cours...";
 
-        // Refs pour accéder aux méthodes de validation
-        const emailInput = ref(null);
-        const passwordInput = ref(null);
+        // ✅ La redirection est déjà gérée par le store dans `auth.js`
+        // ou on peut rediriger manuellement après un délai
+        setTimeout(() => {
+            router.push('/dashboard');
+        }, 1000);
 
-        const validateData = () => {
-            const isEmailValid = emailInput.value?.validate();
-            const isPasswordValid = passwordInput.value?.validate();
-
-            if (isEmailValid && isPasswordValid) {
-                console.log("Données valides, soumission du formulaire...");
-                console.log("Email:", formData.email);
-                console.log("Password:", formData.password);
-                return true;
-            }
-            return false;
-        };
-
-        const handleSubmit = async () => {
-            isloading.value = true;
-            // Réinitialiser les messages
-            message.value = {
-                errorMessage: "",
-                succesMessage: ""
-            };
-
-            try {
-                if (!validateData()) {
-                    console.log("Les champs ne sont pas correctement remplis");
-                    message.value.errorMessage = "Veuillez remplir tous les champs correctement";
-                    return;
-                }
-
-                const response = await api.post('/account/login', {
-                    email: formData.email,
-                    password: formData.password // CORRECTION: "password" au lieu de "passwor"
-                });
-
-                console.log("Réponse complète:", response);
-
-                // Gestion flexible des tokens selon la structure de réponse
-                let token = null;
-                let refreshToken = null;
-
-                // Différentes possibilités de structure de réponse
-                if (response.data.access_token) {
-                    token = response.data.access_token;
-                    refreshToken = response.data.refresh_token;
-                } else if (response.data.access) {
-                    token = response.data.access;
-                    refreshToken = response.data.refresh;
-                } else if (response.data.token) {
-                    token = response.data.token;
-                } else if (response.data.data?.access_token) {
-                    token = response.data.data.access_token;
-                    refreshToken = response.data.data.refresh_token;
-                }
-
-                if (token) {
-                    // Stockage des tokens
-                    localStorage.setItem('authToken', token);
-                    if (refreshToken) {
-                        localStorage.setItem('refresh', refreshToken);
-                    }
-                    
-                    // Redirection
-                    router.push('/dashboard');
-                } else {
-                    throw new Error("Token d'authentification non reçu dans la réponse");
-                }
-
-            } catch (error) {
-                console.log("Erreur de connexion:", error);
-                
-                // Gestion des erreurs améliorée
-                if (error.response?.status === 401) {
-                    message.value.errorMessage = "Email ou mot de passe incorrect";
-                } else if (error.response?.status === 400) {
-                    message.value.errorMessage = "Données de connexion invalides";
-                } else if (error.response?.status === 403) {
-                    message.value.errorMessage = "Accès non autorisé";
-                } else if (error.response?.status === 404) {
-                    message.value.errorMessage = "Service d'authentification non disponible";
-                } else if (error.response?.status >= 500) {
-                    message.value.errorMessage = "Erreur serveur. Veuillez réessayer plus tard.";
-                } else if (error.response?.data?.message) {
-                    message.value.errorMessage = error.response.data.message;
-                } else if (error.message) {
-                    message.value.errorMessage = error.message;
-                } else {
-                    message.value.errorMessage = "Échec de la connexion. Veuillez réessayer."; // CORRECTION: utilisation de message.value
-                }
-                
-                // Log détaillé pour le débogage
-                console.error("Détails de l'erreur:", {
-                    status: error.response?.status,
-                    data: error.response?.data,
-                    message: error.message
-                });
-            } finally {
-                isloading.value = false;
-            }
-        };
+    } catch (error) {
+        console.error("❌ Erreur de connexion:", error);
         
-        return {
-            router,
-            isloading,
-            message,
-            formData,
-            emailInput,
-            passwordInput,
-            validateData,
-            handleSubmit
-        };
+        // ✅ Gestion des erreurs simplifiée - le store a déjà formaté les erreurs
+        if (authStore.error) {
+            errorMessage.value = authStore.error;
+        } else {
+            // Fallback si le store n'a pas d'erreur
+            const errorData = error.response?.data || {};
+            
+            if (error.response?.status === 401) {
+                errorMessage.value = "Email ou mot de passe incorrect";
+            } else if (error.response?.status === 400) {
+                errorMessage.value = errorData.error || errorData.message || "Données de connexion invalides";
+            } else if (error.response?.status === 403) {
+                errorMessage.value = "Accès non autorisé";
+            } else if (error.response?.status === 404) {
+                errorMessage.value = "Service d'authentification non disponible";
+            } else if (error.response?.status >= 500) {
+                errorMessage.value = "Erreur serveur. Veuillez réessayer plus tard.";
+            } else if (error.message) {
+                errorMessage.value = error.message;
+            } else {
+                errorMessage.value = "Échec de la connexion. Veuillez réessayer.";
+            }
+        }
+        
+        // Log détaillé pour le débogage (développement seulement)
+        if (process.env.NODE_ENV === 'development') {
+            console.error("Détails de l'erreur:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+        }
+        
+    } finally {
+        isloading.value = false;
     }
 };
 </script>
@@ -215,6 +191,7 @@ form p, svg {
     background: #ffb7b7;
     width: 100%;
     border-radius: 4px;
+    animation: fadeIn 0.3s ease;
 }
 
 .error__message p {
@@ -222,5 +199,25 @@ form p, svg {
     font-weight: 500;
     margin: 0;
     text-align: center;
+}
+
+.success__message {
+    padding: 0.5rem;
+    background: #d4edda;
+    width: 100%;
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+.success__message p {
+    color: #155724;
+    font-weight: 500;
+    margin: 0;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>
