@@ -9,6 +9,7 @@
     </header>
 
     <main class="main-area">
+      <newSection/>
       <indexDashboardSection/>
     </main>
 
@@ -23,13 +24,15 @@
 import navbar from '@/components/navigation/navbar.vue';
 import sidebar from '@/components/navigation/sidebar.vue';
 import indexDashboardSection from '@/components/section/indexDashboardSection.vue';
+import newSection from '@/components/section/newSection.vue';
 
 export default {
     name: 'DashboardLayout',
     components: {
       navbar,
       sidebar,
-      indexDashboardSection
+      indexDashboardSection,
+      newSection
     }
 }
 </script>

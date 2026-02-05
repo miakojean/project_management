@@ -201,7 +201,7 @@ export default {
             refreshData();
             
             // Optionnel: recharger périodiquement (toutes les 30 secondes)
-            const interval = setInterval(refreshData, 300000);
+            const interval = setInterval(refreshData, 500000);
             
             // Nettoyer l'intervalle quand le composant est détruit
             onUnmounted(() => {
