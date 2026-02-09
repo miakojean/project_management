@@ -26,6 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
                 id: userData.id,
                 first_name: userData.first_name,
                 last_name: userData.last_name,
+                username: userData.username,
                 nom_complet: userData.nom_complet,
                 email: userData.email,
                 category_title: userData.category_title
@@ -166,7 +167,7 @@ export const useAuthStore = defineStore('auth', () => {
         const { silent = false, redirect = true } = options;
         
         if (!silent) {
-            console.log('🚪 Déconnexion...');
+            console.log('Déconnexion...');
         }
         
         try {

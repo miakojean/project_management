@@ -16,11 +16,10 @@ class NotificationListAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get_notification_queryset(self):
-        """
-        Retourne le queryset de base des notifications pour l'utilisateur connecté.
-        """
         return Notification.objects.filter(
             notificationrecipient__recipient=self.request.user
+        ).prefetch_related(
+            'notificationrecipient_set' # Charge TOUS les recipients
         ).distinct().order_by('-created_at')
     
     def get_notificationrecipient_queryset(self):

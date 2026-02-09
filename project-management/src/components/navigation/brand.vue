@@ -1,6 +1,6 @@
 <template>
     <div class="logo" @click="goToDashboard">
-        <img src="../../../public/LOGO_ROND.png" alt="logo de Adn consulting">
+        <img src="../../assets//juristrack.jpeg" class="log--pic" alt="logo de Adn consulting">
         <h4><span>ADN</span> consulting</h4>
     </div>
 </template>
@@ -35,6 +35,7 @@ img{
     width:50px;
     height:50px;
     background-size: cover;
+    border-radius: 50%;
 }
 
 .logo h4{
