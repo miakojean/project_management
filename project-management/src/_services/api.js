@@ -29,7 +29,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        console.error('❌ Erreur intercepteur requête:', error);
+        console.error('Erreur intercepteur requête:', error);
         return Promise.reject(error);
     }
 );
@@ -37,13 +37,13 @@ api.interceptors.request.use(
 // --- INTERCEPTEUR DE RÉPONSE ---
 api.interceptors.response.use(
     (response) => {
-        console.log('✅ Réponse reçue:', response.config.url, response.status);
+        console.log('Réponse reçue:', response.config.url, response.status);
         return response;
     },
     async (error) => {
         const originalRequest = error.config;
 
-        console.log('❌ Erreur intercepteur réponse:', {
+        console.log('Erreur intercepteur réponse:', {
             url: originalRequest?.url,
             status: error.response?.status,
             message: error.message
@@ -52,7 +52,7 @@ api.interceptors.response.use(
         // ✅ Gestion du 401 (session expirée)
         if (error.response?.status === 401 &&
             !originalRequest._retry &&
-            !originalRequest.url.includes('/account/token/refresh') &&
+            !originalRequest.url.includes('/account/token/refresh/') &&
             !originalRequest.url.includes('/account/login')
         ) {
             originalRequest._retry = true;
@@ -60,18 +60,18 @@ api.interceptors.response.use(
             console.log('🔄 Tentative de refresh token via cookie...');
 
             try {
-                // ✅ Le refresh token est dans un cookie HttpOnly
+                // Le refresh token est dans un cookie HttpOnly
                 // Il sera envoyé automatiquement avec `withCredentials: true`
-                await api.post('/account/token/refresh');
-                console.log('✅ Token refreshé avec succès via cookie');
+                await api.post('/account/token/refresh/');
+                console.log('Token refreshé avec succès via cookie');
                 
-                // ✅ Relancer la requête originale
+                // Relancer la requête originale
                 return api(originalRequest);
                 
             } catch (refreshError) {
                 console.error('❌ Échec du refresh token:', refreshError);
                 
-                // ✅ Redirection vers login
+                // Redirection vers login
                 if (router.currentRoute.value.path !== '/login') {
                     router.push('/login?session_expired=true');
                 }
@@ -79,9 +79,9 @@ api.interceptors.response.use(
             }
         }
 
-        // ✅ Gestion des autres erreurs
+        // Gestion des autres erreurs
         if (error.response?.status === 403) {
-            console.error('🚫 Accès refusé (403)');
+            console.error('Accès refusé (403)');
             router.push('/unauthorized');
         }
         
