@@ -484,6 +484,7 @@ export const useDossierStore = defineStore('dossier', () => {
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
+            console.log("Dossiers chargés", dossiers.value)
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers'; 

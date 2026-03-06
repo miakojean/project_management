@@ -9,6 +9,7 @@
     </header>
 
     <main class="main-area">
+      <newSection/>
       <indexDashboardSection/>
     </main>
 
@@ -23,13 +24,15 @@
 import navbar from '@/components/navigation/navbar.vue';
 import sidebar from '@/components/navigation/sidebar.vue';
 import indexDashboardSection from '@/components/section/indexDashboardSection.vue';
+import newSection from '@/components/section/newSection.vue';
 
 export default {
     name: 'DashboardLayout',
     components: {
       navbar,
       sidebar,
-      indexDashboardSection
+      indexDashboardSection,
+      newSection
     }
 }
 </script>
@@ -71,7 +74,7 @@ export default {
   grid-area: main;
   background-color: #f9fafb; /* Légère différence de fond pour mieux voir la séparation */
   overflow-y: auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .footer-area {
@@ -96,6 +99,10 @@ export default {
 
   .sidebar-area {
     display: none; /* À remplacer par un menu hamburger mobile */
+  }
+
+  .header-area{
+    display: none;
   }
 }
 </style>

@@ -6,7 +6,7 @@
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
                 <span class="error-text">{{ errorMessage }}</span>
-                <button class="error-close" @click="clearError">×</button>
+                <button class="error-close" @click="clearError">x</button>
             </div>
         </div>
         
@@ -189,6 +189,11 @@ export default {
                 isValid = false;
             }
 
+            if (!formData.forme_juridique.trim()) {
+                fieldErrors.forme_juridique = 'La forme juridique est obligatoire';
+                isValid = false;
+            }
+
             if (!formData.adresse.trim()) {
                 fieldErrors.adresse = 'L\'adresse est obligatoire';
                 isValid = false;
@@ -228,7 +233,7 @@ export default {
 
         onMounted(async () => {
             if (!user.value && !isInitialized.value) {
-                console.log("🔄 User vide, tentative d'initialisation...");
+                console.log("User vide, tentative d'initialisation...");
                 await authStore.initializeAuth();
             }
         });

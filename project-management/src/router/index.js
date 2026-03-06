@@ -80,6 +80,14 @@ const router = createRouter({
       path:'/upload-file',
       name:'upload-file',
       component:() => import('@/components/section/uploadFileSection.vue')
+    },
+
+    /* About password reseting */
+
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/views/passwordResetView.vue')
     }
   ],
 })

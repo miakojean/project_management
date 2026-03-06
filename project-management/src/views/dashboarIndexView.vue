@@ -59,7 +59,7 @@ export default {
   color: white;
   padding: 1rem;
   overflow-y: auto;
-  border-right: 1px solid #e5e7eb; /* ✅ Bordure de séparation */
+  border-right: 1px solid #e5e7eb;
 }
 
 .header-area {
@@ -100,6 +100,10 @@ export default {
 
   .sidebar-area {
     display: none; /* À remplacer par un menu hamburger mobile */
+  }
+
+  .header-area{
+    display: none;
   }
 }
 </style>

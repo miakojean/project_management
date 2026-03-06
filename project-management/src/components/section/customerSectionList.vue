@@ -518,6 +518,18 @@ export default {
 
 @media (max-width: 768px) {
     .customer__cards__container {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .customer__cards__container {
         grid-template-columns: 1fr;
     }
     
@@ -525,6 +537,12 @@ export default {
         flex-direction: column;
         align-items: stretch;
         text-align: center;
+    }
+
+    .pagination-controls{
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 }
 </style>

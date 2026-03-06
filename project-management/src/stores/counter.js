@@ -46,59 +46,52 @@ export const useCountdownStore = defineStore('countdown', () => {
   // Formater le temps restant pour l'affichage
   const formatCountdown = (timeRemaining) => {
     if (timeRemaining.expired) {
+      const days = timeRemaining.overdue;
+      // On remplace "+Xj" par une structure plus propre
       return {
-        text: `+${timeRemaining.overdue}j`,
-        class: 'countdown-expired',
-        tooltip: `Échéance dépassée depuis ${timeRemaining.overdue} jour(s)`,
-        urgency: 'expired'
+        text: `${days} jour${days > 1 ? 's' : ''}`, 
+        class: 'countdown-overdue', // On harmonise avec votre CSS
+        label: 'Retard :',
+        tooltip: `Échéance dépassée depuis ${days} jour(s)`,
+        urgency: 'expired',
+        raw: timeRemaining
       }
     }
     
-    const { days, hours, minutes, seconds } = timeRemaining
+    const { days, hours, minutes, seconds } = timeRemaining;
     
-    // Déterminer l'urgence
-    let urgency = 'normal'
+    // Logique d'urgence pour les dossiers non-expirés
+    let urgency = 'normal';
     if (days === 0 && hours < 24) {
-      urgency = hours < 12 ? 'urgent' : 'warning'
+      urgency = hours < 12 ? 'urgent' : 'warning';
     } else if (days < 3) {
-      urgency = 'warning'
+      urgency = 'warning';
     }
     
-    // Format d'affichage
-    let text = ''
+    // Format d'affichage pour les dossiers à venir
+    let text = '';
     if (days > 0) {
-      text = `${days} jour${days > 1 ? 's' : ''}`
+      text = `${days} jour${days > 1 ? 's' : ''}`;
     } else if (hours > 0) {
-      text = `${hours}h ${minutes}m`
-    } else if (minutes > 0) {
-      text = `${minutes}m ${seconds}s`
+      text = `${hours}h ${minutes}m`;
     } else {
-      text = `${seconds}s`
+      text = `${minutes}m ${seconds}s`;
     }
-    
-    // Classes CSS
+
     const classMap = {
       'normal': 'countdown-normal',
       'warning': 'countdown-warning',
-      'urgent': 'countdown-urgent',
-      'expired': 'countdown-expired'
-    }
-    
-    // Tooltip
-    const tooltipMap = {
-      'normal': `Échéance dans ${days} jour(s)`,
-      'warning': `Échéance proche : ${days}j ${hours}h`,
-      'urgent': `Échéance imminente : ${hours}h ${minutes}m`,
-      'expired': `Dépassé de ${timeRemaining.overdue} jour(s)`
-    }
-    
+      'urgent': 'countdown-urgent'
+    };
+
     return {
       text,
+      label: 'À finir dans :',
       class: classMap[urgency],
-      tooltip: tooltipMap[urgency],
+      tooltip: `Échéance dans ${days}j ${hours}h`,
       urgency,
       raw: timeRemaining
-    }
+    };
   }
   
   // Démarrer un compte à rebours

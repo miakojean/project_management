@@ -491,7 +491,7 @@ class DossierListSerializer(serializers.ModelSerializer):
             'statut', 'priorite', 'client_nom', 'date_echeance', 
             'est_en_retard', 'taux_avancement', 'date_creation',
             'date_creation_formatee', 'date_echeance_formatee',
-            'client', 
+            'client','est_archive', 
             'documents_count'  # ← ajouté ici
         ]
 

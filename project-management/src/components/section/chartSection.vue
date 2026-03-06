@@ -491,4 +491,18 @@ const updateChart = () => {
     display: none;
   }
 }
+
+@media (max-width: 468px){
+  .chart-card{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .chart-header{
+    display: flex;
+    flex-direction: column;
+  }
+}
 </style>

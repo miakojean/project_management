@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 # Create your views here.
 class CreateUserView(APIView):
@@ -141,23 +142,121 @@ class UserLoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
+            # Générer les tokens JWT
             refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': {
-                    'id': user.id,
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            # Création de la reponse
+            response = Response({
+               'user': {
+                   'user':user.id,
                     'username': user.username,
-                    'email': user.email,
+                    'email':user.email,
                     'first_name': user.first_name,
                     'last_name': user.last_name,
                     'category_title': user.category_title
-                }
-            }, status=status.HTTP_200_OK)
+                },
+                'message':'Connexion Réussie.'
+            }, status=status.HTTP_200_OK
+            )
+
+            # Définir les cookies HttpOnly
+            # Access Token cookie (15 minutes ou 1 jour selon votre configuration)
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                max_age=24 * 60 * 60,  # 1 jour (votre settings)
+            )
+
+            # Refresh Token cookie (7 jours)
+            response.set_cookie(
+                key='refresh_token',
+                value=refresh_token,
+                httponly=True,
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                max_age=7 * 24 * 60 * 60,  # 7 jours
+            )
+
+            return response
         
         else:
             return Response(
                 {'error': 'Email/Nom d\'utilisateur ou mot de passe incorrect.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+class CustomTokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        # Récupérer le refresh token depuis le cookie
+        refresh_token = request.COOKIES.get('refresh_token')
+        
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token manquant. Veuillez vous reconnecter.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
+            # Valider et rafraîchir le token
+            refresh = RefreshToken(refresh_token)
+            new_access_token = str(refresh.access_token)
+            
+            # Créer la réponse
+            response = Response({
+                'message': 'Token rafraîchi avec succès.'
+            }, status=status.HTTP_200_OK)
+            
+            # Mettre à jour le cookie access_token
+            response.set_cookie(
+                key='access_token',
+                value=new_access_token,
+                httponly=True,
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                max_age=24 * 60 * 60,  # 1 jour
+            )
+            
+            # Si rotation des refresh tokens est activée
+            if settings.SIMPLE_JWT.get('ROTATE_REFRESH_TOKENS', False):
+                # Blacklist l'ancien refresh token
+                if settings.SIMPLE_JWT.get('BLACKLIST_AFTER_ROTATION', False):
+                    try:
+                        refresh.blacklist()
+                    except AttributeError:
+                        # Si blacklist n'est pas configuré
+                        pass
+                
+                # Créer un nouveau refresh token
+                user_id = refresh.payload.get('user_id')
+                if user_id:
+                    try:
+                        user = Utilisateur.objects.get(id=user_id)
+                        new_refresh = RefreshToken.for_user(user)
+                        
+                        # Mettre à jour le cookie refresh_token
+                        response.set_cookie(
+                            key='refresh_token',
+                            value=str(new_refresh),
+                            httponly=True,
+                            secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                            max_age=7 * 24 * 60 * 60,  # 7 jours
+                        )
+                    except Utilisateur.DoesNotExist:
+                        pass
+            
+            return response
+            
+        except (TokenError, InvalidToken) as e:
+            return Response(
+                {'error': 'Token invalide ou expiré. Veuillez vous reconnecter.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -193,7 +292,6 @@ class UserLogoutView(APIView):
             )
 
 # About password reseting
-
 class PasswordResetRequestView(APIView): # First step
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -207,32 +305,30 @@ class PasswordResetRequestView(APIView): # First step
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Vérifier d'abord si l'email existe dans la base
         try:
             user = Utilisateur.objects.get(email=email)
             
-            # Vérifier si l'utilisateur est actif
-            if not user.is_active:
-                return Response(
-                    {'message': 'Si un compte existe, un email a été envoyé'},
-                    status=status.HTTP_200_OK
-                )
-                
-            # Générer le token de réinitialisation
-            token = generate_password_reset_token(user)
-            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
+            # Si l'utilisateur existe et est actif, générer et envoyer le token
+            if user.is_active:
+                # Générer le token de réinitialisation
+                token = generate_password_reset_token(user)
+                reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
 
-            try:
-                # Envoi d'email réel
-                send_password_reset_email(user, reset_link)
-            except Exception as mail_err:
-                # Log interne et retour générique (ne pas exposer l'erreur SMTP au client)
-                print(f"Erreur d'envoi email reset pour {user.email}: {mail_err}")
-                # On continue à répondre 200 pour ne pas divulguer l'existence du compte
-
+                # Envoyer l'email uniquement si l'utilisateur existe
+                try:
+                    send_password_reset_email(user, reset_link)
+                except Exception as mail_err:
+                    # Log interne seulement
+                    print(f"Erreur d'envoi email reset pour {user.email}: {mail_err}")
+                    # Ne pas exposer l'erreur à l'utilisateur
+        
         except Utilisateur.DoesNotExist:
-            # On ne dit pas si l'email existe pour des raisons de sécurité
+            # Email n'existe pas dans la base, on ne fait rien (pas d'email envoyé)
+            # Mais on ne le révèle pas à l'utilisateur
             pass
         
+        # Toujours retourner le même message, que l'email existe ou non
         return Response(
             {'message': 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'},
             status=status.HTTP_200_OK
@@ -352,8 +448,11 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user 
-        return Response({
+        user = request.user
+        # Récupérer le token depuis le cookie (optionnel, pour debug)
+        access_token = request.COOKIES.get('access_token')
+        
+        response_data = {
             'user': {
                 'id': user.id,
                 'username': user.username,
@@ -366,4 +465,13 @@ class UserProfileView(APIView):
                 'date_joined': user.date_joined,
                 'last_login': user.last_login
             }
-        })
+        }
+        
+        # En développement, on peut ajouter un indicateur de présence du cookie
+        if settings.DEBUG and access_token:
+            response_data['debug'] = {
+                'cookie_present': True,
+                'cookie_length': len(access_token)
+            }
+        
+        return Response(response_data)

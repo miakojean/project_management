@@ -1,14 +1,8 @@
 <template>
     <section class="w-full flex flex-col gap-2">
-        <div class="layout__header flex flex-col items-center justify-center gap-4 rounded-2xl">
-            <div class="cta-content flex flex-col gap-4">
-                <div class="cta-text">
-                    <h2>Bienvenu(e) sur ADN JurisTrack</h2>
-                    <p>
-                        Une solution pour la gestion et le suivi de vos dossiers juridiques mise en place par ADN Consulting SAS.
-                    </p>
-                </div>
-                <div class="cards grid-rows-3 grid-cols-2 gap-4 mb-4 flex">
+        <div class="layout__header flex flex-col items-center justify-center gap-2 rounded-2xl">
+            <div class="cta-content flex flex-col gap-2">
+                <div class="cards grid-rows-3 grid-cols-2 gap-2 mb-4 flex">
                     <FeaturesCards 
                         title="Gérer vos dossiers"
                         description="Créez, suivez et organisez tous vos dossiers juridiques en un seul endroit."
@@ -99,11 +93,10 @@ export default {
     }
 }
 </script>
+
 <style scoped>
 .layout__header {
     padding: 20px;
-    border-bottom: 1px solid #e0e0e0;
-    background-color: #ffffff;
     padding: 1rem;
     min-height: 450px;
 }
@@ -139,5 +132,20 @@ svg {
   height: 32px;
   stroke: white;
   stroke-width: 1.5;
+}
+
+/* Make my responsive */
+
+@media(max-width:480px){
+    .cards{
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .layout__header{
+        padding: 0;
+    }
 }
 </style>
