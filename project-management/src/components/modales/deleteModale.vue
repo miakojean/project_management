@@ -175,7 +175,7 @@ const confirmDelete = async () => {
         
     } catch (err) {
         error.value = err.message || 'Erreur lors de la suppression'
-        console.error('Erreur suppression:', err)
+        //console.error('Erreur suppression:', err)
     } finally {
         loading.value = false
     }

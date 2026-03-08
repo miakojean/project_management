@@ -182,7 +182,7 @@ const loadCustomerDossiers = async () => {
         customerDossiers.value = dossierStore.customerDossier
     } catch (err) {
         error.value = err.message || 'Erreur lors du chargement des dossiers'
-        console.error('Erreur chargement dossiers:', err)
+        //console.error('Erreur chargement dossiers:', err)
     } finally {
         loading.value = false
     }
@@ -191,11 +191,11 @@ const loadCustomerDossiers = async () => {
 const goToFolderDetail = async (dossier) => {
     try {
         router.push(`/dashboard/customer/affairs/`);
-        console.log('Chargement du dossier:', dossier.id);
+        //console.log('Chargement du dossier:', dossier.id);
         await dossierStore.fetchDossierById(dossier.id);
-        console.log('Dossier chargé avec succès');
+        //console.log('Dossier chargé avec succès');
     } catch (error) {
-        console.error('Erreur lors du chargement du dossier:', error);
+        //console.error('Erreur lors du chargement du dossier:', error);
         // Peut-être afficher une notification d'erreur
     }
 };

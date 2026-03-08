@@ -43,7 +43,7 @@ async function initChart() {
       }
     });
   } catch (err) {
-    console.error('Erreur initialisation chart clients monthly:', err);
+    //console.error('Erreur initialisation chart clients monthly:', err);
   }
 }
 

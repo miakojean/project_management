@@ -198,7 +198,7 @@ const loadCategories = async () => {
   try {
     const response = await dossierStore.fetchCategories();
     
-    console.log('Réponse catégories:', response); // DEBUG
+    // console.log('Réponse catégories:', response); // DEBUG
     
     if (response && Array.isArray(response)) {
       categoryOptions.value = response.map(category => ({
@@ -206,7 +206,7 @@ const loadCategories = async () => {
         label: category.nom
       }));
       
-      console.log('Options formatées:', categoryOptions.value);
+      // console.log('Options formatées:', categoryOptions.value);
       
       // Optionnel: sélectionnez la première catégorie par défaut
       if (categoryOptions.value.length > 0 && !formData.categorie) {
@@ -214,7 +214,7 @@ const loadCategories = async () => {
       }
     }
   } catch (error) {
-    console.error("Erreur:", error);
+    // console.error("Erreur:", error);
   }
 }
 
@@ -252,7 +252,7 @@ const handleSubmit = async () => {
     
     const count = response.data.documents?.length || selectedFiles.value.length
 
-    console.log('Formulaire à envoyer',formData)
+    // console.log('Formulaire à envoyer',formData)
     
     // Afficher la notification de succès (max 3000ms)
     showNotificationPopup('success', `${count} document(s) ajouté(s) avec succès`, 3000)
@@ -270,7 +270,7 @@ const handleSubmit = async () => {
     }, 3500)
 
   } catch (error) {
-    console.error('Erreur upload:', error)
+    // console.error('Erreur upload:', error)
     const msg = error.response?.data?.detail 
       || error.response?.data?.files?.[0] 
       || 'Erreur lors de l\'envoi des documents'
@@ -297,9 +297,9 @@ watch(user, (u) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  console.log('📋 Composant fileForm monté')
-  console.log('👤 Utilisateur:', user.value)
-  console.log('📁 Dossier actuel:', dossierStore.currentDossier)
+  // console.log('📋 Composant fileForm monté')
+  // console.log('👤 Utilisateur:', user.value)
+  // console.log('📁 Dossier actuel:', dossierStore.currentDossier)
 
   if (!user.value && !isInitialized.value) {
     await authStore.initializeAuth()

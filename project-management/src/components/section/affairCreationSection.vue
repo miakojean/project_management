@@ -31,7 +31,7 @@ export default {
         const notificationDuration = ref(3000);
 
         const handleNotification = (notification) => {
-            console.log('📢 Notification reçue:', notification);
+            //console.log('📢 Notification reçue:', notification);
             showNotification.value = true;
             notificationMessage.value = notification.message;
             notificationType.value = notification.type;

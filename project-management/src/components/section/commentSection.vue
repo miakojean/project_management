@@ -279,7 +279,7 @@ const submitInlineReply = async (commentaireId, message) => {
         // Emit to parent to perform the creation
         emit('submitReply', { commentaireId, message: message.trim() })
     } catch (err) {
-        console.error('Erreur submitInlineReply emit:', err)
+        //console.error('Erreur submitInlineReply emit:', err)
     } finally {
         isSubmittingReply.value = false;
     }

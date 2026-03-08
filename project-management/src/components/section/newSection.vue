@@ -115,12 +115,13 @@ const newsItems = ref([
   }
 ]);
 
-// Fonction pour gérer les clics sur les cartes
+/* Fonction pour gérer les clics sur les cartes
 const handleNewsClick = (news) => {
-  console.log('News clicked:', news.title);
+  //console.log('News clicked:', news.title);
   // Navigation vers la page de détail de l'article
   // window.location.href = news.link;
 };
+*/
 
 // Fonction pour obtenir une couleur selon la catégorie
 const getCategoryColor = (category) => {

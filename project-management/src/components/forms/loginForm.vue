@@ -74,7 +74,7 @@ const validateData = () => {
     const isPasswordValid = passwordInput.value?.validate();
 
     if (isEmailValid && isPasswordValid) {
-        console.log("✅ Données valides, soumission du formulaire...");
+        //console.log("✅ Données valides, soumission du formulaire...");
         return true;
     }
     
@@ -147,13 +147,13 @@ const handleSubmit = async () => {
         }
         
         // Log détaillé pour le débogage (développement seulement)
-        if (process.env.NODE_ENV === 'development') {
+        /*if (process.env.NODE_ENV === 'development') {
             console.error("Détails de l'erreur:", {
                 status: error.response?.status,
                 data: error.response?.data,
                 message: error.message
             });
-        }
+        }*/
         
     } finally {
         isloading.value = false;

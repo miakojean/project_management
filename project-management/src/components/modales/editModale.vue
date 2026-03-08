@@ -109,7 +109,7 @@ const loadCustomerDossiers = async () => {
         customerDossiers.value = dossierStore.customerDossier
     } catch (err) {
         error.value = err.message || 'Erreur lors du chargement des dossiers'
-        console.error('Erreur chargement dossiers:', err)
+        //console.error('Erreur chargement dossiers:', err)
     } finally {
         loading.value = false
     }

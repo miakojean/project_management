@@ -212,7 +212,7 @@ export default {
                     currentStep.value = 2; // Passer à l'étape du token
                 }
             } catch (error) {
-                console.error("Erreur lors de la demande de réinitialisation :", error);
+                //////console.error("Erreur lors de la demande de réinitialisation :", error);
                 // Toujours afficher le même message pour des raisons de sécurité
                 message.value.successMessage = "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.";
                 currentStep.value = 2; // Passer quand même à l'étape suivante pour la sécurité
@@ -242,7 +242,7 @@ export default {
                     message.value.errorMessage = response.data.message || "Token invalide ou expiré";
                 }
             } catch (error) {
-                console.error("Erreur lors de la vérification du token :", error);
+                ////console.error("Erreur lors de la vérification du token :", error);
                 if (error.response && error.response.data) {
                     message.value.errorMessage = error.response.data.message || "Token invalide ou expiré";
                 } else {
@@ -275,7 +275,7 @@ export default {
                     startCountdown();
                 }
             } catch (error) {
-                console.error("Erreur lors de la réinitialisation du mot de passe :", error);
+                //console.error("Erreur lors de la réinitialisation du mot de passe :", error);
                 if (error.response && error.response.data) {
                     message.value.errorMessage = error.response.data.error || error.response.data.message || "Une erreur est survenue lors de la réinitialisation";
                 } else {

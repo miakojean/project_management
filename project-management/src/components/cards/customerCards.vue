@@ -110,7 +110,7 @@ export default {
     },
     openFolder() {
       // Logique future pour ouvrir le dossier directement
-      console.log('Ouverture du dossier...');
+      //console.log('Ouverture du dossier...');
     }
   }
 }
