@@ -27,10 +27,10 @@
             <p>{{ errorMessage }}</p>
         </div>
 
-        <!-- Message de succès -->
+        <!-- Message de succès 
         <div v-if="successMessage" class="success__message center__flex">
             <p>{{ successMessage }}</p>
-        </div>
+        </div> -->
 
         <divider />
         
@@ -101,7 +101,7 @@ const handleSubmit = async () => {
             return;
         }
 
-        console.log("🔐 Tentative de connexion...");
+        //console.log("🔐 Tentative de connexion...");
 
         // ✅ UTILISER LE STORE POUR LE LOGIN
         // Le store gère automatiquement les cookies
@@ -110,7 +110,7 @@ const handleSubmit = async () => {
             password: formData.password
         });
 
-        console.log("✅ Connexion réussie via le store");
+        //console.log("✅ Connexion réussie via le store");
         successMessage.value = "Connexion réussie ! Redirection en cours...";
 
         // ✅ La redirection est déjà gérée par le store dans `auth.js`
@@ -120,7 +120,7 @@ const handleSubmit = async () => {
         }, 1000);
 
     } catch (error) {
-        console.error("❌ Erreur de connexion:", error);
+        //console.error("❌ Erreur de connexion:", error);
         
         // ✅ Gestion des erreurs simplifiée - le store a déjà formaté les erreurs
         if (authStore.error) {
