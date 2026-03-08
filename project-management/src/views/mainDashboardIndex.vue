@@ -9,7 +9,7 @@
     </header>
 
     <main class="main-area">
-      <newSection/>
+      <!-- <newSection/> -->
       <indexDashboardSection/>
     </main>
 

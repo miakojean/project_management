@@ -266,21 +266,36 @@ class UserLogoutView(APIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data.get("refresh")
+            # 1. Récupération du refresh token. 
+            # Si tes cookies sont HttpOnly, utilise request.COOKIES.get('nom_du_cookie_refresh')
+            # Sinon, si le front l'envoie manuellement : request.data.get("refresh")
+            refresh_token = request.COOKIES.get("refresh_token") or request.data.get("refresh")
+            
             if refresh_token:
                 try:
                     token = RefreshToken(refresh_token)
-                    token.blacklist()  # Blacklist le token
+                    token.blacklist()  # Blacklist le token côté serveur
                 except Exception as e:
-                    # Le token est peut-être déjà expiré ou invalide
                     print(f"Erreur lors du blacklist du token: {e}")
             
-            return Response(
+            # 2. On prépare la réponse
+            response = Response(
                 {
                     'message': 'Déconnexion réussie.'
                 },
                 status=status.HTTP_200_OK
             )
+            
+            # 3. ON SUPPRIME LES COOKIES CÔTÉ CLIENT
+            # Remplace 'access_token' et 'refresh_token' par les noms exacts de tes cookies
+            response.delete_cookie('access_token')
+            response.delete_cookie('refresh_token')
+            
+            # Note : Si tu as défini des attributs spécifiques lors de la CRÉATION du cookie 
+            # (comme domain, path ou samesite), tu dois les préciser ici aussi pour que ça marche.
+            # Exemple : response.delete_cookie('access_token', path='/', samesite='Lax')
+
+            return response
         
         except Exception as e:
             return Response(
