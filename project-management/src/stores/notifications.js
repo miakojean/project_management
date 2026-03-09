@@ -38,17 +38,17 @@ export const useNotificationStore = defineStore('notif', () => {
             // Votre API Django retourne un format avec 'metadata'
             if (response.data.metadata) {
                 unreadCount.value = response.data.metadata.unread_count || 0;
-                console.log('notifications', response.data)
+                // console.log('notifications', response.data)
                 return unreadCount.value;
             }
             
             // Fallback si l'API a un format différent
             unreadCount.value = response.data.unread_count || 0;
-            console.log('notifications', response.data)
+            // console.log('notifications', response.data)
             return unreadCount.value;
             
         } catch (error) {
-            console.error("Erreur - chargement du compte de notifications:", error);
+            // console.error("Erreur - chargement du compte de notifications:", error);
             return 0;
         }
     };
@@ -76,11 +76,11 @@ export const useNotificationStore = defineStore('notif', () => {
                     ).length;
                 }
             }
-            console.log('notifications', response.data)
+            // console.log('notifications', response.data)
             
             return notifications.value;
         } catch (error) {
-            console.error("Erreur - chargement de la liste de notifications:", error);
+            // console.error("Erreur - chargement de la liste de notifications:", error);
             notifications.value = [];
             return [];
         } finally {
@@ -110,7 +110,7 @@ export const useNotificationStore = defineStore('notif', () => {
             
             return markedRead;
         } catch (error) {
-            console.error("Erreur - marquage des notifications:", error);
+            // console.error("Erreur - marquage des notifications:", error);
             return 0;
         }
     };
@@ -138,7 +138,7 @@ export const useNotificationStore = defineStore('notif', () => {
             
             return true;
         } catch (error) {
-            console.error("Erreur - marquage d'une notification:", error);
+            // console.error("Erreur - marquage d'une notification:", error);
             return false;
         }
     };

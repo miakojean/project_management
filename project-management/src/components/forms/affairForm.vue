@@ -159,7 +159,7 @@ export default {
         watch(currentClient, (newClient) => {
             if (newClient && newClient.id) {
                 formData.client = newClient.id;
-                console.log("✅ Client ID assigné:", formData.client);
+                //console.log("✅ Client ID assigné:", formData.client);
             }
         }, { immediate: true });
 
@@ -209,7 +209,7 @@ export default {
 
             // Affiche le rapport d'erreur
             if (!isValid) {
-                console.log(errorMessage);
+                //console.log(errorMessage);
             }
 
             return isValid;
@@ -218,22 +218,22 @@ export default {
 
         // Fonction pour créer un dossier
         const handleSubmit = async () => {
-            console.log("🔄 Début de la création du dossier...");
+            //console.log("🔄 Début de la création du dossier...");
             
             if (!isValid()) {
-                console.log("soumission echouée!!!")
+                //console.log("soumission echouée!!!")
                 return;
             }
 
             isLoading.value = true;
 
             try {
-                console.log("📦 Données à envoyer:", JSON.stringify(formData, null, 2));
+                //console.log("📦 Données à envoyer:", JSON.stringify(formData, null, 2));
 
                 // Utiliser le store pour créer le dossier
                 const nouveauDossier = await dossierStore.createDossier(formData);
                 
-                console.log("✅ Dossier créé avec succès:", nouveauDossier);
+                //console.log("✅ Dossier créé avec succès:", nouveauDossier);
 
                 emit('notification', {
                     type: 'success',
@@ -249,7 +249,7 @@ export default {
                 return nouveauDossier;
 
             } catch (error) {
-                console.error('❌ Erreur création dossier:', error);
+                //console.error('❌ Erreur création dossier:', error);
                 
                 // Gestion des erreurs
                 if (dossierStore.error) {
@@ -278,8 +278,8 @@ export default {
         };
 
         onMounted(() => {
-            console.log('🔍 Client sélectionné:', currentClient.value);
-            console.log('🔍 Utilisateur connecté:', authStore.user);
+            //console.log('🔍 Client sélectionné:', currentClient.value);
+            //console.log('🔍 Utilisateur connecté:', authStore.user);
             
             // S'assurer que l'initialisation est faite
             if (!authStore.user) {

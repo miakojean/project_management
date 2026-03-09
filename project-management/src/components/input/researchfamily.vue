@@ -238,7 +238,7 @@ export default {
                     });
 
                 } catch (error) {
-                    console.error('Erreur lors de la recherche combinée:', error);
+                    //console.error('Erreur lors de la recherche combinée:', error);
                     searchResults.value = [];
                 } finally {
                     loading.value = false;
@@ -249,11 +249,11 @@ export default {
         const goToFolderDetail = async (dossier) => {
             try {
                 router.push(`/dashboard/customer/affairs/`);
-                console.log('Chargement du dossier:', dossier.id);
+                // console.log('Chargement du dossier:', dossier.id);
                 await dossierStore.fetchDossierById(dossier.id);
-                console.log('Dossier chargé avec succès');
+                // console.log('Dossier chargé avec succès');
             } catch (error) {
-                console.error('Erreur lors du chargement du dossier:', error);
+                // console.error('Erreur lors du chargement du dossier:', error);
             }
         };
         

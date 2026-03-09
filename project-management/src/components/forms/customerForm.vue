@@ -195,16 +195,16 @@ export default {
         };
 
         watch(user, (newUser) => {
-            console.log("👀 Watch user déclenché:", newUser);
+            //console.log("👀 Watch user déclenché:", newUser);
             if (newUser && newUser.id) {
                 formData.charge_de_clientele = newUser.id;
-                console.log("✅ ID assigné:", formData.charge_de_clientele);
+                //console.log("✅ ID assigné:", formData.charge_de_clientele);
             }
         }, { immediate: true });
 
         onMounted(async () => {
             if (!user.value && !isInitialized.value) {
-                console.log("🔄 User vide, tentative d'initialisation...");
+                //console.log("🔄 User vide, tentative d'initialisation...");
                 await authStore.initializeAuth();
             }
         });
@@ -225,7 +225,7 @@ export default {
             }
 
             try {
-                console.log("📤 Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
+                //console.log("📤 Envoi du formulaire avec ID Agent:", formData.charge_de_clientele);
 
                 const response = await api.post('manager/clients/ajouter/', formData);
 
@@ -254,7 +254,7 @@ export default {
                 return response;
 
             } catch (error) {
-                console.error('Erreur lors de la soumission:', error);
+                //console.error('Erreur lors de la soumission:', error);
                 
                 let errorMsg = 'Une erreur est survenue lors de l\'ajout du client';
                 

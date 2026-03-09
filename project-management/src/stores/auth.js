@@ -33,9 +33,9 @@ export const useAuthStore = defineStore('auth', () => {
             };
             localStorage.setItem('cachedUser', JSON.stringify(safeData));
             user.value = safeData;
-            console.log('💾 Utilisateur mis en cache:', safeData);
+            // console.log('💾 Utilisateur mis en cache:', safeData);
         } catch (e) {
-            console.error('❌ Erreur sauvegarde cache utilisateur:', e);
+            // console.error('❌ Erreur sauvegarde cache utilisateur:', e);
         }
     }
 
@@ -44,11 +44,11 @@ export const useAuthStore = defineStore('auth', () => {
             const cached = localStorage.getItem('cachedUser');
             if (cached) {
                 user.value = JSON.parse(cached);
-                console.log('⚡ Utilisateur chargé depuis le cache');
+                // console.log('⚡ Utilisateur chargé depuis le cache');
                 return true;
             }
         } catch (e) {
-            console.error('❌ Erreur chargement cache:', e);
+            // console.error('❌ Erreur chargement cache:', e);
             localStorage.removeItem('cachedUser');
         }
         return false;
@@ -57,18 +57,18 @@ export const useAuthStore = defineStore('auth', () => {
     function clearUserCache() {
         localStorage.removeItem('cachedUser');
         user.value = null;
-        console.log('🗑️ Cache utilisateur nettoyé');
+        // console.log('🗑️ Cache utilisateur nettoyé');
     }
 
     // --- ACTIONS PUBLIQUES ---
 
     async function initializeAuth() {
         if (isInitialized.value) {
-            console.log('✅ Auth déjà initialisé');
+            // console.log('✅ Auth déjà initialisé');
             return;
         }
         
-        console.log('🚀 Initialisation de l\'authentification...');
+        // console.log('🚀 Initialisation de l\'authentification...');
         
         // 1. Charger depuis le cache pour affichage immédiat
         loadUserFromCache();
@@ -79,15 +79,15 @@ export const useAuthStore = defineStore('auth', () => {
         if (user.value) {
             try {
                 await fetchCurrentUser();
-                console.log('✅ Session valide');
+                // console.log('✅ Session valide');
             } catch (error) {
-                console.log('⚠️ Session potentiellement expirée, laissé à l\'intercepteur');
+                // console.log('⚠️ Session potentiellement expirée, laissé à l\'intercepteur');
                 // Ne pas nettoyer automatiquement - l'intercepteur gèrera
             }
         }
         
         isInitialized.value = true;
-        console.log('✅ Initialisation terminée');
+        // console.log('✅ Initialisation terminée');
     }
 
     async function fetchCurrentUser() {
@@ -95,16 +95,16 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
         
         try {
-            console.log('👤 Récupération des données utilisateur...');
+            // console.log('👤 Récupération des données utilisateur...');
             const userData = await authService.getCurrentUser();
             
             // ✅ Mettre à jour Pinia ET le cache
             cacheUser(userData);
-            console.log('✅ Utilisateur récupéré:', userData);
+            // console.log('✅ Utilisateur récupéré:', userData);
             
             return user.value;
         } catch (err) {
-            console.error('❌ Erreur récupération utilisateur:', err);
+            // console.error('❌ Erreur récupération utilisateur:', err);
             error.value = err.message;
             
             // Ne pas nettoyer le cache utilisateur automatiquement
@@ -121,26 +121,26 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
         
         try {
-            console.log('🔐 Connexion en cours...');
+            // console.log('🔐 Connexion en cours...');
             
             // ✅ 1. Effectuer le login (les cookies sont définis automatiquement)
             const response = await authService.login(credentials);
-            console.log('✅ Login réussi');
+            // console.log('✅ Login réussi');
             
             // ✅ 2. Récupérer et stocker les infos utilisateur
             if (response.user) {
-                console.log('✅ Utilisateur reçu dans la réponse login');
+                // console.log('✅ Utilisateur reçu dans la réponse login');
                 cacheUser(response.user);
             } else {
-                console.log('📡 Récupération des infos utilisateur...');
+                // console.log('📡 Récupération des infos utilisateur...');
                 await fetchCurrentUser();
             }
             
-            console.log('✅ Connexion terminée avec succès');
+            // console.log('✅ Connexion terminée avec succès');
             return response;
             
         } catch (err) {
-            console.error('❌ Erreur lors de la connexion:', err);
+            // console.error('❌ Erreur lors de la connexion:', err);
             
             // Extraire le message d'erreur du backend
             const errorData = err.response?.data || {};
@@ -167,16 +167,16 @@ export const useAuthStore = defineStore('auth', () => {
         const { silent = false, redirect = true } = options;
         
         if (!silent) {
-            console.log('Déconnexion...');
+            // console.log('Déconnexion...');
         }
         
         try {
             // ✅ 1. Appeler l'API de déconnexion (supprime les cookies côté serveur)
             await authService.logout();
-            console.log('✅ Déconnexion API réussie');
+            // console.log('✅ Déconnexion API réussie');
         } catch (err) {
             if (!silent) {
-                console.error('❌ Erreur lors de la déconnexion API:', err);
+                // console.error('❌ Erreur lors de la déconnexion API:', err);
             }
             // Continuer quand même pour nettoyer côté client
         } finally {
@@ -188,10 +188,10 @@ export const useAuthStore = defineStore('auth', () => {
                 const dossierStore = useDossierStore();
                 if (dossierStore && typeof dossierStore.reset === 'function') {
                     dossierStore.reset();
-                    console.log('🗑️ Cache dossier nettoyé via auth.logout');
+                    // console.log('🗑️ Cache dossier nettoyé via auth.logout');
                 }
             } catch (e) {
-                console.warn('⚠️ Impossible de réinitialiser dossierStore:', e);
+                // console.warn('⚠️ Impossible de réinitialiser dossierStore:', e);
             }
             
             // ✅ 4. Réinitialiser l'état
@@ -199,7 +199,7 @@ export const useAuthStore = defineStore('auth', () => {
             error.value = null;
             
             if (!silent) {
-                console.log('✅ Déconnexion terminée');
+                // console.log('✅ Déconnexion terminée');
                 
                 // ✅ 5. Redirection vers la page de login
                 if (redirect) {

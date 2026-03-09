@@ -124,11 +124,11 @@ export default {
         const goToFolderDetail = async (dossier) => { //View
             try {
                 router.push(`/dashboard/customer/affairs/`);
-                console.log('Chargement du dossier archive:', dossier.id);
+                //console.log('Chargement du dossier archive:', dossier.id);
                 await dossierStore.fetchDossierById(dossier.id);
-                console.log('Dossier archive chargé avec succès');
+                //console.log('Dossier archive chargé avec succès');
             } catch (error) {
-                console.error('Erreur lors du chargement du dossier archive:', error);
+                //console.error('Erreur lors du chargement du dossier archive:', error);
             }
         };
 
@@ -155,7 +155,7 @@ export default {
                 // Rafraîchir les données
                 await refreshData();
             } catch (error) {
-                console.error("❌ Erreur lors du marquage:", error);
+                //console.error("❌ Erreur lors du marquage:", error);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Une erreur est survenue";
                 notificationPopup.value.type = "error";
@@ -176,7 +176,7 @@ export default {
                 // Utiliser partial=true pour mise à jour partielle
                 await dossierStore.updateDossier(dossier?.id, formData, true);
                 
-                console.log("📁 Dossier archivé avec succès:", dossier?.reference_dossier);
+                //console.log("📁 Dossier archivé avec succès:", dossier?.reference_dossier);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Dossier archivé avec succès";
                 notificationPopup.value.type = "success";
@@ -189,7 +189,7 @@ export default {
                 // Rafraîchir les données
                 await refreshData();
             } catch (error) {
-                console.error("❌ Erreur lors de l'archivage:", error);
+                //console.error("❌ Erreur lors de l'archivage:", error);
                 notificationPopup.value.isVisible = true;
                 notificationPopup.value.message = "Une erreur est survenue lors de l'archivage";
                 notificationPopup.value.type = "error";
@@ -215,7 +215,7 @@ export default {
                 await dossierStore.fetchDossiers();
                 currentPage.value = 1; // Reset à la première page
             } catch (error) {
-                console.error('Erreur lors du rafraîchissement:', error);
+                //console.error('Erreur lors du rafraîchissement:', error);
             }
         };
 
@@ -236,15 +236,15 @@ export default {
 
         // Lifecycle
         onMounted(async () => {
-            console.log('📂 Chargement des dossiers pour affairIndexSection...');
+            //console.log('📂 Chargement des dossiers pour affairIndexSection...');
             
             if (dossierStore.dossiers.length === 0) {
                 await dossierStore.fetchArchivesDossiers();
             }
             
-            console.log('✅ Dossiers disponibles:', dossierStore.dossiers.length);
+            //console.log('✅ Dossiers disponibles:', dossierStore.dossiers.length);
             if (dossierStore.dossiers.length > 0) {
-                console.log('📋 Structure d\'un dossier:', dossierStore.dossiers[0]);
+                //console.log('📋 Structure d\'un dossier:', dossierStore.dossiers[0]);
             }
         });
 

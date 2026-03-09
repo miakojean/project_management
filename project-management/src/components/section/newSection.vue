@@ -117,7 +117,7 @@ const newsItems = ref([
 
 // Fonction pour gérer les clics sur les cartes
 const handleNewsClick = (news) => {
-  console.log('News clicked:', news.title);
+  // console.log('News clicked:', news.title);
   // Navigation vers la page de détail de l'article
   // window.location.href = news.link;
 };

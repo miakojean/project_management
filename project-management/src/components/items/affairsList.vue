@@ -117,19 +117,19 @@ export default {
     },
     methods: {
         downloadDocument(id) {
-            console.log('Télécharger document:', id);
+            //console.log('Télécharger document:', id);
             // Logique de téléchargement
         },
         viewDocument(id) {
-            console.log('Visualiser document:', id);
+            //console.log('Visualiser document:', id);
             // Logique de visualisation
         },
         shareDocument(id) {
-            console.log('Partager document:', id);
+            // console.log('Partager document:', id);
             // Logique de partage
         },
         toggleMenu(id) {
-            console.log('Menu document:', id);
+            // console.log('Menu document:', id);
             // Logique du menu contextuel
         }
     }

@@ -197,27 +197,27 @@ export default {
         };
 
         const toggleProfileMenu = () => {
-            console.log('👤 Toggle profile menu');
+            // console.log('👤 Toggle profile menu');
         };
 
         // Chargement des données métier uniquement
         const loadCustomers = async () => {
             try {
-                console.log('🔄 Chargement des clients dans sidebar...');
+                // console.log('🔄 Chargement des clients dans sidebar...');
                 await customerStore.fetchCustomers();
             } catch (error) {
                 // On ne bloque pas l'UI et on ne déconnecte pas si ça échoue
-                console.warn('⚠️ Erreur non critique chargement clients sidebar:', error);
+                // console.warn('⚠️ Erreur non critique chargement clients sidebar:', error);
             }
         };
 
         const loadDossiers = async () => {
             try {
-                console.log('🔄 Chargement des dossiers dans sidebar...');
+                // console.log('🔄 Chargement des dossiers dans sidebar...');
                 await dossierStore.fetchDossiers();
                 await dossierStore.fetchArchivesDossiers()
             } catch (error) {
-                console.warn('⚠️ Erreur non critique chargement dossiers sidebar:', error);
+                // console.warn('⚠️ Erreur non critique chargement dossiers sidebar:', error);
             }
         };
 
@@ -229,7 +229,7 @@ export default {
             try {
                 await authStore.logout();
             } catch (error) {
-                console.error('❌ Erreur déconnexion:', error);
+                // console.error('❌ Erreur déconnexion:', error);
             } finally {
                 // On force la redirection vers login quoi qu'il arrive
                 isLoggingOut.value = false;
@@ -243,7 +243,7 @@ export default {
             await loadCustomers();
             await loadDossiers();
             await authStore.fetchCurrentUser();
-            console.log('Nombre de dossier archivés',dossiersArchivesCount.value)
+            // console.log('Nombre de dossier archivés',dossiersArchivesCount.value)
 
         });
 

@@ -93,7 +93,7 @@ export const useChartStore = defineStore("chartStore", () => {
             return response.data;
         } catch (err) {
             error.value = err.message || 'Erreur lors du chargement des inscriptions clients';
-            console.error('Erreur fetchClientMonthlyRegistrations:', err);
+            // console.error('Erreur fetchClientMonthlyRegistrations:', err);
             
             // Données fictives pour le développement
             if (process.env.NODE_ENV === 'development') {
@@ -130,7 +130,7 @@ export const useChartStore = defineStore("chartStore", () => {
             return response.data;
         } catch (err) {
             error.value = err.message || 'Erreur lors du chargement des statistiques de dossiers';
-            console.error('Erreur fetchDossierMonthlyStats:', err);
+            // console.error('Erreur fetchDossierMonthlyStats:', err);
             
             // Données fictives pour le développement
             if (process.env.NODE_ENV === 'development') {
@@ -167,7 +167,7 @@ export const useChartStore = defineStore("chartStore", () => {
             return response.data;
         } catch (err) {
             error.value = err.message || 'Erreur lors du chargement des statistiques de ventes';
-            console.error('Erreur fetchSalesMonthlyStats:', err);
+            // console.error('Erreur fetchSalesMonthlyStats:', err);
             
             // Données fictives pour le développement
             if (process.env.NODE_ENV === 'development') {
@@ -191,7 +191,7 @@ export const useChartStore = defineStore("chartStore", () => {
             ]);
         } catch (err) {
             error.value = err.message || 'Erreur lors du chargement des statistiques';
-            console.error('Erreur fetchAllMonthlyStats:', err);
+            // console.error('Erreur fetchAllMonthlyStats:', err);
         } finally {
             loading.value = false;
         }

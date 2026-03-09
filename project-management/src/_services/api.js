@@ -12,7 +12,7 @@ const api = axios.create({
 // --- INTERCEPTEUR DE REQUÊTE ---
 api.interceptors.request.use(
     (config) => {
-        console.log('📤 Requête:', config.method.toUpperCase(), config.url);
+        // console.log('📤 Requête:', config.method.toUpperCase(), config.url);
         
         // Timestamp anti-cache pour les GET (optionnel)
         if (config.method === 'get') {
@@ -29,7 +29,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        console.error('Erreur intercepteur requête:', error);
+        // console.error('Erreur intercepteur requête:', error);
         return Promise.reject(error);
     }
 );
@@ -37,17 +37,17 @@ api.interceptors.request.use(
 // --- INTERCEPTEUR DE RÉPONSE ---
 api.interceptors.response.use(
     (response) => {
-        console.log('Réponse reçue:', response.config.url, response.status);
+        // console.log('Réponse reçue:', response.config.url, response.status);
         return response;
     },
     async (error) => {
         const originalRequest = error.config;
 
-        console.log('Erreur intercepteur réponse:', {
+        /* console.log('Erreur intercepteur réponse:', {
             url: originalRequest?.url,
             status: error.response?.status,
             message: error.message
-        });
+        });*/
 
         // ✅ Gestion du 401 (session expirée)
         if (error.response?.status === 401 &&
@@ -57,19 +57,19 @@ api.interceptors.response.use(
         ) {
             originalRequest._retry = true;
 
-            console.log('🔄 Tentative de refresh token via cookie...');
+            // console.log('🔄 Tentative de refresh token via cookie...');
 
             try {
                 // Le refresh token est dans un cookie HttpOnly
                 // Il sera envoyé automatiquement avec `withCredentials: true`
                 await api.post('/account/token/refresh/');
-                console.log('Token refreshé avec succès via cookie');
+                // console.log('Token refreshé avec succès via cookie');
                 
                 // Relancer la requête originale
                 return api(originalRequest);
                 
             } catch (refreshError) {
-                console.error('❌ Échec du refresh token:', refreshError);
+                // console.error('❌ Échec du refresh token:', refreshError);
                 
                 // Redirection vers login
                 if (router.currentRoute.value.path !== '/login') {
@@ -81,7 +81,7 @@ api.interceptors.response.use(
 
         // Gestion des autres erreurs
         if (error.response?.status === 403) {
-            console.error('Accès refusé (403)');
+            // console.error('Accès refusé (403)');
             router.push('/unauthorized');
         }
         
@@ -96,50 +96,50 @@ api.interceptors.response.use(
 export const authService = {
     login: async (credentials) => {
         try {
-            console.log('🔑 Tentative de login...');
+            // console.log('🔑 Tentative de login...');
             
             // ✅ Login standard - les cookies seront automatiquement définis par le backend
             const response = await api.post('/account/login', credentials);
             
-            console.log('✅ Login réussi');
+            // console.log('✅ Login réussi');
             return response.data; // Retourne les données utilisateur
             
         } catch (error) {
-            console.error('❌ Erreur login:', error.response?.data || error.message);
+            // console.error('❌ Erreur login:', error.response?.data || error.message);
             throw error;
         }
     },
     
     logout: async () => {
         try {
-            console.log('🚪 Déconnexion en cours...');
+            // console.log('🚪 Déconnexion en cours...');
             // ✅ Le backend supprimera les cookies
             await api.post('/account/logout');
-            console.log('✅ Déconnexion API réussie');
+            // console.log('✅ Déconnexion API réussie');
             
         } catch (error) {
-            console.error('❌ Erreur logout:', error);
+            // console.error('❌ Erreur logout:', error);
             // On continue quand même pour nettoyer côté frontend
         } finally {
             // Redirection gérée par le store ou le composant
-            console.log('✅ Déconnexion terminée côté frontend');
+            // console.log('✅ Déconnexion terminée côté frontend');
         }
     },
     
     getCurrentUser: async () => {
         try {
-            console.log('👤 Récupération utilisateur actuel...');
+            // console.log('👤 Récupération utilisateur actuel...');
             
             // ✅ Le cookie access_token (HttpOnly) est envoyé automatiquement
             const response = await api.get('/account/me');
             
-            console.log('✅ Utilisateur récupéré');
+            // console.log('✅ Utilisateur récupéré');
             
             // Format de réponse attendu: { user: {...} } ou directement l'objet user
             return response.data.user || response.data;
             
         } catch (error) {
-            console.error('❌ Erreur récupération utilisateur:', error.response?.data || error.message);
+            // console.error('❌ Erreur récupération utilisateur:', error.response?.data || error.message);
             
             // Si erreur 401, la redirection est déjà gérée par l'intercepteur
             throw error;

@@ -105,7 +105,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
             };
 
         } catch (error) {
-            console.error('Erreur lors du téléchargement:', error);
+            // console.error('Erreur lors du téléchargement:', error);
             
             // Gestion des erreurs spécifiques
             if (error.response) {
@@ -131,7 +131,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
 
     async function deleteDocument(doc) {
         if (!doc || !doc.id) {
-            console.error("Erreur: L'objet document ou son ID est manquant.");
+            // console.error("Erreur: L'objet document ou son ID est manquant.");
             // Vous pouvez choisir de lever une erreur ou de retourner silencieusement
             throw new Error("ID de document non fourni.");
         }
@@ -144,7 +144,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
             // La vue DRF retourne un statut 204 No Content en cas de succès,
             // donc la `response.data` peut être vide, mais le statut est suffisant.
 
-            console.log(`Document ${doc.id} supprimé avec succès.`, response);
+            // console.log(`Document ${doc.id} supprimé avec succès.`, response);
 
             // Optionnel : Retourner le statut ou un message de succès
             return { 
@@ -157,7 +157,7 @@ export const useDocumentStore = defineStore('documents', ()=>{
             const status = error.response?.status;
             const responseData = error.response?.data;
             const errorMessage = responseData?.error || responseData?.message || error.message || "Erreur inconnue lors de la suppression.";
-            console.error(`Erreur lors de la suppression du document ${doc.id}:`, { status, responseData, error });
+            // console.error(`Erreur lors de la suppression du document ${doc.id}:`, { status, responseData, error });
 
             // Propager une erreur plus informative
             const thrown = new Error(`Erreur suppression document: ${status ? status + ' ' : ''}${errorMessage}`);

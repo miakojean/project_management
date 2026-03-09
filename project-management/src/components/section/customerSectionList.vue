@@ -196,7 +196,7 @@ export default {
             store.attachCustomer(customer);
 
             // Debug log
-            console.log('Naviguer vers les détails du client:', customer);
+            //console.log('Naviguer vers les détails du client:', customer);
             router.push('/dashboard/customer-info')
         };
         
@@ -227,7 +227,7 @@ export default {
                 await store.fetchCustomers();
                 currentPage.value = 1; // Retour à la première page
             } catch (error) {
-                console.error('Erreur lors du rafraîchissement:', error);
+                //console.error('Erreur lors du rafraîchissement:', error);
             }
         };
 
@@ -251,7 +251,7 @@ export default {
                     await store.fetchCustomers();
                     currentPage.value = 1;
                 } catch (err) {
-                    console.error('Erreur lors de l\'application du filtre de recherche clients:', err);
+                    //console.error('Erreur lors de l\'application du filtre de recherche clients:', err);
                 }
             }
         );
@@ -261,7 +261,7 @@ export default {
             selectedCustomer.value = customer;
             isOpen.value = true;
             store.attachCustomer(customer);
-            console.log('Client selectionné',customer)
+            //console.log('Client selectionné',customer)
         };
 
         // Mappe les types internes en labels lisibles

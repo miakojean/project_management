@@ -100,7 +100,7 @@ export default {
         const notificationDuration = ref(3000);
 
         const goToNextStep = (selectedType) => {
-            console.log('Type sélectionné:', selectedType);
+            //console.log('Type sélectionné:', selectedType);
             entityType.value = selectedType;
             currentStep.value = 2;
         };
@@ -110,7 +110,7 @@ export default {
         };
 
         const handleFormSubmit = (formData) => {
-            console.log('Données du formulaire soumises avec succès:', formData);
+            // console.log('Données du formulaire soumises avec succès:', formData);
             // Logique de soumission...
         };
 

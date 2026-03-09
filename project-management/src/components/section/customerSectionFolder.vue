@@ -192,27 +192,27 @@ const formatDate = (dateString) => {
             year: 'numeric'
         });
     } catch (e) {
-        console.error("Erreur de format de date:", e);
+        // console.error("Erreur de format de date:", e);
         return 'Date invalide';
     }
 };
 
 // Méthodes pour les commentaires
 const loadCommentaires = async () => {
-    console.log('loadCommentaires appelé, doc.value:', doc.value);
+    // console.log('loadCommentaires appelé, doc.value:', doc.value);
     if (!doc.value?.id) {
-        console.log('Pas de dossier ID, vidage des commentaires');
+        // console.log('Pas de dossier ID, vidage des commentaires');
         commentaires.value = []; // Vider si pas de dossier
         return;
     }
     
-    console.log('Chargement des commentaires pour le dossier:', doc.value.id);
+    // console.log('Chargement des commentaires pour le dossier:', doc.value.id);
     commentairesLoading.value = true;
     try {
         // Utiliser la fonction utilitaire du store qui charge commentaires + réponses
         const result = await dossierStore.loadCommentairesForDossier(doc.value.id);
         // Résultat: { commentaires, reponses }
-        console.log('loadCommentairesForDossier result:', result);
+        // console.log('loadCommentairesForDossier result:', result);
 
         // Associer les réponses à chaque commentaire pour l'affichage
         const commentairesAvecReponses = result.commentaires.map(c => ({
@@ -222,11 +222,11 @@ const loadCommentaires = async () => {
 
         commentaires.value = commentairesAvecReponses;
 
-        console.log("Commentaires chargés correctement", commentaires.value);
+        // console.log("Commentaires chargés correctement", commentaires.value);
         
     } catch (error) {
         showNotification('Erreur lors du chargement des commentaires', 'error');
-        console.error('Erreur loadCommentaires:', error);
+        // console.error('Erreur loadCommentaires:', error);
     } finally {
         commentairesLoading.value = false;
     }
@@ -249,7 +249,7 @@ const handleCreateComment = async (message) => {
         
     } catch (error) {
         showNotification('Erreur lors de l\'ajout du commentaire', 'error');
-        console.error('Erreur handleCreateComment:', error);
+        // console.error('Erreur handleCreateComment:', error);
     } finally {
         isSubmittingComment.value = false;
     }
@@ -258,7 +258,7 @@ const handleCreateComment = async (message) => {
 const handleReplyToComment = (comment) => {
     // Backward-compatible handler called when user clicks 'Répondre' —
     // the child component now opens the inline reply input itself and focuses it.
-    console.debug('handleReplyToComment called for comment', comment?.id);
+    // console.debug('handleReplyToComment called for comment', comment?.id);
 };
 
 // Handler for inline reply submission from the child component
@@ -276,14 +276,14 @@ const handleCreateReponseFromChild = async ({commentaireId, message}) => {
             }
             commentaires.value[commentaireIndex].reponses.push(newReponse);
         } else {
-            console.warn(`Commentaire parent avec l'ID ${commentaireId} non trouvé pour ajouter la réponse.`);
+            // console.warn(`Commentaire parent avec l'ID ${commentaireId} non trouvé pour ajouter la réponse.`);
         }
 
         showNotification('Réponse ajoutée avec succès', 'success');
     } catch (error) {
         const serverMsg = error?.response?.data?.error || error?.message || 'Erreur lors de l\'ajout de la réponse';
         showNotification(serverMsg, 'error');
-        console.error('Erreur handleCreateReponseFromChild:', { error, serverMsg });
+        // console.error('Erreur handleCreateReponseFromChild:', { error, serverMsg });
     } finally {
         isSubmittingReponse.value = false;
     }
@@ -327,7 +327,7 @@ const handleEditComment = async (comment) => {
             
         } catch (error) {
             showNotification('Erreur lors de la modification du commentaire', 'error');
-            console.error('Erreur handleEditComment:', error);
+            // console.error('Erreur handleEditComment:', error);
         }
     }
 };
@@ -370,7 +370,7 @@ const confirmDeleteComment = async () => {
         
     } catch (error) {
         showNotification('Erreur lors de la suppression du commentaire', 'error');
-        console.error('Erreur confirmDeleteComment:', error);
+        // console.error('Erreur confirmDeleteComment:', error);
     } finally {
         isDeleteCommentModalOpen.value = false;
         commentToDelete.value = null;
@@ -382,12 +382,12 @@ const confirmDeleteComment = async () => {
 // Méthodes pour les documents
 const showDeleteDocumentModal = (document) => {
     // Debug: Vérifiez la structure de l'objet document
-    console.log('Document à supprimer - structure complète:', document);
-    console.log('ID du document:', document.id);
+    // console.log('Document à supprimer - structure complète:', document);
+    // console.log('ID du document:', document.id);
     
     // Vérifiez que l'ID existe
     if (!document || !document.id) {
-        console.error('Document invalide - pas d\'ID:', document);
+        // console.error('Document invalide - pas d\'ID:', document);
         showNotification('Erreur: Document invalide', 'error');
         return;
     }
@@ -399,7 +399,7 @@ const showDeleteDocumentModal = (document) => {
 const handleDelete = async () => {
     // 1. Utilisez .value pour vérifier l'ID
     if (!documentToDelete.value || !documentToDelete.value.id) {
-        console.error('Aucun document sélectionné ou ID manquant');
+        // console.error('Aucun document sélectionné ou ID manquant');
         return;
     };
     
@@ -445,9 +445,9 @@ const showNotification = (message, type = 'success') => {
 watch(
     () => doc.value?.id,
     (newId) => {
-        console.log('Watcher dossier ID déclenché, newId:', newId);
+        // console.log('Watcher dossier ID déclenché, newId:', newId);
         if (newId) {
-            console.log('Dossier changé, ID:', newId); // DEBUG
+            // console.log('Dossier changé, ID:', newId); // DEBUG
             loadCommentaires();
         } else {
             commentaires.value = [];
@@ -458,23 +458,23 @@ watch(
 
 // Initialisation
 onMounted(() => {
-    console.log('Composant customerSectionFolder monté, dossier actuel:', doc.value); // DEBUG
-    console.log('currentDossier du store:', dossierStore.currentDossier); // DEBUG
+    // console.log('Composant customerSectionFolder monté, dossier actuel:', doc.value); // DEBUG
+    // console.log('currentDossier du store:', dossierStore.currentDossier); // DEBUG
 });
 
 // Méthodes pour le template
 const handleView = () => {
-    console.log('Voir le dossier:', doc.value);
+    // console.log('Voir le dossier:', doc.value);
     // Logique de navigation/affichage de vue détaillée
 };
 
 const handleEdit = () => {
-    console.log('Éditer le dossier:', doc.value);
+    // console.log('Éditer le dossier:', doc.value);
     // Logique d'ouverture de modale d'édition
 };
 
 const handleAction = (action) => {
-    console.log('Action:', action);
+    // console.log('Action:', action);
     // Logique pour les actions spécifiques du dossier (e.g. "Clore", "Annuler")
 };
 
@@ -485,7 +485,7 @@ const handleDownload = async (docId, fileName) => {
         showNotification(`Téléchargement lancé${result?.filename ? `: ${result.filename}` : ''}`, 'success');
     } catch (error) {
         showNotification('Erreur lors du téléchargement', 'error');
-        console.error('Erreur handleDownload:', error);
+        // console.error('Erreur handleDownload:', error);
     }
 };
 </script>
