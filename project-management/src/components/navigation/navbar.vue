@@ -6,7 +6,6 @@
                 :searchFunction="customSearchFunction"
                 :maxResults="8"
                 @search="handleSearch"
-                @select="handleSelect"
             />
         </div>
         <addButton @click="handleAddClick"/>
