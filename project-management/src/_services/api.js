@@ -82,7 +82,7 @@ api.interceptors.response.use(
 
         // Gestion des autres erreurs
         if (error.response?.status === 403) {
-            console.error('Accès refusé (403)');
+            // console.error('Accès refusé (403)');
             router.push('/unauthorized');
         }
         
