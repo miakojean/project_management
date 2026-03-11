@@ -125,11 +125,11 @@ export default {
             // Logique de visualisation
         },
         shareDocument(id) {
-            //console.log('Partager document:', id);
+            // console.log('Partager document:', id);
             // Logique de partage
         },
         toggleMenu(id) {
-            //console.log('Menu document:', id);
+            // console.log('Menu document:', id);
             // Logique du menu contextuel
         }
     }

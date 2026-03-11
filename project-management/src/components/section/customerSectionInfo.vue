@@ -221,12 +221,12 @@ export default {
 
         // Si aucun ID trouvé (ex: refresh page sans ID dans l'URL), on redirige ou on reset
         if (!targetId) {
-            //console.warn("Aucun client sélectionné, retour à la liste ou mode création.");
+            // console.warn("Aucun client sélectionné, retour à la liste ou mode création.");
             // Optionnel : router.push('/dashboard/customer-list');
             return; 
         }
 
-        //console.log(`Chargement du client ID: ${targetId} depuis l'API...`);
+        // console.log(`Chargement du client ID: ${targetId} depuis l'API...`);
         
         // 2. Appel API pour avoir les infos fraîches
         const clientData = await clientStore.fetchCustomerById(targetId);
@@ -234,10 +234,10 @@ export default {
         // 3. Remplir le formulaire
         populateForm(clientData);
         
-        //console.log('Formulaire synchronisé avec succès');
+        // console.log('Formulaire synchronisé avec succès');
         
       } catch (error) {
-        //console.error('Erreur lors du chargement du client:', error);
+        // console.error('Erreur lors du chargement du client:', error);
       } finally {
         isLoading.value = false;
       }
@@ -346,7 +346,7 @@ export default {
         delete dataToSave.date_creation;
 
         // 4. ENVOI
-        //console.log("Envoi des données pour mise à jour :", dataToSave);
+        // console.log("Envoi des données pour mise à jour :", dataToSave);
         await clientStore.updateCustomer(idToUpdate, dataToSave);
         
         // 5. SUCCÈS
@@ -360,7 +360,7 @@ export default {
         await loadClientData(); 
         
       } catch (error) {
-        //console.error('Erreur save:', error);
+        // console.error('Erreur save:', error);
         
         // Affichage intelligent de l'erreur pour comprendre ce qui bloque
         let errorMsg = error.message || 'Erreur inconnue';

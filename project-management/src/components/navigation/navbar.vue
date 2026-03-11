@@ -6,7 +6,6 @@
                 :searchFunction="customSearchFunction"
                 :maxResults="8"
                 @search="handleSearch"
-                @select="handleSelect"
             />
         </div>
         <addButton @click="handleAddClick"/>
@@ -178,7 +177,7 @@ export default {
                 emit('notification-read', notificationId);
                 
             } catch (error) {
-                //console.error('Erreur lors du marquage de la notification:', error);
+                // console.error('Erreur lors du marquage de la notification:', error);
             }
         };
         
@@ -212,7 +211,7 @@ export default {
         // Handle search event from the search component (optional: here we just log)
         const handleSearch = (payload) => {
             // payload: { query, results }
-            //console.log('Navigation bar search event:', payload);
+            // console.log('Navigation bar search event:', payload);
             // In the future we could navigate or focus a specific section
         };
 

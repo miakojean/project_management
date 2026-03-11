@@ -110,7 +110,7 @@ export default {
         };
 
         const handleFormSubmit = (formData) => {
-            //console.log('Données du formulaire soumises avec succès:', formData);
+            // console.log('Données du formulaire soumises avec succès:', formData);
             // Logique de soumission...
         };
 

@@ -1,7 +1,7 @@
 <template>
     <div class="logo" @click="goToDashboard">
         <img src="../../assets//juristrack.jpeg" class="log--pic" alt="logo de Adn consulting">
-        <h4><span>ADN</span> consulting</h4>
+        <h4>Juristrack</h4>
     </div>
 </template>
 

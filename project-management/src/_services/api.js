@@ -13,6 +13,7 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // console.log('📤 Requête:', config.method.toUpperCase(), config.url);
+        // console.log('📤 Requête:', config.method.toUpperCase(), config.url);
         
         // Timestamp anti-cache pour les GET (optionnel)
         if (config.method === 'get') {
@@ -81,8 +82,8 @@ api.interceptors.response.use(
 
         // Gestion des autres erreurs
         if (error.response?.status === 403) {
-            // console.error('Accès refusé (403)');
-            router.push('/unauthorized');// 
+            console.error('Accès refusé (403)');
+            router.push('/unauthorized');
         }
         
         return Promise.reject(error);

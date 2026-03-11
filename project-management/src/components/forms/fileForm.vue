@@ -42,7 +42,7 @@
           v-model="formData.categorie"
           :options="categoryOptions"
           :error="fieldErrors.categorie"
-          @update:modelValue="(val) => console.log('Catégorie sélectionnée:', val)"
+          @update:modelValue=""
         />
         <inputArea
           identifiant="Description" 
@@ -198,7 +198,7 @@ const loadCategories = async () => {
   try {
     const response = await dossierStore.fetchCategories();
     
-    // console.log('Réponse catégories:', response); // DEBUG
+    //console.log('Réponse catégories:', response); // DEBUG
     
     if (response && Array.isArray(response)) {
       categoryOptions.value = response.map(category => ({
@@ -206,7 +206,7 @@ const loadCategories = async () => {
         label: category.nom
       }));
       
-      // console.log('Options formatées:', categoryOptions.value);
+      //console.log('Options formatées:', categoryOptions.value);
       
       // Optionnel: sélectionnez la première catégorie par défaut
       if (categoryOptions.value.length > 0 && !formData.categorie) {
@@ -214,7 +214,7 @@ const loadCategories = async () => {
       }
     }
   } catch (error) {
-    // console.error("Erreur:", error);
+    //console.error("Erreur:", error);
   }
 }
 
@@ -270,7 +270,7 @@ const handleSubmit = async () => {
     }, 3500)
 
   } catch (error) {
-    // console.error('Erreur upload:', error)
+    //console.error('Erreur upload:', error)
     const msg = error.response?.data?.detail 
       || error.response?.data?.files?.[0] 
       || 'Erreur lors de l\'envoi des documents'

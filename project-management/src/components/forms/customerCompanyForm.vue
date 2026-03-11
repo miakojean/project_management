@@ -200,7 +200,7 @@ const handleSubmit = async () => {
     
     await new Promise(resolve => setTimeout(resolve, 1500)); // Fake delay
     
-    //console.log("Données envoyées :", JSON.parse(JSON.stringify(form)));
+    // console.log("Données envoyées :", JSON.parse(JSON.stringify(form)));
     
     submitStatus.value = 'success';
     
@@ -208,7 +208,7 @@ const handleSubmit = async () => {
     Object.keys(form).forEach(key => form[key] = '');
     
   } catch (error) {
-    //console.error("Erreur API :", error);
+    // console.error("Erreur API :", error);
     submitStatus.value = 'error';
   } finally {
     isLoading.value = false;

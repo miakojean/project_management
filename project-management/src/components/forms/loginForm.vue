@@ -35,7 +35,7 @@
         <divider />
         
         <div class="w-full flex justify-items-start gap-2 cursor-pointer" @click="goToPasswordReset">
-            <p>Signaler l'oubli du mot de passe</p>
+            <p>Mot de passe oublié?</p>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -84,7 +84,7 @@ const validateData = () => {
 
 // Redirection pour mot de passe oublié
 const goToPasswordReset = () => {
-    router.push('/password-reset');
+    router.push('/reset-password');
 };
 
 // Soumission
@@ -171,7 +171,7 @@ form {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 form h3 {

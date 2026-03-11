@@ -219,11 +219,11 @@ export default {
 
     handleDelete(){
       this.$emit("delete")
-      //console.log("Evènement de suppression émis!!!")
+      // console.log("Evènement de suppression émis!!!")
     },
     
     handleShare() {
-      //console.log('Partager document:', this.title)
+      // console.log('Partager document:', this.title)
       this.$emit('share', {
         title: this.title,
         type: this.documentType
@@ -231,7 +231,7 @@ export default {
     },
     
     handleCustomAction(action) {
-      //console.log('Action personnalisée:', action, this.title)
+      // console.log('Action personnalisée:', action, this.title)
       this.$emit('custom-action', {
         action: action,
         document: {
@@ -258,15 +258,15 @@ export default {
   
   // Hooks de cycle de vie
   mounted() {
-    //console.log('DocumentCard monté:', this.title)
+    // console.log('DocumentCard monté:', this.title)
     
     // Validation des props
     if (this.progress < 0) {
-      //console.warn('La progression ne peut pas être négative:', this.progress)
+      // console.warn('La progression ne peut pas être négative:', this.progress)
     }
     
     if (Number(this.completedSteps) > Number(this.totalSteps)) {
-      //console.warn('Le nombre de steps complétés dépasse le total:', this.completedSteps, '/', this.totalSteps)
+      // console.warn('Le nombre de steps complétés dépasse le total:', this.completedSteps, '/', this.totalSteps)
     }
   },
   

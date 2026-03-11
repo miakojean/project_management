@@ -157,17 +157,17 @@ export default {
 
         // Méthodes existantes modifiées pour utiliser les données dynamiques
         downloadDocument(doc) {
-            //console.log('Télécharger document:', doc);
+            // console.log('Télécharger document:', doc);
             this.$emit('download', doc);
         },
 
         viewDocument(doc) {
-            //console.log('Visualiser document:', doc);
+            // console.log('Visualiser document:', doc);
             this.$emit('view', doc);
         },
 
         shareDocument(doc) {
-            //console.log('Partager document:', doc);
+            // console.log('Partager document:', doc);
             this.$emit('share', doc);
         }
     }

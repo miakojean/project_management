@@ -16,6 +16,7 @@ function loadStateFromCache() {
         }
     } catch (e) {
         //console.error("Erreur lors du chargement du cache:", e);
+        //console.error("Erreur lors du chargement du cache:", e);
     }
     return {};
 }
@@ -110,11 +111,11 @@ export const useDossierStore = defineStore('dossier', () => {
             // Supporter plusieurs formes de réponse (objet {commentaires: [...] } ou directement un tableau)
             const newCommentaires = response.data?.commentaires || response.data || [];
 
-            //console.log('fetchCommentairesByDossier response:', {
-            //    url: `/manager/affairs/${dossierId}/commentaires/`,
-            //    status: response.status,
-            //    receivedCount: Array.isArray(newCommentaires) ? newCommentaires.length : 'N/A'
-            //});
+            /*console.log('fetchCommentairesByDossier response:', {
+                url: `/manager/affairs/${dossierId}/commentaires/`,
+                status: response.status,
+                receivedCount: Array.isArray(newCommentaires) ? newCommentaires.length : 'N/A'
+            });*/
 
             const normalized = Array.isArray(newCommentaires) ? newCommentaires : [];
 
@@ -135,11 +136,11 @@ export const useDossierStore = defineStore('dossier', () => {
         } catch (err) {
             // Log détaillé pour faciliter le debug (status + payload)
             commentairesError.value = err.response?.data?.error || 'Erreur lors du chargement des commentaires';
-            //console.error('Erreur fetchCommentaires:', {
-            //    status: err.response?.status,
-            //    data: err.response?.data,
-            //    message: err.message
-            //});
+            /*console.error('Erreur fetchCommentaires:', {
+                status: err.response?.status,
+                data: err.response?.data,
+                message: err.message
+            });*/
             throw err;
         } finally {
             commentairesLoading.value = false;
@@ -325,7 +326,7 @@ export const useDossierStore = defineStore('dossier', () => {
                 }
                 commentaires.value[commentaireIndex].reponses.push(reponseData);
             }
-            //console.debug('createReponse: réponse créée et attachée', { commentaireId, reponseData });
+            /*console.debug('createReponse: réponse créée et attachée', { commentaireId, reponseData });*/
             
             return response.data;
         } catch (err) {
@@ -413,7 +414,7 @@ export const useDossierStore = defineStore('dossier', () => {
                 reponses: collectedReponses
             };
         } catch (err) {
-            //console.error('Erreur lors du chargement complet des commentaires:', err);
+            /*console.error('Erreur lors du chargement complet des commentaires:', err);*/
             throw err;
         }
     }
@@ -484,7 +485,7 @@ export const useDossierStore = defineStore('dossier', () => {
             const response = await api.get(`/manager/affairs`, { params });
             dossiers.value = response.data.data.dossiers;
             stats.value = response.data.data.metadata;
-            //console.log("Dossiers chargés", dossiers.value)
+            // console.log("Dossiers chargés", dossiers.value)
             return response.data;
         } catch (err) {
             error.value = err.response?.data?.error || 'Erreur lors du chargement des dossiers'; 
@@ -515,7 +516,7 @@ export const useDossierStore = defineStore('dossier', () => {
             return dossiersRes;
         } catch (err) {
             error.value = err.response?.data?.error || err.message || 'Erreur lors de la recherche de dossiers';
-            //console.error('Erreur searchDossiers:', err);
+            // console.error('Erreur searchDossiers:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -526,10 +527,10 @@ export const useDossierStore = defineStore('dossier', () => {
         try {
             const response = await api.get(`/manager/affairs?est_archive=true`)
             dossiersArchives.value = response.data.data.dossiers
-            //console.log('Documents archivés', dossiersArchives)
+            // console.log('Documents archivés', dossiersArchives)
         } catch (err) {
             error.value = err.response?.data?.error || "Un problème est lors de la réccupération des archives"
-            //console.error(error)
+            // console.error(error)
         }   
     }
 
@@ -538,16 +539,16 @@ export const useDossierStore = defineStore('dossier', () => {
         error.value = null;
         
         try {
-            ////console.log('fetchDossierById appelé avec id:', id);
+            // console.log('fetchDossierById appelé avec id:', id);
             const response = await api.get(`/manager/affairs/details/${id}/`);
-            ////console.log('Réponse fetchDossierById:', response.data);
+            // console.log('Réponse fetchDossierById:', response.data);
             currentDossier.value = response.data;
-            ////console.log('currentDossier mis à jour:', currentDossier.value);
+            // console.log('currentDossier mis à jour:', currentDossier.value);
             return response.data;
         } catch (err) {
-            ////console.error('Erreur fetchDossierById:', err);
+            // console.error('Erreur fetchDossierById:', err);
             error.value = err.response?.data?.error || 'Erreur lors du chargement du dossier';
-            ////console.error('Une erreur est intervenue lors de la récupération du dossier');
+            // console.error('Une erreur est intervenue lors de la récupération du dossier');
             throw err;
         } finally {
             loading.value = false;

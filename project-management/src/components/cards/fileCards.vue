@@ -199,7 +199,7 @@ export default {
   // Méthodes
   methods: {
     handleView() {
-      //console.log('Voir document:', this.title)
+      // console.log('Voir document:', this.title)
       this.$emit('view', {
         title: this.title,
         type: this.documentType,
@@ -231,7 +231,7 @@ export default {
     },
     
     handleCustomAction(action) {
-      //console.log('Action personnalisée:', action, this.title)
+      // console.log('Action personnalisée:', action, this.title)
       this.$emit('custom-action', {
         action: action,
         document: {
@@ -283,11 +283,11 @@ export default {
   watch: {
     progress(newVal) {
       this.localProgress = Number(newVal)
-      //console.log('Progression mise à jour:', this.localProgress)
+      // console.log('Progression mise à jour:', this.localProgress)
     },
     
     title(newVal) {
-      //console.log('Titre mis à jour:', newVal)
+      // console.log('Titre mis à jour:', newVal)
     }
   }
 }

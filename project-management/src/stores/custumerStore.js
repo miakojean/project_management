@@ -95,7 +95,7 @@ export const useCustomerStore = defineStore('customer', () => {
                 }
 
                 // Afficher les clients
-                //console.log(response.data.clients)
+                // console.log(response.data.clients)
 
                 return response.data;
             } else {
@@ -103,7 +103,7 @@ export const useCustomerStore = defineStore('customer', () => {
             }
         } catch (err) {
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur fetchCustomers:', err);
+            // console.error('Erreur fetchCustomers:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -130,7 +130,7 @@ export const useCustomerStore = defineStore('customer', () => {
                 }
             } catch (err) {
                 error.value = err.response?.data?.message || err.message || 'Erreur réseau';
-                //console.error('Erreur fetchCustomersMonthlyStats:', err);
+                // console.error('Erreur fetchCustomersMonthlyStats:', err);
                 throw err;
             } finally {
                 loading.value = false;
@@ -149,14 +149,14 @@ export const useCustomerStore = defineStore('customer', () => {
             
             if (response.data.success) {
                 currentCustomer.value = response.data.client;
-                //console.log('Détails du client:', response.data.client);
+                // console.log('Détails du client:', response.data.client);
                 return response.data.client;
             } else {
                 throw new Error(response.data.message || 'Client non trouvé');
             }
         } catch (err) {
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur fetchCustomerById:', err);
+            // console.error('Erreur fetchCustomerById:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -185,7 +185,7 @@ export const useCustomerStore = defineStore('customer', () => {
             }
         } catch (err) {
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur searchCustomers:', err);
+            // console.error('Erreur searchCustomers:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -216,7 +216,7 @@ export const useCustomerStore = defineStore('customer', () => {
             }
         } catch (err) {
             error.value = err.response?.data?.errors || err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur createCustomer:', err);
+            // console.error('Erreur createCustomer:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -251,7 +251,7 @@ export const useCustomerStore = defineStore('customer', () => {
             }
         } catch (err) {
             error.value = err.response?.data?.errors || err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur updateCustomer:', err);
+            // console.error('Erreur updateCustomer:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -281,7 +281,7 @@ export const useCustomerStore = defineStore('customer', () => {
             }
         } catch (err) {
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
-            //console.error('Erreur deleteCustomer:', err);
+            // console.error('Erreur deleteCustomer:', err);
             throw err;
         } finally {
             loading.value = false;

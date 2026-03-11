@@ -310,7 +310,7 @@ export default {
         
         // Gestion des actions du dropdown
         const handleDropdownAction = (action) => {
-            //console.log('Action dropdown sélectionnée:', action, 'sur le dossier:', props.reference);
+            // console.log('Action dropdown sélectionnée:', action, 'sur le dossier:', props.reference);
             
             const dossierData = {
                 dossierId: props.dossierId,

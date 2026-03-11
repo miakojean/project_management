@@ -1,9 +1,0 @@
-/* The file about responsive */
-
-@media (max-width: 430px) {
-    
-    nav{
-        display: none;
-    }
-
-}

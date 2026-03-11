@@ -64,12 +64,12 @@ export default {
         }
       });
 
-      //console.log('🔍 Appliquer filtres:', cleanFilters);
+      // console.log('🔍 Appliquer filtres:', cleanFilters);
       
       try {
         await dossierStore.fetchDossiers(cleanFilters);
       } catch (error) {
-        //console.error('Erreur lors du filtrage:', error);
+        // console.error('Erreur lors du filtrage:', error);
       }
     };
 
