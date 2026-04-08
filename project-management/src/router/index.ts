@@ -1,7 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore();
 
 const router = createRouter({
+  
   history: createWebHistory(import.meta.env.BASE_URL),
+  
   routes: [
     {
       path: '/',
@@ -90,6 +95,18 @@ const router = createRouter({
       component: () => import('@/views/passwordResetView.vue')
     }
   ],
+})
+
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore() // ✅ Ici c'est bon, Pinia est monté
+
+  if (to.meta.requiresAuth) {
+    const isAuthenticated = authStore.isAuthenticated || await authStore.checkAuth()
+
+    if (!isAuthenticated) {
+      return { name: 'login' } 
+    }
+  }
 })
 
 export default router
