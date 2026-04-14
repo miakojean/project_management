@@ -43,7 +43,6 @@
                     @mark-as-done="handleMarkAsDone(dossier)" 
                     @delete="handleDeleteDossier"
                     @dossier-action="handleDossierAction"
-                    @card-click="handleCardClick"
                     class="dossier-card"
                 />
             </div>

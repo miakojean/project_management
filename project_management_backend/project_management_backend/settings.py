@@ -136,22 +136,14 @@ WSGI_APPLICATION = 'project_management_backend.wsgi.application'
 # Optionnel: Configuration pour PostgreSQL en production
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': config('DB_NAME'),
-    #     'USER': config('DB_USER'),
-    #     'PASSWORD': config('DB_PASSWORD'),
-    #     'HOST': config('DB_HOST'),
-    #     'PORT': config('DB_PORT'),
-    # },
 
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'project-management',
-        'USER': 'postgres',
-        'PASSWORD': '123456',   # en dur
-        'HOST': 'localhost',
-        'PORT': '5433',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),   # en dur
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
     }
 }
 
