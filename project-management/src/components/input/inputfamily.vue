@@ -117,7 +117,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 1.5rem; /* Espacement entre les champs */
+  margin-bottom: 0.5rem; /* Espacement entre les champs */
 }
 
 /* --- Header du champ (Label + Action) --- */
@@ -149,9 +149,8 @@ label {
 
 .styled-input {
   width: 100%;
-  padding: 0.85rem 1rem;
-  padding-right: 2.8rem; /* Place pour l'icône à droite */
-  font-size: 0.95rem;
+  padding: 0.85rem;
+  font-size: 0.9rem;
   color: #1F2937; /* Texte presque noir */
   background-color: #ffffff;
   border: 1px solid #E5E7EB; /* Gris très clair */
@@ -168,7 +167,7 @@ label {
 
 /* Focus State - Bordure bleue */
 .styled-input:focus {
-  border-color: #3B82F6;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 1px #3B82F6; /* Légère lueur bleue */
 }
 

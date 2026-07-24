@@ -16,7 +16,7 @@ input:placeholder-shown{
 }
 
 input:focus {
-  border-color: #2563eb;
+  border-color: var(--primary-color);
 }
 
 textarea{
@@ -33,7 +33,7 @@ textarea{
 }
 
 textarea:focus{
-    border-color: #007BFF;
-    outline: none;
-    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  border-color: #007BFF;
+  outline: none;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 }

@@ -164,9 +164,9 @@ const handleSubmit = async () => {
 <style scoped>
 form {
     width: 100%;
-    max-width: 500px;
+    max-width: 450px;
     height: 100%;
-    padding: 1rem;
+    padding: 0.5rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -177,7 +177,7 @@ form {
 form h3 {
     text-align: start;
     width: 100%;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 form p, svg {

@@ -39,11 +39,11 @@ export default defineComponent({
 <style scoped>
 .main-button {
     background: var(--primary-color);
-    padding: 0.8rem;
+    padding: 0.6rem;
     border: none;
-    border-radius: 16px;
+    border-radius: 4px;
     color: white;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     width: 100%;
     transition: all 0.3s ease-in-out;
