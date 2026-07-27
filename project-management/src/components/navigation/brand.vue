@@ -1,6 +1,5 @@
 <template>
     <div class="logo" @click="goToDashboard">
-        <img src="../../assets//juristrack.jpeg" class="log--pic" alt="logo de Adn consulting">
         <h4>Juristrack</h4>
     </div>
 </template>
@@ -40,8 +39,8 @@ img{
 
 .logo h4{
     font-size: 1.2rem;
-    font-weight: 400;
-    color: #fff;
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 .logo h4 span{

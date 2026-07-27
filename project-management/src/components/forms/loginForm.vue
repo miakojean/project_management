@@ -178,6 +178,8 @@ form h3 {
     text-align: start;
     width: 100%;
     margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
 form p, svg {
