@@ -1,5 +1,5 @@
 <template>
-  <section class="main-section">
+  <section class="main-section w-full">
     
     <h3>Bienvenu Jean Yves, très ravi de vous revoir.</h3>
 

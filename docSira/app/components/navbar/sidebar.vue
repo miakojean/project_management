@@ -1,15 +1,39 @@
 <template>
   <aside class="sidebar" :class="{ 'is-reduced': isReduced }">
+    <!-- LOGO -->
     <div class="logo hidden-mobile">
-      <span class="logo-text" v-if="!isReduced">Contratchap</span>
-      <!-- Bouton Menu (Hamburger) pour réduire/agrandir -->
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="toggle-icon" @click="toggleReduce">
+      <!-- Icône affichée lorsque la sidebar est réduite -->
+      <svg 
+        v-if="isReduced" 
+        xmlns="http://www.w3.org/2000/svg" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke-width="1.5" 
+        stroke="currentColor" 
+        class="logo-icon"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+      </svg>
+
+      <!-- Texte affiché lorsque la sidebar est ouverte -->
+      <span class="logo-text" v-else>DocSira</span>
+
+      <!-- Bouton de bascule (toujours visible) -->
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke-width="1.5" 
+        stroke="currentColor" 
+        class="toggle-icon" 
+        @click="toggleReduce"
+      >
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
       </svg>
     </div>
 
+    <!-- NAVIGATION -->
     <nav class="nav-menu">
-      
       <button 
         class="nav-item" 
         :class="{ active: route.path.includes('/profile/Dashboard') }"
@@ -21,7 +45,6 @@
         <span class="nav-label" v-if="!isReduced">Dashboard</span>
       </button>
 
-      <!-- Mes Contrats -->
       <button 
         class="nav-item"
         :class="{ active: route.path.includes('/profile/Contract') }"
@@ -44,7 +67,6 @@
         <span class="nav-label" v-if="!isReduced">Clients</span>
       </button>
 
-      <!-- Mes packs -->
       <button 
         class="nav-item"
         :class="{ active: route.path.includes('/profile/Experts') }"
@@ -80,6 +102,7 @@
       </button>
     </nav>
 
+    <!-- DÉCONNEXION -->
     <div class="logout">
       <button class="nav-item" @click="authStore.logout">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
@@ -93,7 +116,8 @@
 
 <script lang="ts">
 import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router'; 
+import { useRouter, useRoute } from 'vue-router';
+
 
 export default {
   name: 'Sidebar',
@@ -106,11 +130,11 @@ export default {
       isReduced.value = !isReduced.value;
     };
 
-
     return { 
       isReduced, 
       router,
       route,
+      toggleReduce
     };
   }
 }
@@ -118,12 +142,12 @@ export default {
 
 <style scoped>
 .sidebar {
-  --sb-bg: #000e2ddd;          /* Bleu nuit profond */
-  --sb-text: #ffffff;        /* Gris ardoise (Texte inactif) */
-  --sb-text-active: #000e2d;  /* Blanc éclatant */
-  --sb-accent: #5452f4;      /* Vert émeraude */
-  --sb-border: rgba(255, 255, 255, 0.08); /* Bordure subtile */
-  --sb-hover-bg: #000e2d44; /* Fond au survol */
+  --sb-bg: #000e2ddd;
+  --sb-text: #ffffff;
+  --sb-text-active: #ffffff;
+  --sb-accent: #5452f4;
+  --sb-border: rgba(255, 255, 255, 0.08);
+  --sb-hover-bg: #000e2d44;
 }
 
 .sidebar {
@@ -139,24 +163,23 @@ export default {
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 100;
-  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.1); 
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.1);
 }
 
 .nav-menu {
   display: flex;
   width: 100%;
-  justify-content: flex-start; 
+  justify-content: flex-start;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
-  -webkit-overflow-scrolling: touch; 
+  -webkit-overflow-scrolling: touch;
   gap: 0.5rem;
   padding: 0 1rem;
-  scrollbar-width: none; 
+  scrollbar-width: none;
 }
-
-.nav-menu::-webkit-scrollbar{
-    display: none;
+.nav-menu::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -175,19 +198,16 @@ export default {
   font-size: 0.5rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  text-decoration: none; /* Enlève le souligné par défaut des liens <a> */
+  text-decoration: none;
 }
-
 .icon {
   width: 24px;
   height: 24px;
   margin-bottom: 0.2rem;
   transition: transform 0.2s ease;
 }
-
-/* États Actif & Survol */
-.nav-item.active { 
-  color: var(--sb-accent); 
+.nav-item.active {
+  color: var(--sb-accent);
 }
 .nav-item.active .icon {
   transform: translateY(-2px);
@@ -196,20 +216,20 @@ export default {
   color: var(--sb-text-active);
 }
 
-.hidden-mobile { 
-  display: none; 
+.hidden-mobile {
+  display: none;
 }
-.logout span{
-    color:#ef4444
+.logout span {
+  color: #ef4444;
 }
-.logout .nav-item{
-    color: #ef4444;
+.logout .nav-item {
+  color: #ef4444;
 }
 
-
+/* --- DESKTOP --- */
 @media (min-width: 1024px) {
-  .hidden-mobile { 
-    display: flex; 
+  .hidden-mobile {
+    display: flex;
   }
 
   .sidebar {
@@ -240,20 +260,24 @@ export default {
     justify-content: space-between;
     padding: 0 0.5rem;
   }
-  
   .sidebar.is-reduced .logo {
     justify-content: center;
     padding: 0;
+    gap: 0.5rem;
   }
-
   .logo-text {
     font-weight: 700;
     font-size: 1.25rem;
-    color: var(--secondary-light-color);
+    color: var(--secondary-light-color, #fff);
     letter-spacing: -0.02em;
-    margin: 1rem
+    margin: 1rem;
   }
-
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--sb-text);
+    flex-shrink: 0;
+  }
   .toggle-icon {
     width: 28px;
     height: 28px;
@@ -261,7 +285,6 @@ export default {
     cursor: pointer;
     transition: color 0.2s ease;
   }
-
   .toggle-icon:hover {
     color: var(--sb-accent);
   }
@@ -282,26 +305,21 @@ export default {
     border-radius: 12px;
     font-size: 0.8rem;
   }
-
   .nav-item:hover {
     background-color: rgba(53, 95, 203, 0.932);
     color: #ffffff;
   }
-  
   .nav-item.active {
     background-color: rgba(53, 95, 203, 0.932);
     color: #ffffff;
   }
-
   .nav-item.active .icon {
     transform: none;
   }
-
   .sidebar.is-reduced .nav-item {
     justify-content: center;
     padding: 0.8rem 0;
   }
-
   .nav-label {
     white-space: nowrap;
     animation: fadeIn 0.2s ease forwards;
@@ -313,7 +331,6 @@ export default {
     border-top: 1px solid var(--sb-border);
     padding-top: 1rem;
   }
-  
   .logout .nav-item:hover {
     background-color: rgba(239, 68, 68, 0.1);
     color: #ef4444;

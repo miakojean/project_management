@@ -161,6 +161,7 @@ export default {
   font-family: sans-serif;
   width: 100%;
   max-width: 400px;
+
 }
 
 .input-label {
