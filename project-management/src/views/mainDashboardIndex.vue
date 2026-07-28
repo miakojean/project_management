@@ -23,10 +23,6 @@
       <indexDashboardSection/>
     </main>
 
-    <footer class="footer-area">
-      <p>&copy; 2025 Adn consulting</p>
-    </footer>
-
   </div>
 </template>
 
@@ -87,8 +83,7 @@ export default {
   grid-template-rows: 60px 1fr auto;
   grid-template-areas: 
     "sidebar header"
-    "sidebar main"
-    "sidebar footer";
+    "sidebar main";
   transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -160,8 +155,7 @@ export default {
     grid-template-rows: 60px 1fr auto;
     grid-template-areas:
       "header"
-      "main"
-      "footer";
+      "main";
     transition: none;
   }
 

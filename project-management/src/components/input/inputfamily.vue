@@ -117,6 +117,7 @@ export default {
 <style scoped>
 .input__family {
   width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

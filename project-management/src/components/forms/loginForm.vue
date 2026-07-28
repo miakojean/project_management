@@ -198,6 +198,7 @@ form p, svg {
 
 .error__message p {
     color: #bd0000;
+    font-size: 12px;
     font-weight: 500;
     margin: 0;
     text-align: center;

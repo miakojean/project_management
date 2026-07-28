@@ -18,6 +18,7 @@ nav{
     background: transparent;
     width: 100%;
     padding: 1rem;
+    position: fixed;
 }
 
 img{
