@@ -1,7 +1,7 @@
 <template>
-  <nav>
-    <h4>DocSira</h4>
-  </nav>
+    <nav>
+        <h4>DocSira</h4>
+    </nav>
 </template>
 
 <script>
