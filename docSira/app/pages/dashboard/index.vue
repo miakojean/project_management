@@ -47,7 +47,7 @@ export default {
   overflow-y: auto;              /* Scroll si le contenu dépasse */
   overflow-x: hidden;
   padding: 0.5rem;  /* Espace en bas pour la sidebar mobile */
-  background: #ffffff;
+  background: #e9ebee;
 }
 
 /* La section du dashboard prend tout l'espace vertical restant */

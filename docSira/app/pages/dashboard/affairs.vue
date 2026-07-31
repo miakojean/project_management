@@ -6,19 +6,19 @@
         <!-- Contenu principal -->
         <main class="main-content">
             <navbar />
-            <dashboarSection class="dashboard-section" />
+            <affairSection class="dashboard-section" />
         </main>
     </div>
 </template>
 
 <script>
 import navbar from '../../components/navbar/navbar.vue'
-import dashboarSection from '../../components/sections/dashboard-section/dashboardSection.vue'
+import affairSection from '../../components/sections/dashboard-section/affairSection.vue'
 import sidebar from '../../components/navbar/sidebar.vue'
 
 export default {
   components: {
-    dashboarSection,
+    affairSection,
     sidebar,
     navbar
   }
@@ -31,7 +31,7 @@ export default {
   display: flex;
   height: 100vh;                 /* Hauteur pleine de l'écran */
   overflow: hidden;              /* Empêche le débordement global */
-  background: #f9fafb;           /* Couleur de fond (optionnelle) */
+  background: #e9ebee;           /* Couleur de fond (optionnelle) */
 }
 
 /* === SIDEBAR === */
@@ -46,7 +46,6 @@ export default {
   flex-direction: column;        /* Navbar en haut, section en dessous */
   overflow-y: auto;              /* Scroll si le contenu dépasse */
   overflow-x: hidden;
-  padding: 0.5rem;  /* Espace en bas pour la sidebar mobile */
   background: #ffffff;
 }
 
@@ -58,18 +57,13 @@ export default {
 /* === RESPONSIVE : si la sidebar devient mobile (ex: position fixed en bas) === */
 /* Ici on ajuste le padding-bottom pour que le contenu ne soit pas caché */
 @media (max-width: 1023px) {
-  .main-content {
-    padding-bottom: 4px;        /* Ajuste selon la hauteur de ta sidebar mobile */
-  }
+  
 }
 
 /* Option : si tu veux un comportement différent sur grand écran */
 @media (min-width: 1024px) {
   .main-layout {
     flex-direction: row;         /* Par défaut c'est déjà row, mais on le précise */
-  }
-  .main-content {
-    padding-bottom: 1rem;        /* Pas d'espace supplémentaire sur desktop */
   }
 }
 </style>

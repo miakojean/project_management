@@ -25,42 +25,14 @@ export default {
 <style scoped>
 .features-cards{
     height: auto;
-    padding: 12px;
+    padding: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: #f0eee9;
-    border-radius: 4px;
-}
-
-.features-cards svg{
-    color: #162b57;
-}
-
-.features-cards p{
-    font-size: 1rem;
+    background: var(--primary-color-ligth);
+    border-radius: 45px;
+    color: #fff;
     font-weight: 400;
-    color: #212c45;
-}
-
-@media (min-width: 768px){
-    .features-cards{
-        height: auto;
-        padding: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        border-radius: 4px;
-        transition: ease-in-out 0.4s;
-    } 
-
-    .features-cards:hover{
-        transition: ease-in-out 0.2s;
-        transform: translateY(-5px);
-        cursor: pointer;
-        background: #dfc073;
-    }
 }
 </style>

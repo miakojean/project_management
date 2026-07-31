@@ -21,6 +21,7 @@
 
 :root{
   --primary-color: #5452f4;
+  --primary-color-ligth:#325aaf;
   --primary-color-dark: #005380;
   --secondary-color: #7ac17a;
   --adn-gray-color: #555555;
@@ -93,6 +94,7 @@ form h3 {
   align-items: center;
   min-height: 100vh;
   width: 100%;
+  background: #e9ebee;
 }
 
 .main-layout h3 {

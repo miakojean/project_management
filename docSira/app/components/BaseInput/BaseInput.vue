@@ -180,11 +180,12 @@ export default {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .form-input {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.8rem;
   font-size: 1rem;
   line-height: 1.5;
   color: var(--text-color);
@@ -207,6 +208,7 @@ export default {
   position: absolute;
   top: 0;
   bottom: 0;
+  margin-right: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,8 +220,12 @@ export default {
 .input-icon-left { left: 0; }
 .input-icon-right { right: 0; }
 
-.pl-icon { padding-left: 2.5rem; }
-.pr-icon { padding-right: 2.5rem; }
+.pl-icon {
+  padding-left: 3rem; /* au lieu de 2.5rem */
+}
+.pr-icon {
+  padding-right: 3rem;
+}
 
 /* Styles spécifiques pour le bouton de mot de passe */
 .toggle-password-btn {
