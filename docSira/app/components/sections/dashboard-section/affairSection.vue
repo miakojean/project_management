@@ -2,11 +2,9 @@
   <section class="main-section w-full">
 
 
-      <div class="actions">
-        <folderCards title="Dossiers"/>
-        <folderCards title="Clients"/>
-        <folderCards title="Archives"/>
-      </div>
+    <div class="actions">
+      <folder v-for="folder in 5" :key="folder"/>
+    </div>
     
 
   </section>
@@ -16,12 +14,14 @@
 import BaseInput from '../../BaseInput/BaseInput.vue'
 import folderCards from '../../cards/folderCards.vue'
 import featuresCard from '../../cards/featuresCards.vue'
+import folder from '../../tools/folder.vue'
 export default {
 
     components:{
       BaseInput,
       folderCards,
-      featuresCard
+      featuresCard,
+      folder
     }
 
 }
@@ -47,12 +47,30 @@ export default {
   color: #ffffff;             /* couleur de l'icône */
 }
 
-.actions{
-  width: 100%;
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 colonnes par défaut (mobile) */
+  gap: 0.75rem;                        /* espacement entre les cartes */
   max-width: 900px;
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
+  margin: 0 auto;                      /* centrage horizontal du bloc */
+  justify-items: center;               /* centrage de chaque carte dans sa cellule */
+  align-items: center;                 /* centrage vertical (optionnel) */
+}
+
+/* Tablette : 3 colonnes */
+@media (min-width: 768px) {
+  .actions {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Desktop : 4 colonnes */
+@media (min-width: 1024px) {
+  .actions {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
 }
 
 </style>

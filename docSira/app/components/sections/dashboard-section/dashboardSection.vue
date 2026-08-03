@@ -24,9 +24,9 @@
     </BaseInput>
 
     <div class="actions">
-      <features-card title="Dossiers"/>
-      <features-card title="Clients"/>
-      <features-card title="Archives"/>
+      <features-card title="Dossiers" content="Gérer correctement tous vos dossiers et mettez de l'ordre dans votre espace de travail"/>
+      <features-card title="Clients" content="Gérer correctement tous vos clients avec des outils puissants"/>
+      <features-card title="Archives" content="Accéder à tous vos documents archivés en quelques clics"/>
     </div>
 
     <!-- 
