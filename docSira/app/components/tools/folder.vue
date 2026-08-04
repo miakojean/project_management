@@ -19,7 +19,10 @@
             </div>
         </div>
         <div class="footer">
-            <p>Fougana Kwaki</p>
+          <p>Fougana Kwaki</p>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+          </svg>
         </div>
     </div>
 </template>
@@ -36,7 +39,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   color: '#5452f4',
-  size: 1.2,
+  size: 1.1,
   items: () => [],
   class: ''
 });
@@ -148,3 +151,29 @@ const handleClick = () => {
   open.value = !open.value;
 };
 </script>
+
+<style scoped>
+.footer{
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 8px;
+}
+
+.footer p{
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+  text-align: center;
+}
+
+svg{
+  color: var(--primary-color);
+}
+
+svg:hover{
+  color: var(--primary-color);
+  cursor: pointer;
+}
+</style>

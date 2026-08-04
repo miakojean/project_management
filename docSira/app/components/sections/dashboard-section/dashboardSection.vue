@@ -24,35 +24,48 @@
     </BaseInput>
 
     <div class="actions">
-      <features-card title="Dossiers" content="Gérer correctement tous vos dossiers et mettez de l'ordre dans votre espace de travail"/>
-      <features-card title="Clients" content="Gérer correctement tous vos clients avec des outils puissants"/>
-      <features-card title="Archives" content="Accéder à tous vos documents archivés en quelques clics"/>
+      <features-card 
+        title="Dossiers" 
+        content="Gérer correctement tous vos dossiers et mettez de l'ordre dans votre espace de travail"
+        @click="()=> {router.push('/dashboard/affairs')}"
+      />
+      <features-card 
+        title="Clients" 
+        content="Gérer correctement tous vos clients avec des outils puissants"
+        @click="()=> {router.push('/dashboard/customer')}"
+      />
+      <features-card 
+        title="Archives" 
+        content="Accéder à tous vos documents archivés en quelques clics"
+        @click="()=>{router.push('/dashboard/archives')}"
+      />
     </div>
-
-    <!-- 
-
-      <div class="actions">
-        <folderCards title="Dossiers"/>
-        <folderCards title="Clients"/>
-        <folderCards title="Archives"/>
-      </div>
-    
-    -->
 
   </section>
 </template>
 
-<script>
+<script lang="ts">
 import BaseInput from '../../BaseInput/BaseInput.vue'
 import folderCards from '../../cards/folderCards.vue'
 import featuresCard from '../../cards/featuresCards.vue'
+
+import { useRouter } from 'vue-router'
 export default {
 
-    components:{
-      BaseInput,
-      folderCards,
-      featuresCard
+  components:{
+    BaseInput,
+    folderCards,
+    featuresCard
+  },
+  setup(){
+
+    const router = useRouter();
+
+    return{
+      router,
     }
+
+  }
 
 }
 </script>
