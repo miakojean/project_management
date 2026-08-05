@@ -14,32 +14,31 @@ export default {
 
 <style scoped>
 nav {
-  position: fixed;
-  top: 5px;
-  right: 5px;
-  /* les deux width: 100% sont en double, on garde une seule */
+  position: sticky;
+  top: 30px;
   width: 100%;
-  max-width: 1024px;
+  /* max-width: 1024px; */
   display: flex;
   align-items: center;
   padding: 1rem;
-  /* on enlève justify-content: space-between */
+  z-index: 1000;
+  background: none;
 }
 
 nav h4 {
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--primary-color);
-  margin: 0; /* pour éviter un décalage */
+  margin: 0;
 }
 
 .profile-btn {
-  margin-left: auto; /* clé : pousse le bouton à droite */
+  margin-left: auto;
 }
 
 @media (min-width: 1024px) {
   nav h4 {
-    display: none; /* logo caché sur PC */
+    display: none;
   }
 }
 </style>

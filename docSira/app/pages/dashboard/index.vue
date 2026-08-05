@@ -1,14 +1,14 @@
 <template>
-    <div class="main-layout">
-        <!-- Sidebar -->
-        <sidebar />
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <sidebar />
 
-        <!-- Contenu principal -->
-        <main class="main-content">
-            <navbar />
-            <dashboarSection class="dashboard-section" />
-        </main>
-    </div>
+    <!-- Contenu principal -->
+    <main class="main-content">
+      <navbar />
+      <dashboarSection class="dashboard-section" />
+    </main>
+  </div>
 </template>
 
 <script>

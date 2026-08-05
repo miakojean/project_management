@@ -78,7 +78,7 @@ export default {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: #5452f4;        /* fond gris clair */
+  background: var(--primary-color );        /* fond gris clair */
   border-radius: 50%;         /* cercle */
   margin-left: 2px;           /* ajustement si besoin */
   transition: background 0.2s;

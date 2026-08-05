@@ -46,20 +46,12 @@ export default {
   flex-direction: column;        /* Navbar en haut, section en dessous */
   overflow-y: auto;              /* Scroll si le contenu dépasse */
   overflow-x: hidden;
-  background: #ffffff;
 }
 
 /* La section du dashboard prend tout l'espace vertical restant */
 .dashboard-section {
   flex: 1;
 }
-
-/* === RESPONSIVE : si la sidebar devient mobile (ex: position fixed en bas) === */
-/* Ici on ajuste le padding-bottom pour que le contenu ne soit pas caché */
-@media (max-width: 1023px) {
-  
-}
-
 /* Option : si tu veux un comportement différent sur grand écran */
 @media (min-width: 1024px) {
   .main-layout {

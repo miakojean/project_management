@@ -2,6 +2,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 @import "tailwindcss";
 /*
@@ -20,7 +21,7 @@
 }
 
 :root{
-  --primary-color: #5452f4;
+  --primary-color: #005792;
   --primary-color-ligth:#325aaf;
   --primary-color-dark: #005380;
   --secondary-color: #7ac17a;
@@ -93,7 +94,7 @@ form h3 {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  overflow-y: scroll;
+  overflow-y: auto;
   width: 100%;
   background: #e9ebee;
 }

@@ -25,7 +25,7 @@
     <nav class="nav-menu">
       <button 
         class="nav-item" 
-        :class="{ active: route.path.includes('/Dashboard ') }"
+        :class="{ active: route.path.includes('/Dashboard/index/ ') }"
         @click="router.push('/Dashboard')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
@@ -175,7 +175,7 @@ export default {
 .nav-item {
   background: none;
   border: none;
-  color: var(--sb-text);
+  color: var(--primary-color);
   cursor: pointer;
   padding: 0.5rem;
   display: flex;
@@ -186,7 +186,7 @@ export default {
   width: 100px;
   min-height: 50px;
   font-size: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   text-decoration: none;
 }
@@ -252,7 +252,7 @@ export default {
   }
 
   .logo svg{
-    color: #5452f4;
+    color: var(--primary-color);
   }
 
   .sidebar.is-reduced .logo {
@@ -263,7 +263,7 @@ export default {
   .logo-text {
     font-weight: 700;
     font-size: 1.25rem;
-    color: var(--sb-accent);
+    color: var(--primary-color);
     letter-spacing: -0.02em;
     margin: 1rem;
   }
@@ -276,13 +276,13 @@ export default {
   .toggle-icon {
     width: 28px;
     height: 28px;
-    color: var(--sb-text);
+    color: var(--primary-color);
     cursor: pointer;
     transition: color 0.2s ease;
   }
   
   .toggle-icon:hover {
-    color: var(--sb-accent);
+    color: var(--primary-color);
   }
 
   .nav-menu {
@@ -302,11 +302,11 @@ export default {
     font-size: 0.8rem;
   }
   .nav-item:hover {
-    background-color: rgba(53, 95, 203, 0.932);
+    background-color: var(--primary-color);
     color: #ffffff;
   }
   .nav-item.active {
-    background-color: rgba(53, 95, 203, 0.932);
+    background-color: var(--primary-color);
     color: #ffffff;
   }
   .nav-item.active .icon {

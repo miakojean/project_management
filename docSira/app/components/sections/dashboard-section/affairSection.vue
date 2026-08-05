@@ -3,7 +3,7 @@
 
 
     <div class="actions">
-      <folder v-for="folder in 22" 
+      <folder v-for="folder in 12" 
         :key="folder"
       />
     </div>

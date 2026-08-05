@@ -1,22 +1,22 @@
 <template>
     <div :style="{ transform: `scale(${props.size})` }" :class="props.class">
         <div :class="folderClass" :style="folderStyle" @click="handleClick">
-            <div
+          <div
             class="relative w-[100px] h-[80px] rounded-tl-0 rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px]"
             :style="{ backgroundColor: folderBackColor }"
-            >
-            <span
-                class="absolute z-0 bottom-[98%] left-0 w-[30px] h-[10px] rounded-tl-[5px] rounded-tr-[5px] rounded-bl-0 rounded-br-0"
-                :style="{ backgroundColor: folderBackColor }"
-            ></span>
-            <div v-for="(item, i) in papers" :key="i" :class="getPaperClasses(i)" :style="getPaperStyle(i)">
-                <slot :name="`item-${i + 1}`" :item="item" :index="i" :isOpen="open">
-                {{ item }}
-                </slot>
-            </div>
-            <div :class="frontClass" :style="{ backgroundColor: props.color }"></div>
-            <div :class="rightClass" :style="{ backgroundColor: props.color }"></div>
-            </div>
+          >
+          <span
+            class="absolute z-0 bottom-[98%] left-0 w-[30px] h-[10px] rounded-tl-[5px] rounded-tr-[5px] rounded-bl-0 rounded-br-0"
+            :style="{ backgroundColor: folderBackColor }"
+          ></span>
+          <div v-for="(item, i) in papers" :key="i" :class="getPaperClasses(i)" :style="getPaperStyle(i)">
+            <slot :name="`item-${i + 1}`" :item="item" :index="i" :isOpen="open">
+            {{ item }}
+            </slot>
+          </div>
+          <div :class="frontClass" :style="{ backgroundColor: props.color }"></div>
+          <div :class="rightClass" :style="{ backgroundColor: props.color }"></div>
+          </div>
         </div>
         <div class="footer">
           <p>Fougana Kwaki</p>
@@ -38,7 +38,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  color: '#5452f4',
+  color: '#005792',
   size: 1.1,
   items: () => [],
   class: ''
@@ -159,12 +159,14 @@ const handleClick = () => {
   justify-content: center;
   gap: 0.5rem;
   margin-top: 8px;
+  padding: 8px;
 }
 
 .footer p{
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
-  font-weight: 500;
-  color: #888;
+  font-weight: 600;
+  color: var(--primary-color);
   text-align: center;
 }
 
