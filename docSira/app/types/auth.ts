@@ -4,10 +4,6 @@ export interface LoginForm {
     password: string;
 }
 
-export function isValidLoginForm(loginForm:LoginForm): boolean {
-
-    if (!loginForm.email || !loginForm.password) {
-        return false;
-    }
-    return true;
+export interface MessageForm {
+    message: string;
 }

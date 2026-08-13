@@ -1,8 +1,6 @@
 <template>
   <main>
 
-    <navbar/>
-
     <div class="content-container">
       <login-form/>
     </div>
