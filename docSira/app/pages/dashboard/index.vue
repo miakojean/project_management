@@ -55,14 +55,6 @@ export default {
   flex: 1;
 }
 
-/* === RESPONSIVE : si la sidebar devient mobile (ex: position fixed en bas) === */
-/* Ici on ajuste le padding-bottom pour que le contenu ne soit pas caché */
-@media (max-width: 1023px) {
-  .main-content {
-    padding-bottom: 4px;        /* Ajuste selon la hauteur de ta sidebar mobile */
-  }
-}
-
 /* Option : si tu veux un comportement différent sur grand écran */
 @media (min-width: 1024px) {
   .main-layout {

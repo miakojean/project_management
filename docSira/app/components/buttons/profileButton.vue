@@ -79,9 +79,9 @@ onUnmounted(() => {
   border-radius: 50%;
   cursor: pointer;
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  padding: 0.9rem;
+  padding: 0.8rem;
   transition: 0.4s;
 }
 
@@ -100,6 +100,7 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   overflow: hidden;
+  padding: 0.5rem;
 }
 
 .dropdown-menu {
@@ -129,6 +130,7 @@ onUnmounted(() => {
 .dropdown-menu a:hover,
 .dropdown-menu button:hover {
   background-color: #f5f5f5;
+  border-radius: 0.5rem;
 }
 
 /* Animation */

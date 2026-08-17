@@ -1,9 +1,9 @@
 <template>
-  <section class="main-section w-full h-full">
+  <section class="main-section">
 
 
     <div class="actions">
-      <folder v-for="folder in 12" 
+      <affairsCards v-for="folder in 9" 
         :key="folder"
       />
     </div>
@@ -13,20 +13,16 @@
 </template>
 
 <script lang="ts">
-import BaseInput from '../../BaseInput/BaseInput.vue'
-import folderCards from '../../cards/folderCards.vue'
-import featuresCard from '../../cards/featuresCards.vue'
-import folder from '../../tools/folder.vue'
+
+import affairsCards from '../../cards/affairsCards.vue'
 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 export default {
 
   components:{
-    BaseInput,
-    folderCards,
-    featuresCard,
-    folder
+    
+    affairsCards
   },
 
   setup(){
@@ -70,7 +66,8 @@ export default {
   margin: 0 auto;                      /* centrage horizontal du bloc */
   justify-items: center;               /* centrage de chaque carte dans sa cellule */
   align-items: center;                 /* centrage vertical (optionnel) */
-  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* Tablette : 3 colonnes */
@@ -85,9 +82,11 @@ export default {
 @media (min-width: 1024px) {
   .actions {
     padding-top: 3rem;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
     width:100%;
+    min-height: 100%;
+    overflow-y: auto;
   }
 }
 

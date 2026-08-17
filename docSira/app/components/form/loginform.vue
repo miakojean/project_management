@@ -25,7 +25,7 @@ import { isValidLoginForm } from '../../utils/forms'
 export default {
   components: { inputFamily, mainButton },
   setup() {
-    const loginForm = ref<LoginForm>({
+    const loginForm = ref<LoginForm>({ 
       email: '',
       password: ''
     })

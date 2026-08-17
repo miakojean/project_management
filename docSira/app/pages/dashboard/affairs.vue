@@ -1,14 +1,14 @@
 <template>
-    <div class="main-layout">
-        <!-- Sidebar -->
-        <sidebar />
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <sidebar />
 
-        <!-- Contenu principal -->
-        <main class="main-content">
-            <navbar />
-            <affairSection class="dashboard-section" />
-        </main>
-    </div>
+    <!-- Contenu principal -->
+    <main class="main-content">
+      <navbar />
+      <affairSection class="dashboard-section" />
+    </main>
+  </div>
 </template>
 
 <script>
@@ -42,10 +42,11 @@ export default {
 .main-content {
   flex: 1;                       /* Prend tout l'espace restant */
   width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;        /* Navbar en haut, section en dessous */
   overflow-y: auto;              /* Scroll si le contenu dépasse */
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 /* La section du dashboard prend tout l'espace vertical restant */
@@ -56,6 +57,7 @@ export default {
 @media (min-width: 1024px) {
   .main-layout {
     flex-direction: row;         /* Par défaut c'est déjà row, mais on le précise */
+    min-height: 100vh;
   }
 }
 </style>
