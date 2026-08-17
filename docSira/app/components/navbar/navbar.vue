@@ -74,7 +74,7 @@ nav {
   align-items: center;
   padding: 1rem;
   z-index: 1000;
-  background: #f6f6f6;
+  background: #e9ebee;
 }
 
 /* =========================================
