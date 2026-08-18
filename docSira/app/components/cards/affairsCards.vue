@@ -1,17 +1,17 @@
 <template>
     <div class="card" ref="cardRef" :class="{ 'card--active': isOpen }">
-        
+
         <div class="card__header w-full flex justify-between">
             <button class="card__badge">
                 {{ title }}
             </button>
-            
+
             <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 fill="none" viewBox="0 0 24 24" 
                 stroke-width="1.5" 
                 stroke="currentColor" 
-                class="size-6 cursor-pointer"
+                class="size-8 cursor-pointer"
                 @click.stop="toggleMenu"
             >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
@@ -27,13 +27,43 @@
         <div class="card__footer flex w-full items-center justify-between">
             <div class="icons">
                 <span class="footer__content">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25M9 16.5v.75m3-3v3M15 12v5.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                </span>
+                <span class="footer__content">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25M9 16.5v.75m3-3v3M15 12v5.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                     </svg>
                 </span>
             </div>
+            
             <div class="info">
-                <p>1 fichier(s)</p>
+                <p>2 fichier(s)</p>
+                
+                <div class="progress-ring" :title="progress + '% complété'">
+                    <svg width="36" height="36" viewBox="0 0 36 36">
+                        <circle 
+                            class="progress-ring__track" 
+                            stroke-width="3" 
+                            fill="transparent" 
+                            :r="radius" 
+                            cx="18" 
+                            cy="18" 
+                        />
+                        <circle 
+                            class="progress-ring__circle" 
+                            stroke-width="3" 
+                            fill="transparent" 
+                            :r="radius" 
+                            cx="18" 
+                            cy="18" 
+                            :stroke-dasharray="circumference" 
+                            :stroke-dashoffset="progressOffset" 
+                        />
+                    </svg>
+                    <span class="progress-ring__text">{{ progress }}%</span>
+                </div>
             </div>
         </div>
 
@@ -47,7 +77,6 @@
             </transition>
         </Teleport>
 
-        <!-- ⚡️ Ajout des classes dynamiques pour le X (gauche/droite) et Y (haut/bas) -->
         <transition :name="menuPositionX === 'right' ? 'slide-right' : 'slide-left'">
             <div 
                 v-if="isOpen" 
@@ -55,12 +84,46 @@
                 :class="['dropbox--' + menuPositionX, 'dropbox--' + menuPositionY]"
             >
                 <ul>
-                    <li @click="isOpen = false">Ouvrir</li>
-                    <li @click="isOpen = false">Renommer</li>
-                    <li @click="isOpen = false">Partager</li>
-                    <li @click="isOpen = false">Créer un lien</li>
-                    <li @click="isOpen = false">Télécharger</li>
-                    <li @click="isOpen = false">Archiver</li>
+                    <li @click="isOpen = false"> 
+                        
+                        Ouvrir
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2" >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                        </svg>
+                        Détails
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2" >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                        </svg>
+                        Renommer
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                        </svg>
+                        Partager
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                        </svg>
+                        Créer un lien
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Télécharger
+                    </li>
+                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2" >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                        </svg>
+                        Archiver
+                    </li>
                     <li class="danger" @click="isOpen = false">Supprimer</li>
                 </ul>
             </div>
@@ -70,7 +133,7 @@
 </template>
 
 <script lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 export default {
     props: {
@@ -81,35 +144,49 @@ export default {
         content: {
             type: String,
             default: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit. Harum cum eligendi.'
+        },
+        // Nouvelle prop pour la progression (de 0 à 100)
+        progress: {
+            type: Number,
+            default: 65 
         }
     },
 
-    setup() {
+    emits: ['open', 'rename', 'share', 'link', 'download', 'archive', 'delete'],
+
+    setup(props, { emit }) {
         const isOpen = ref<boolean>(false);
         const cardRef = ref<HTMLElement | null>(null);
-        
-        // On sépare la position X et Y
+
         const menuPositionX = ref<'left' | 'right'>('right');
         const menuPositionY = ref<'top' | 'bottom'>('top');
 
+        // --- Logique de l'anneau de progression ---
+        const radius = 15; // Rayon du cercle
+        const circumference = 2 * Math.PI * radius; // Calcul de la circonférence [cite: 14, 15]
+        
+        // Calcul du décalage pour simuler la progression
+        const progressOffset = computed(() => {
+            // Sécurité pour s'assurer que la valeur reste entre 0 et 100
+            const validProgress = Math.max(0, Math.min(100, props.progress));
+            return circumference - (validProgress / 100) * circumference;
+        });
+
         const toggleMenu = () => {
             isOpen.value = !isOpen.value;
-            
+
             if (isOpen.value && cardRef.value) {
                 const rect = cardRef.value.getBoundingClientRect();
-                
-                // Calcul de l'espace disponible
+
                 const spaceOnRight = window.innerWidth - rect.right;
-                const spaceOnBottom = window.innerHeight - rect.top; // Espace vers le bas
-                
-                // Axe X : Gérer Gauche / Droite
+                const spaceOnBottom = window.innerHeight - rect.top;
+
                 if (spaceOnRight < 200) {
                     menuPositionX.value = 'left';
                 } else {
                     menuPositionX.value = 'right';
                 }
-                
-                // Axe Y : Gérer Haut / Bas (Si l'espace en bas est < à 320px, on ouvre vers le haut)
+
                 if (spaceOnBottom < 320) {
                     menuPositionY.value = 'bottom';
                 } else {
@@ -123,7 +200,11 @@ export default {
             cardRef,
             menuPositionX,
             menuPositionY,
-            toggleMenu
+            toggleMenu,
+            // Retour des variables de progression
+            radius,
+            circumference,
+            progressOffset
         }
     }
 }
@@ -174,20 +255,40 @@ export default {
     line-height: 1.5;
 }
 
+/* --- ⚡️ Section Superposition des Icônes --- */
+.icons {
+    display: flex;
+    align-items: center;
+}
+
 .card__footer .footer__content {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.6rem;
+    padding: 0.4rem;
     background: var(--primary-color, #2563eb);
-    max-width: 32px;
-    max-height: 32px;
+    width: 38px;
+    height: 38px;
     border-radius: 999px;
+    flex-shrink: 0;
+    border: 2px solid #ffffff; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); 
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.card__footer .footer__content + .footer__content {
+    margin-left: -14px;
+}
+
+.card__footer .footer__content:hover {
+    transform: scale(1.1);
+    z-index: 10;
 }
 
 .card__footer .footer__content svg {
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
     color: #ffffff; 
     stroke: #ffffff;
 }
@@ -196,9 +297,10 @@ export default {
     color: #7d8796;
     font-size: 0.8rem;
     font-weight: 500;
+    margin: 0;
 }
 
-/* --- ⚡️ La Dropbox --- */
+/* --- Dropbox --- */
 .dropbox {
     position: absolute;
     background: #ffffff;
@@ -208,19 +310,18 @@ export default {
     min-width: 170px;
     z-index: 55; 
     overflow: hidden; 
+    padding: 0.5rem;
 }
 
-/* --- ⚡️ Modificateurs d'axe Y (Haut/Bas) --- */
 .dropbox--top {
     top: 0;
     bottom: auto;
 }
 .dropbox--bottom {
-    bottom: 0; /* Aligne le bas du menu avec le bas de la carte (pousse vers le haut) */
+    bottom: 0;
     top: auto;
 }
 
-/* --- ⚡️ Modificateurs d'axe X (Gauche/Droite) --- */
 .dropbox--right {
     left: calc(100% + 15px); 
     right: auto;
@@ -230,12 +331,10 @@ export default {
     left: auto;
 }
 
-/* --- ⚡️ Modificateurs d'Origine pour l'Animation (Crucial pour l'effet rebond) --- */
 .dropbox--right.dropbox--top { transform-origin: top left; }
 .dropbox--right.dropbox--bottom { transform-origin: bottom left; }
 .dropbox--left.dropbox--top { transform-origin: top right; }
 .dropbox--left.dropbox--bottom { transform-origin: bottom right; }
-
 
 .dropbox ul {
     list-style: none;
@@ -244,12 +343,13 @@ export default {
 }
 
 .dropbox li {
-    padding: 0.7rem 1.2rem;
+    padding: 0.7rem;
     font-size: 0.875rem;
     color: #374151;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 0.5rem;
 }
 
 .dropbox li:hover {
@@ -306,5 +406,43 @@ export default {
 :global(.fade-enter-from),
 :global(.fade-leave-to) {
     opacity: 0;
+}
+
+/* --- ⚡️ Section Info & Anneau de progression --- */
+.info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Espacement entre le texte et l'anneau [cite: 26] */
+}
+
+.progress-ring {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.progress-ring svg {
+    /* Fait pivoter le SVG de -90deg pour que la progression commence à midi (en haut) [cite: 28] */
+    transform: rotate(-90deg);
+}
+
+.progress-ring__track {
+    stroke: #e5e7eb; /* Couleur de la piste de fond (gris clair) [cite: 28] */
+}
+
+.progress-ring__circle {
+    stroke: var(--primary-color, #2563eb);
+    stroke-linecap: round; /* Bords arrondis pour la barre de progression [cite: 29] */
+    transition: stroke-dashoffset 0.5s ease-in-out; /* Animation fluide lors du changement de valeur [cite: 30] */
+}
+
+.progress-ring__text {
+    position: absolute;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #4b5563; /* [cite: 31] */
 }
 </style>

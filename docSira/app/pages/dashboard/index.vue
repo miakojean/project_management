@@ -46,7 +46,7 @@ export default {
   flex-direction: column;        /* Navbar en haut, section en dessous */
   overflow-y: auto;              /* Scroll si le contenu dépasse */
   overflow-x: hidden;
-  padding: 0.5rem;  /* Espace en bas pour la sidebar mobile */
+  padding: 0 0 0.5rem 0;  /* Espace en bas pour la sidebar mobile */
   background: #e9ebee;
 }
 

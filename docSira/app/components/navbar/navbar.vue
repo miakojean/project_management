@@ -3,7 +3,7 @@
     <ul class="breadcrumbs">
       <li>
         <router-link to="/">Accueil</router-link>
-        <span v-if="breadcrumbs.length" class="separator">/</span>
+        <span v-if="breadcrumbs.length" class="separator"> > </span>
       </li>
 
       <li v-for="(crumb, index) in breadcrumbs" :key="index">
@@ -16,11 +16,10 @@
         
         <span v-else class="current-page">{{ crumb.label }}</span>
         
-        <span v-if="index < breadcrumbs.length - 1" class="separator">/</span>
+        <span v-if="index < breadcrumbs.length - 1" class="separator"> > </span>
       </li>
     </ul>
 
-    <profileButton class="profile-btn" />
   </nav>
 </template>
 
@@ -73,7 +72,7 @@ nav {
   display: flex;
   align-items: center;
   padding: 1rem;
-  z-index: 1000;
+  z-index: 30;
   background: #e9ebee;
 }
 
