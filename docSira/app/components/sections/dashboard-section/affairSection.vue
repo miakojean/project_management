@@ -7,8 +7,12 @@
             :key="folder"
             @open="handleOpenModal"
             @rename="handleRenameModal"
+            @link="handleLinkModal"
+            @share="handleShare"
         />
     </div>
+
+    <!-- About modale -->
 
     <detailsModale
         :isOpen="isModalOpen"
@@ -21,6 +25,16 @@
         @close="() => { isRenameModalOpen = false}"
     />
 
+    <linkModale
+        :isOpen="isLinkModalOpen"
+        @close="() => { isLinkModalOpen = false}"
+    />
+
+    <shareModale
+        :isOpen="isShareModalOpen"
+        @close="() => { isShareModalOpen = false}"
+    />
+
     </section>
 </template>
 
@@ -28,6 +42,9 @@
 import detailsModale from '~/components/modale/detailsModale.vue';
 import affairsCards from '../../cards/affairsCards.vue'
 import renameModale from '../../modale/renameModale.vue';
+import linkModale from '../../modale/linkModale.vue';
+import shareModale from '../../modale/shareModale.vue';
+
 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -37,7 +54,9 @@ export default {
   components:{
     detailsModale,
     affairsCards,
-    renameModale
+    renameModale,
+    linkModale,
+    shareModale
   },
 
   setup(){
@@ -48,32 +67,39 @@ export default {
 
     const isModalOpen = ref<boolean>(false);
     const isRenameModalOpen = ref<boolean>(false);
+    const isLinkModalOpen = ref<boolean>(false);
+    const isShareModalOpen = ref<boolean>(false);
+
     const currentName = 'kaba Niale';
 
 
 
     function handleOpenModal() {
-      if (!isModalOpen.value) {
-        isModalOpen.value = true;
-      } else {
-        isModalOpen.value = false;
-      }
+      isModalOpen.value = !isModalOpen.value;
     }
 
     function handleRenameModal() {
-      if (!isRenameModalOpen.value) {
-        isRenameModalOpen.value = true;
-      } else {
-        isRenameModalOpen.value = false;
-      }
+      isRenameModalOpen.value = !isRenameModalOpen.value;
+    }
+
+    function handleLinkModal() {
+      isLinkModalOpen.value = !isLinkModalOpen.value
+    }
+
+    function handleShare() {
+      isShareModalOpen.value = !isShareModalOpen.value;
     }
 
     return{
       router,
       isModalOpen,
       isRenameModalOpen,
+      isLinkModalOpen,
+      isShareModalOpen,
       handleOpenModal,
       handleRenameModal,
+      handleLinkModal,
+      handleShare,
       currentName
     }
 
