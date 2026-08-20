@@ -2,20 +2,20 @@
   <nav>
     <ul class="breadcrumbs">
       <li>
-        <router-link to="/">Accueil</router-link>
+        <router-link to="">Accueil</router-link>
         <span v-if="breadcrumbs.length" class="separator"> > </span>
       </li>
 
       <li v-for="(crumb, index) in breadcrumbs" :key="index">
-        <router-link 
-          v-if="index < breadcrumbs.length - 1" 
+        <router-link
+          v-if="index < breadcrumbs.length - 1"
           :to="crumb.path"
         >
           {{ crumb.label }}
         </router-link>
-        
+
         <span v-else class="current-page">{{ crumb.label }}</span>
-        
+
         <span v-if="index < breadcrumbs.length - 1" class="separator"> > </span>
       </li>
     </ul>
@@ -44,7 +44,7 @@ export default {
       return paths.map((path) => {
         // On reconstruit le chemin étape par étape
         currentPath += `/${path}`;
-        
+
         // On formate le label (ex: "create-coupon" -> "Create coupon")
         // On met la 1ère lettre en majuscule et on remplace les tirets par des espaces
         const label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');

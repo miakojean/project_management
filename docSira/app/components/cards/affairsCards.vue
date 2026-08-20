@@ -6,11 +6,11 @@
                 {{ title }}
             </button>
 
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" viewBox="0 0 24 24" 
-                stroke-width="1.5" 
-                stroke="currentColor" 
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
                 class="size-8 cursor-pointer"
                 @click.stop="toggleMenu"
             >
@@ -37,29 +37,29 @@
                     </svg>
                 </span>
             </div>
-            
+
             <div class="info">
                 <p>2 fichier(s)</p>
-                
+
                 <div class="progress-ring" :title="progress + '% complété'">
                     <svg width="36" height="36" viewBox="0 0 36 36">
-                        <circle 
-                            class="progress-ring__track" 
-                            stroke-width="3" 
-                            fill="transparent" 
-                            :r="radius" 
-                            cx="18" 
-                            cy="18" 
+                        <circle
+                            class="progress-ring__track"
+                            stroke-width="3"
+                            fill="transparent"
+                            :r="radius"
+                            cx="18"
+                            cy="18"
                         />
-                        <circle 
-                            class="progress-ring__circle" 
-                            stroke-width="3" 
-                            fill="transparent" 
-                            :r="radius" 
-                            cx="18" 
-                            cy="18" 
-                            :stroke-dasharray="circumference" 
-                            :stroke-dashoffset="progressOffset" 
+                        <circle
+                            class="progress-ring__circle"
+                            stroke-width="3"
+                            fill="transparent"
+                            :r="radius"
+                            cx="18"
+                            cy="18"
+                            :stroke-dasharray="circumference"
+                            :stroke-dashoffset="progressOffset"
                         />
                     </svg>
                     <span class="progress-ring__text">{{ progress }}%</span>
@@ -69,32 +69,32 @@
 
         <Teleport to="body">
             <transition name="fade">
-                <div 
-                    v-if="isOpen" 
-                    class="overlay" 
+                <div
+                    v-if="isOpen"
+                    class="overlay"
                     @click="isOpen = false"
                 ></div>
             </transition>
         </Teleport>
 
         <transition :name="menuPositionX === 'right' ? 'slide-right' : 'slide-left'">
-            <div 
-                v-if="isOpen" 
-                class="dropbox" 
+            <div
+                v-if="isOpen"
+                class="dropbox"
                 :class="['dropbox--' + menuPositionX, 'dropbox--' + menuPositionY]"
             >
                 <ul>
-                    <li @click="isOpen = false"> 
-                        
+                    <li @click="$emit('open')">
+
                         Ouvrir
                     </li>
-                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2" >
+                    <li @click="() => { isOpen = false, $emit('open')}" class="w-full flex items-center justify-start gap-2" >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                         </svg>
                         Détails
                     </li>
-                    <li @click="isOpen = false" class="w-full flex items-center justify-start gap-2" >
+                    <li @click="() => { isOpen = false, $emit('rename')}" class="w-full flex items-center justify-start gap-2" >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                         </svg>
@@ -148,7 +148,7 @@ export default {
         // Nouvelle prop pour la progression (de 0 à 100)
         progress: {
             type: Number,
-            default: 65 
+            default: 65
         }
     },
 
@@ -164,7 +164,7 @@ export default {
         // --- Logique de l'anneau de progression ---
         const radius = 15; // Rayon du cercle
         const circumference = 2 * Math.PI * radius; // Calcul de la circonférence [cite: 14, 15]
-        
+
         // Calcul du décalage pour simuler la progression
         const progressOffset = computed(() => {
             // Sécurité pour s'assurer que la valeur reste entre 0 et 100
@@ -213,7 +213,7 @@ export default {
 <style scoped>
 .card {
     width: 100%;
-    max-width: 310px; 
+    max-width: 310px;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
@@ -221,7 +221,7 @@ export default {
     background: #ffffff;
     border-radius: 16px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative; 
+    position: relative;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -232,8 +232,8 @@ export default {
 }
 
 .card--active {
-    z-index: 50; 
-    position: relative; 
+    z-index: 50;
+    position: relative;
 }
 
 .card__badge {
@@ -250,7 +250,7 @@ export default {
 
 .card__text {
     margin: 0;
-    color: #4b5563; 
+    color: #4b5563;
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -271,8 +271,8 @@ export default {
     height: 38px;
     border-radius: 999px;
     flex-shrink: 0;
-    border: 2px solid #ffffff; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); 
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     position: relative;
     transition: transform 0.2s ease;
 }
@@ -289,7 +289,7 @@ export default {
 .card__footer .footer__content svg {
     width: 20px;
     height: 20px;
-    color: #ffffff; 
+    color: #ffffff;
     stroke: #ffffff;
 }
 
@@ -308,8 +308,8 @@ export default {
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     border: 1px solid #f3f4f6;
     min-width: 170px;
-    z-index: 55; 
-    overflow: hidden; 
+    z-index: 55;
+    overflow: hidden;
     padding: 0.5rem;
 }
 
@@ -323,11 +323,11 @@ export default {
 }
 
 .dropbox--right {
-    left: calc(100% + 15px); 
+    left: calc(100% + 15px);
     right: auto;
 }
 .dropbox--left {
-    right: calc(100% + 15px); 
+    right: calc(100% + 15px);
     left: auto;
 }
 
@@ -395,7 +395,7 @@ export default {
     background-color: rgba(17, 24, 39, 0.25);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 40; 
+    z-index: 40;
     cursor: default;
 }
 
