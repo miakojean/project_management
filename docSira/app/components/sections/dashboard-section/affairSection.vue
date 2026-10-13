@@ -2,15 +2,18 @@
     <section class="main-section w-full">
 
 
-    <div class="actions">
-        <affairsCards v-for="folder in 9"
-            :key="folder"
-            @open="handleOpenModal"
-            @rename="handleRenameModal"
-            @link="handleLinkModal"
-            @share="handleShare"
-        />
-    </div>
+        <div class="actions">
+            <affairsCards v-for="folder in 9"
+                :key="folder"
+                @goTo="handleGoTo(folder)"
+                @open="handleOpenModal"
+                @rename="handleRenameModal"
+                @link="handleLinkModal"
+                @share="handleShare"
+                @archive="handleArchive"
+                @delete="handleDelete"
+            />
+        </div>
 
     <!-- About modale -->
 
@@ -35,6 +38,16 @@
         @close="() => { isShareModalOpen = false}"
     />
 
+    <archiveModale
+        :isOpen="isArchiveModalOpen"
+        @close="() => { isArchiveModalOpen = false}"
+    />
+
+    <deleteModale
+        :isOpen="isDeleteModalOpen"
+        @close="() => { isDeleteModalOpen = false}"
+    />
+
     </section>
 </template>
 
@@ -44,6 +57,8 @@ import affairsCards from '../../cards/affairsCards.vue'
 import renameModale from '../../modale/renameModale.vue';
 import linkModale from '../../modale/linkModale.vue';
 import shareModale from '../../modale/shareModale.vue';
+import archiveModale from '../../modale/archiveModale.vue';
+import deleteModale from '../../modale/deleteModale.vue';
 
 
 import { ref } from 'vue';
@@ -56,7 +71,9 @@ export default {
     affairsCards,
     renameModale,
     linkModale,
-    shareModale
+    shareModale,
+    archiveModale,
+    deleteModale
   },
 
   setup(){
@@ -69,10 +86,15 @@ export default {
     const isRenameModalOpen = ref<boolean>(false);
     const isLinkModalOpen = ref<boolean>(false);
     const isShareModalOpen = ref<boolean>(false);
+    const isArchiveModalOpen = ref<boolean>(false);
+    const isDeleteModalOpen = ref<boolean>(false);
 
     const currentName = 'kaba Niale';
 
-
+    // Manage folder navigation
+    function handleGoTo(id:number) {
+      router.push(`/affairs/${id}/`);
+    }
 
     function handleOpenModal() {
       isModalOpen.value = !isModalOpen.value;
@@ -90,16 +112,29 @@ export default {
       isShareModalOpen.value = !isShareModalOpen.value;
     }
 
-    return{
+    function handleArchive() {
+      isArchiveModalOpen.value = !isArchiveModalOpen.value;
+    }
+
+    function handleDelete() {
+      isDeleteModalOpen.value = !isDeleteModalOpen.value;
+    }
+
+    return {
       router,
       isModalOpen,
       isRenameModalOpen,
       isLinkModalOpen,
       isShareModalOpen,
+      isArchiveModalOpen,
+      isDeleteModalOpen, /* 👈 AJOUTEZ CECI ICI ! */
       handleOpenModal,
       handleRenameModal,
       handleLinkModal,
+      handleGoTo,
       handleShare,
+      handleArchive,
+      handleDelete,
       currentName
     }
 
